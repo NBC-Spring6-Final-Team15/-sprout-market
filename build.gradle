@@ -42,8 +42,11 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // 웹 소켓
+    // web socket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 }
 
