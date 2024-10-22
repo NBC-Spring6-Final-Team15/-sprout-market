@@ -1,12 +1,13 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
+import com.sprarta.sproutmarket.domain.common.Timestamped;
 import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
 @Getter
 @Table(name = "users")
-public class User {
+public class User extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
