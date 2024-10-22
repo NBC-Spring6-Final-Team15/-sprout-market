@@ -32,7 +32,7 @@ public class Item extends Timestamped {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User sellerId;
+    private User seller;
 
     // 판매 상태
     @Column(nullable = false)
