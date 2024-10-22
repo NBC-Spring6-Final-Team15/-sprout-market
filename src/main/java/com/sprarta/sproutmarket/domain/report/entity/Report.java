@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.report.entity;
 
 
+import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.report.enums.ReportStatus;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
