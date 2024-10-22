@@ -1,7 +1,7 @@
 package com.sprarta.sproutmarket.domain.review.entity;
 
 
-import com.sprarta.sproutmarket.domain.common.Timestamped;
+import com.sprarta.sproutmarket.domain.trade.entity.Trade;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Review extends Timestamped {
+public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +25,7 @@ public class Review extends Timestamped {
     @JoinColumn(name = "member_id")
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "trade_id")
-    private Trade trade;
-
-
-
+//    @OneToOne
+//    @JoinColumn(name = "trade_id")
+//    private Trade trade;
 }
