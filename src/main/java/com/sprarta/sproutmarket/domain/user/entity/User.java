@@ -68,6 +68,17 @@ public class User extends Timestamped {
         this.userRole = userRole;
     }
 
+    public User(Long id, String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.userRole = userRole;
+    }
+
     public User(Long id, String email, UserRole userRole) {
         this.id = id;
         this.email = email;
@@ -78,8 +89,8 @@ public class User extends Timestamped {
         return new User(customUserDetails.getId(), customUserDetails.getEmail(), customUserDetails.getRole());
     }
 
-    public void changePassword(String password) {
-        this.password = password;
+    public void changePassword(String newPassword) {
+        this.password = newPassword;
     }
 
     public void deactivate() {

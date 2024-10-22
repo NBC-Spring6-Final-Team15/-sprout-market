@@ -27,20 +27,24 @@ public class UserService {
 
     @Transactional
     public void changePassword(CustomUserDetails authUser, UserChangePasswordRequest userChangePasswordRequest) {
-        User.fromAuthUser(authUser);
-        validateNewPassword(userChangePasswordRequest);
 
-        User user = userRepository.findById(authUser.getId())
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        // 1. 유저 존재 여부 확인
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        if (passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
-        }
-
+        // 2. 기존 비밀번호가 맞는지 확인
         if (!passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
 
+        // 3. 새 비밀번호가 기존 비밀번호와 동일한지 확인 (암호화하지 않은 상태로 비교)
+        if (userChangePasswordRequest.getOldPassword().equals(userChangePasswordRequest.getNewPassword())) {
+            throw new IllegalArgumentException("새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
+        }
+
+        // 4. 새 비밀번호가 유효한지 확인
+        validateNewPassword(userChangePasswordRequest);
+
+        // 5. 새 비밀번호 암호화 후 저장
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
     }
 
@@ -54,17 +58,16 @@ public class UserService {
 
     @Transactional
     public void deleteUser(CustomUserDetails authUser, UserDeleteRequest userDeleteRequest) {
-        User.fromAuthUser(authUser);
-        // 1. 유저 존재 여부 확인
-        User user = userRepository.findById(authUser.getId())
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        // 2. 비밀번호 일치 여부 확인
+        // 1. 유저 존재 여부 확인
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        // 1. 비밀번호 일치 여부 확인
         if (!passwordEncoder.matches(userDeleteRequest.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
 
-        // 3. 계정 삭제 처리
+        // 2. 유저 비활성화 및 삭제
         user.deactivate();
         userRepository.delete(user);
     }
