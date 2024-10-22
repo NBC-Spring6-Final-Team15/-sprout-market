@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.report.entity;
 
 
+import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.report.enums.ReportStatus;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Report {
+public class Report extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
