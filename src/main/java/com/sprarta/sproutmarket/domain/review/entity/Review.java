@@ -25,10 +25,7 @@ public class Review {
     @JoinColumn(name = "member_id")
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "trade_id")
-    private Trade trade;
-
-
-
+//    @OneToOne
+//    @JoinColumn(name = "trade_id")
+//    private Trade trade;
 }
