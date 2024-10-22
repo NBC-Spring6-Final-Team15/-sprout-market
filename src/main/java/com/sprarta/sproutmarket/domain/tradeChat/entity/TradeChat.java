@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.tradeChat.entity;
 
+import com.sprarta.sproutmarket.domain.common.Timestamped;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-public class TradeChat{
+public class TradeChat extends Timestamped {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
