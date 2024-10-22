@@ -1,12 +1,21 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
 import com.sprarta.sproutmarket.domain.common.Timestamped;
+import com.sprarta.sproutmarket.domain.report.entity.Report;
+import com.sprarta.sproutmarket.domain.review.entity.Review;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Getter
 @Table(name = "users")
+@NoArgsConstructor
+@AllArgsConstructor
 public class User extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,9 +36,13 @@ public class User extends Timestamped {
     @Column(name = "address")
     private String address;
 
-    @ManyToOne
-    @JoinColumn(name = "activity_address_id")
-    private ActivityArea activityAddress;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole userRole;
+
+//    @ManyToOne
+//    @JoinColumn(name = "activity_address_id")
+//    private ActivityArea activityAddress;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Review> reviews;

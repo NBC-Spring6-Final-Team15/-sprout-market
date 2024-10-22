@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.review.entity;
 
 
+import com.sprarta.sproutmarket.domain.trade.entity.Trade;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,10 +25,7 @@ public class Review {
     @JoinColumn(name = "member_id")
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "trade_id")
-    private Trade trade;
-
-
-
+//    @OneToOne
+//    @JoinColumn(name = "trade_id")
+//    private Trade trade;
 }
