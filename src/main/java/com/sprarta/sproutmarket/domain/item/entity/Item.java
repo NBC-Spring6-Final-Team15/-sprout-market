@@ -68,4 +68,9 @@ public class Item extends Timestamped {
         this.itemSaleStatus = itemSaleStatus;
     }
 
+    public void changeContents(String title, String description, int price, String imageUrl) {
+        this.title = title;
+        this.description = description;
+        this.price = price;
+    }
 }
