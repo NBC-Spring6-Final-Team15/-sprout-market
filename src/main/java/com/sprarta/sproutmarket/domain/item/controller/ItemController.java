@@ -1,8 +1,8 @@
 package com.sprarta.sproutmarket.domain.item.controller;
 
 import com.sprarta.sproutmarket.domain.common.dto.response.StatusResponse;
-import com.sprarta.sproutmarket.domain.item.eto.request.ItemContentsUpdateRequest;
-import com.sprarta.sproutmarket.domain.item.eto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +31,12 @@ public class ItemController {
     @PostMapping("/{itemId}/update/contents")
     public ResponseEntity<StatusResponse> updateContents(@PathVariable Long itemId, @RequestBody ItemContentsUpdateRequest request, @AuthenticationPrincipal CustomUserDetails authUser){
         StatusResponse statusResponse = itemService.updateContents(itemId, request, authUser);
+        return ResponseEntity.ok(statusResponse);
+    }
+
+    @PostMapping("/{itemId}/delete")
+    public ResponseEntity<StatusResponse> solfDeleteItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+        StatusResponse statusResponse = itemService.solfDeleteItem(itemId, authUser);
         return ResponseEntity.ok(statusResponse);
     }
 

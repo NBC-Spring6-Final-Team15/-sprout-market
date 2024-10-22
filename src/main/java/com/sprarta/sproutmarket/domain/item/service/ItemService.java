@@ -7,8 +7,8 @@ import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.exception.NotFoundException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
-import com.sprarta.sproutmarket.domain.item.eto.request.ItemContentsUpdateRequest;
-import com.sprarta.sproutmarket.domain.item.eto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.exception.ItemNotFoundException;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
@@ -116,6 +116,26 @@ public class ItemService {
     }
 
     // 물품 논리적 삭제
+    public StatusResponse solfDeleteItem(Long itemId, CustomUserDetails authUser){
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+
+        item.solfDelete(
+            Status.DELETED
+        );
+
+        itemRepository.save(item);
+
+        return new StatusResponse(
+            "매물이 성공적으로 삭제되었습니다.",
+            user.getEmail(),
+            200
+        );
+    }
 
 
     /**

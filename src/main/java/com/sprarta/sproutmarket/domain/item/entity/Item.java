@@ -73,4 +73,8 @@ public class Item extends Timestamped {
         this.description = description;
         this.price = price;
     }
+
+    public void solfDelete(Status deleted) {
+        this.status = deleted;
+    }
 }
