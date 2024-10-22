@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
@@ -18,6 +19,12 @@ public class CustomUserDetailService implements UserDetailsService {
         // 이메일로 사용자 찾기
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        // 1. 소프트 삭제된 유저인지 확인
+        if (user.getStatus() == Status.DELETED) {
+            throw new IllegalArgumentException("비활성화된 계정입니다. 관리자에게 문의하세요.");
+        }
+
         // User 엔티티를 기반으로 CustomUserDetails 객체 반환
         return new CustomUserDetails(user);
     }
