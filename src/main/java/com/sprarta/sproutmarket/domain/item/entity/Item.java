@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -42,14 +43,25 @@ public class Item extends Timestamped {
     private Category category;
 
     // 파일
-    @Column(nullable = false)
-    @OneToMany(mappedBy = "item_id")
-    private List<Image> images = new ArrayList<>();
+//    @Column(nullable = false)
+//    @OneToMany(mappedBy = "item_id")
+//    private List<Image> images = new ArrayList<>();
+
 
     // 삭제 상태
     @Column(nullable = false)
     private Status status;
 
 
+    // 빌더의 사용이유: 필드 개수가 많고, 더 추가될 예정이라
+    @Builder
+    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, Category category, Status status){
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.itemSaleStatus = itemSaleStatus;
+        this.category = category;
+        this.status = status;
+    }
 
 }
