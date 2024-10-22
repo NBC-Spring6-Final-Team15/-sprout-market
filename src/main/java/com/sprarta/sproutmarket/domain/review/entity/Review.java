@@ -43,4 +43,13 @@ public class Review extends Timestamped {
         this.trade = trade;
     }
 
+    public void update(String comment, ReviewRating reviewRating) {
+        if (comment != null) {
+            this.comment = comment;
+        }
+        if (reviewRating != null) {
+            this.reviewRating = reviewRating;
+        }
+
+    }
 }
