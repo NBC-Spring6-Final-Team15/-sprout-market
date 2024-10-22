@@ -7,12 +7,11 @@ import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.eto.request.ItemCreateRequest;
-import com.sprarta.sproutmarket.domain.item.eto.response.ItemSimpleResponse;
+import com.sprarta.sproutmarket.domain.item.exception.ItemNotFoundException;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -53,11 +52,36 @@ public class ItemService {
     }
 
     // 물품 상태 변경
+    public StatusResponse updateSaleStatus(Long itemId, String itemSaleStatus) {
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+
+        // 유저 활성 상태 확인
+
+        // 매물 존재 확인
+        Item item = findByIdOrElseThrow(itemId);
+
+        // 매물이 해당 유저의 매물이 맞는지 확인
+        //item.getSellerId(user.getId())
+
+        item.changeSaleStatus(ItemSaleStatus.of(itemSaleStatus));
+
+        itemRepository.save(item);
+
+        return new StatusResponse(
+            "매물의 판매 상태가 성공적으로 수정되었습니다.",
+            "", //card.getUser.getEmail,
+            200
+        );
+    }
 
     // 물품 내용 수정
 
     // 물품 물리적 삭제
 
 
+    public Item findByIdOrElseThrow(Long id){
+        return itemRepository.findById(id)
+            .orElseThrow(() -> new ItemNotFoundException());
+    }
 
 }
