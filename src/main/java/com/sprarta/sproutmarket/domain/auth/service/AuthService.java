@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
@@ -50,6 +51,11 @@ public class AuthService {
     public SigninResponse signin(SigninRequest request) {
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new IllegalArgumentException("가입되지 않은 유저입니다."));
+
+        // 1소프트 삭제된 유저인지 확인
+        if (user.getStatus() == Status.DELETED) {
+            throw new IllegalArgumentException("비활성화된 계정입니다. 관리자에게 문의하세요.");
+        }
 
         // 로그인 시 이메일과 비밀번호가 일치하지 않을 경우 401을 반환합니다.
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {

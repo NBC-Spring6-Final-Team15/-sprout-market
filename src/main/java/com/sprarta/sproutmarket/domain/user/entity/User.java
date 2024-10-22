@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
 import com.sprarta.sproutmarket.domain.common.Timestamped;
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.report.entity.Report;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -53,6 +54,10 @@ public class User extends Timestamped {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Report> reports;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Status status = Status.ACTIVE;
+
     public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
         this.username = username;
         this.email = email;
@@ -61,5 +66,23 @@ public class User extends Timestamped {
         this.phoneNumber = phoneNumber;
         this.address = address;
         this.userRole = userRole;
+    }
+
+    public User(Long id, String email, UserRole userRole) {
+        this.id = id;
+        this.email = email;
+        this.userRole = userRole;
+    }
+
+    public static User fromAuthUser(CustomUserDetails customUserDetails) {
+        return new User(customUserDetails.getId(), customUserDetails.getEmail(), customUserDetails.getRole());
+    }
+
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
+    public void deactivate() {
+        this.status = Status.DELETED;
     }
 }
