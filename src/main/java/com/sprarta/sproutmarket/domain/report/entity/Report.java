@@ -20,7 +20,7 @@ public class Report extends Timestamped {
     private Long id;
 
     @Column(nullable = false)
-    private String reporting_reason;
+    private String reportingReason;
 
     @Enumerated(EnumType.STRING)
     private ReportStatus reportStatus;
