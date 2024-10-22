@@ -19,4 +19,10 @@ public class ItemController {
         return ResponseEntity.ok(statusResponse);
     }
 
+    @PostMapping("/{itemId}/update/sale-status")
+    public ResponseEntity<StatusResponse> updateItemSaleStatus(@PathVariable Long itemId, @RequestParam String saleStatus){
+        StatusResponse statusResponse = itemService.updateSaleStatus(itemId, saleStatus);
+        return ResponseEntity.ok(statusResponse);
+    }
+
 }
