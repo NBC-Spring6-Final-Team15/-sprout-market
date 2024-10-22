@@ -5,7 +5,7 @@ import org.apache.coyote.BadRequestException;
 import java.util.Arrays;
 
 public enum ItemSaleStatus {
-    SAVED, RESERVED, SOLD_OUT;
+    WAITING, RESERVED, SOLD;
 
     public static ItemSaleStatus of(String saleStatus) throws BadRequestException {
         return Arrays.stream(ItemSaleStatus.values())

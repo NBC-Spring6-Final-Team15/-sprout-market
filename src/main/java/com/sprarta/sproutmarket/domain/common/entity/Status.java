@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.item.entity;
+package com.sprarta.sproutmarket.domain.common.entity;
 
 import org.apache.coyote.BadRequestException;
 
