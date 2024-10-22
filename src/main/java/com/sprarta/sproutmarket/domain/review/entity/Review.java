@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.review.entity;
 
 
+import com.sprarta.sproutmarket.domain.trade.entity.Trade;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
