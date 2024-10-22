@@ -21,6 +21,9 @@ public class User extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "username", nullable = false)
+    private String username;
+
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
@@ -49,4 +52,14 @@ public class User extends Timestamped {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Report> reports;
+
+    public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.userRole = userRole;
+    }
 }
