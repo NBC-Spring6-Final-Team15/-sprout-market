@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
