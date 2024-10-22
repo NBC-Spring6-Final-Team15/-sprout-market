@@ -24,14 +24,14 @@ public class UserController {
     @PutMapping
     public void changePassword(
             @AuthenticationPrincipal CustomUserDetails authUser,
-            @RequestBody UserChangePasswordRequest userChangePasswordRequest) {
+            @RequestBody @Valid UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser, userChangePasswordRequest);
     }
 
     @DeleteMapping
     public void deleteUser(
             @AuthenticationPrincipal CustomUserDetails authUser,
-            @RequestBody UserDeleteRequest userDeleteRequest) {
+            @RequestBody @Valid UserDeleteRequest userDeleteRequest) {
         userService.deleteUser(authUser, userDeleteRequest);
     }
 }
