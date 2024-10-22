@@ -19,7 +19,7 @@ public class Review {
 
     @Column(nullable = false)
     private String comment;
-    ㅋ
+
     @ManyToOne
     @JoinColumn(name = "member_id")
     private User user;
