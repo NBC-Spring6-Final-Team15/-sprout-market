@@ -2,6 +2,7 @@ package com.sprarta.sproutmarket.domain.report.entity;
 
 
 import com.sprarta.sproutmarket.domain.report.enums.ReportStatus;
+import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,11 +26,11 @@ public class Report {
 
     @ManyToOne
     @JoinColumn(name = "reporter_id")
-    private Users users;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "item_id")
-    private Items items;
+    private Item item;
 
 
 }
