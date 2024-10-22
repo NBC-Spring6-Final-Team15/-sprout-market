@@ -35,7 +35,7 @@ public class Item extends Timestamped {
     private User seller;
 
     // 판매 상태
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private ItemSaleStatus itemSaleStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,17 +49,18 @@ public class Item extends Timestamped {
 
 
     // 삭제 상태
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Status status;
 
 
     // 빌더의 사용이유: 필드 개수가 많고, 더 추가될 예정이라
     @Builder
-    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, Category category, Status status){
+    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, User seller,  Category category, Status status){
         this.title = title;
         this.description = description;
         this.price = price;
         this.itemSaleStatus = itemSaleStatus;
+        this.seller = seller;
         this.category = category;
         this.status = status;
     }

@@ -16,9 +16,11 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -31,6 +33,7 @@ public class ItemService {
      * @param authUser 매물 수정을 유청한 사용자
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
+    @Transactional
     public StatusResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
@@ -46,6 +49,7 @@ public class ItemService {
             .price(itemCreateRequest.getPrice())
             .itemSaleStatus(ItemSaleStatus.WAITING)
             .category(findCategory)
+            .seller(user)
             .status(Status.ACTIVE)
             .build();
 
@@ -65,6 +69,7 @@ public class ItemService {
      * @param authUser 매물 판매 상태 수정을 유청한 사용자
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
+    @Transactional
     public StatusResponse updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
@@ -91,6 +96,7 @@ public class ItemService {
      * @param authUser 매물 내용 수정을 유청한 사용자
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
+    @Transactional
     public StatusResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
@@ -115,7 +121,14 @@ public class ItemService {
         );
     }
 
-    // 물품 논리적 삭제
+
+    /**
+     *
+     * @param itemId Item's ID
+     * @param authUser 매물 내용 수정을 유청한 사용자
+     * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
+     */
+    @Transactional
     public StatusResponse solfDeleteItem(Long itemId, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
