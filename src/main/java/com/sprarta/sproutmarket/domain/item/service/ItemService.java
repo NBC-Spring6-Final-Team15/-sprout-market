@@ -78,7 +78,8 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
 
-        item.changeSaleStatus(ItemSaleStatus.of(itemSaleStatus));
+        ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
+        item.changeSaleStatus(newItemSaleStatus);
 
         itemRepository.save(item);
 
@@ -175,7 +176,7 @@ public class ItemService {
      */
     public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
         return itemRepository.findByIdAndSellerId(itemId, sellerId)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_OWNED_ITEM));
+            .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
     }
 
 }
