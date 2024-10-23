@@ -2,7 +2,6 @@ package com.sprarta.sproutmarket.domain.tradeChat.service;
 
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.common.exception.NotFoundException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.ChatRoomDto;
@@ -33,6 +32,7 @@ public class ChatRoomService {
     private final ItemRepository itemRepository;
 
     // 채팅방 생성 - 구매자와 상품 사이에는 채팅방이 하나만 존재해야 함, 기본적으로 방 생성은 구매자만 가능?
+    @Transactional
     public ChatRoomDto createChatRoom(Long itemId, CustomUserDetails authUser) {
         User buyer = findUserById(authUser.getId());
         Item item = findItemById(itemId);
@@ -40,18 +40,18 @@ public class ChatRoomService {
         // 상품과 구매자 사이에 기존 채팅방이 있는지 확인
         Optional<ChatRoom> findChatRoom = chatRoomRepository.findByItemAndBuyer(item, buyer);
         if (findChatRoom.isPresent()) {
-            throw new IllegalArgumentException("이미 채팅방 존재");
+            throw new ApiException(ErrorStatus.CONFLICT_CHATROOM);
         }
 
         // 상품 판매자와 현재 사용자 id 가 동일할 경우 생성 X
-        if (ObjectUtils.nullSafeEquals(item.getSellerId().getId(), buyer.getId())) {
-            throw new IllegalArgumentException("자신의 상품에 채팅방 생성 불가");
+        if (ObjectUtils.nullSafeEquals(item.getSeller().getId(), buyer.getId())) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_CHATROOM_CREATE);
         }
 
         // 새로운 채팅방 생성
         ChatRoom chatRoom = ChatRoom.builder()
                 .buyer(buyer)
-                .seller(item.getSellerId())
+                .seller(item.getSeller())
                 .item(item)
                 .build();
 
@@ -109,7 +109,7 @@ public class ChatRoomService {
     // 사용자 존재 확인
     private User findUserById(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("해당 사용자가 존재하지 않음"));
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         return user;
     }
@@ -117,7 +117,7 @@ public class ChatRoomService {
     // 상품 존재 확인
     private Item findItemById(Long itemId) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("해당 상품이 존재하지 않음"));
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
 
         return item;
     }
@@ -125,7 +125,7 @@ public class ChatRoomService {
     // 채팅방 존재 확인
     private ChatRoom findChatRoomById(Long chatRoomId) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new NotFoundException("해당 채팅방이 존재하지 않음"));
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));
 
         return chatRoom;
     }
@@ -134,7 +134,7 @@ public class ChatRoomService {
     private void chatRoomMatch(ChatRoom chatRoom, Long userId) {
         if (!ObjectUtils.nullSafeEquals(chatRoom.getBuyer().getId(), userId)
         && !ObjectUtils.nullSafeEquals(chatRoom.getSeller().getId(), userId)) {
-            throw new IllegalArgumentException("채팅방 사용자 일치 안 함");
+            throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
         }
     }
 
