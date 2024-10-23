@@ -59,7 +59,7 @@ public class ItemController {
     }
 
     /**
-     * 매물을 삭제하는 로직
+     * 자신이 등록한 매물을 (논리적)삭제하는 로직
      * @param itemId Item's ID
      * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제한 아이템에 대한 정보를 포함한 응답 객체
@@ -67,6 +67,17 @@ public class ItemController {
     @PostMapping("/{itemId}/delete")
     public ResponseEntity<ApiResponse<ItemResponse>> solfDeleteItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.softDeleteItem(itemId, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+    }
+
+    /**
+     * 관리자가 신고된 매물을 (논리적)삭제하는 로직
+     * @param itemId Item's ID
+     * @return ApiResponse - 메세지, 상태 코드, 삭제된 아이템에 대한 정보를 포함한 응답 객체
+     */
+    @PostMapping("/{itemId}/report")
+    public ResponseEntity<ApiResponse<ItemResponse>> softDeleteReportedItem(@PathVariable Long itemId){
+        ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 

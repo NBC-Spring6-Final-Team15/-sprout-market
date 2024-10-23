@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -132,10 +133,10 @@ public class ItemService {
 
 
     /**
-     * 매물을 삭제하는 로직
+     * 자신이 등록한 매물을 논리적 삭제하는 로직
      * @param itemId Item's ID
      * @param authUser 매물 삭제를 요청한 사용자
-     * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
+     * @return ItemResponse - 삭제된 매물의 제목, 상태, 삭제한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
     public ItemResponse softDeleteItem(Long itemId, CustomUserDetails authUser){
@@ -156,6 +157,30 @@ public class ItemService {
             item.getTitle(),
             item.getStatus(),
             user.getNickname()
+        );
+    }
+
+    /**
+     * 관리자가 신고된 매물을 논리적 삭제하는 로직
+     * @param itemId Item's ID
+     * @return ItemResponse - 삭제된 매물의 제목, 설명, 상태를 포함한 응답 객체
+     */
+    @Transactional
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ItemResponse softDeleteReportedItem(Long itemId){
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = findByIdOrElseThrow(itemId);
+
+        item.solfDelete(
+            Status.DELETED
+        );
+
+        itemRepository.save(item);
+
+        return new ItemResponse(
+            item.getTitle(),
+            item.getDescription(),
+            item.getStatus()
         );
     }
 
