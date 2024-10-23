@@ -19,6 +19,8 @@ public enum ErrorStatus implements BaseCode {
     UNAUTHORIZED_TOKEN(HttpStatus.UNAUTHORIZED,401,"JWT 토큰 검증 중 오류가 발생했습니다."),
     FORBIDDEN_TOKEN(HttpStatus.FORBIDDEN, 403, "관리자 권한이 없습니다."),
 
+    BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
+
     TEST_ERROR(HttpStatus.BAD_REQUEST, 400, "ApiException 예외 처리 테스트");
 
     private final HttpStatus httpStatus;

@@ -73,46 +73,51 @@ public class AdministrativeAreaService {
     }
 
     /**
-     * 현재 역직렬화를 위해 geojson-jackson 객체로 파일을 파싱하는데,
+     * 현재 역직렬화를 위해 geojson-jackson 으로 파일을 변환하는데,
      * MySQL 에 Multipolygon 으로 저장하기 위해 JTS 에서 제공하는 MultiPolygon 으로 변환합니다.
-     * @param geoJsonMultiPolygon : geoJson 의 MultiPolygon 타입입니다.
-     * @return jts 의 MultiPolygon 타입으로 변환합니다.
+     *
+     * @param geoJsonMultiPolygon GeoJSON MultiPolygon 타입입니다.
+     * @return JTS MultiPolygon 타입으로 변환된 객체입니다.
      */
     private MultiPolygon convertToJtsMultiPolygon(org.geojson.MultiPolygon geoJsonMultiPolygon) {
-        List<Polygon> polygons = new ArrayList<>();
+        List<Polygon> polygons = geoJsonMultiPolygon.getCoordinates().stream()
+                .map(this::createJtsPolygon)
+                .toList();
 
-        // geoJsonMultiPolygon 의 모든 좌표를 가져와서 JTS 의 MultiPolygon 으로 변환합니다.
-        for (List<List<LngLatAlt>> polygonCoordinates : geoJsonMultiPolygon.getCoordinates()) {
-            List<LinearRing> linearRings = new ArrayList<>();
+        return geometryFactory.createMultiPolygon(polygons.toArray(new Polygon[0]));
+    }
 
-            for (int i = 0; i < polygonCoordinates.size(); i++) {
-                List<LngLatAlt> ring = polygonCoordinates.get(i);
-                Coordinate[] coordinates = ring.stream()
-                        .map(coord -> new Coordinate(coord.getLongitude(), coord.getLatitude()))
-                        .toArray(Coordinate[]::new);
+    /**
+     * GeoJSON 의 다각형 좌표를 JTS Polygon 으로 생성합니다.
+     *
+     * @param polygonCoordinates GeoJSON 다각형의 좌표 리스트입니다.
+     * @return JTS Polygon 객체입니다.
+     */
+    private Polygon createJtsPolygon(List<List<LngLatAlt>> polygonCoordinates) {
+        List<LinearRing> linearRings = polygonCoordinates.stream()
+                .map(this::createLinearRing)
+                .toList();
 
-                if (i == 0) {
-                    // 첫 번째 링은 외곽 링 (outer ring), 행정구역의 실제 경계면
-                    LinearRing shell = geometryFactory.createLinearRing(coordinates);
-                    linearRings.add(shell);
-                } else {
-                    // 나머지는 내부 링 (inner ring, hole), 행정구역의 내부에 제외되는 부분이 따로 있다면 구멍처럼 비어있게
-                    LinearRing hole = geometryFactory.createLinearRing(coordinates);
-                    linearRings.add(hole);
-                }
-            }
+        LinearRing shell = linearRings.get(0);
+        LinearRing[] holes = linearRings.size() > 1
+                ? linearRings.subList(1, linearRings.size()).toArray(new LinearRing[0])
+                : null;
 
-            LinearRing shell = linearRings.get(0);
-            LinearRing[] holes = linearRings.size() > 1
-                    ? linearRings.subList(1, linearRings.size()).toArray(new LinearRing[0])
-                    : null;
+        return geometryFactory.createPolygon(shell, holes);
+    }
 
-            Polygon polygon = geometryFactory.createPolygon(shell, holes);
-            polygons.add(polygon);
-        }
+    /**
+     * GeoJSON 링 좌표를 JTS LinearRing 으로 변환합니다.
+     *
+     * @param ring GeoJSON 링의 좌표 리스트입니다.
+     * @return JTS LinearRing 객체입니다.
+     */
+    private LinearRing createLinearRing(List<LngLatAlt> ring) {
+        Coordinate[] coordinates = ring.stream()
+                .map(coord -> new Coordinate(coord.getLongitude(), coord.getLatitude()))
+                .toArray(Coordinate[]::new);
 
-        Polygon[] polygonArray = polygons.toArray(new Polygon[0]);
-        return geometryFactory.createMultiPolygon(polygonArray);
+        return geometryFactory.createLinearRing(coordinates);
     }
 
     /**
