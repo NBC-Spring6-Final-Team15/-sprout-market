@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final ReportRepository reportRepository;
     private final CategoryService categoryService;
 
 
@@ -159,26 +158,6 @@ public class ItemService {
                 user.getNickname()
         );
     }
-
-    // 관리자가 신고 받은 매물 삭제
-    public void deleteReportedItem(Long reportId, CustomUserDetails customUserDetails) {
-        User user = User.fromAuthUser(customUserDetails);
-        if (user.getUserRole() != UserRole.ADMIN) {
-            throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
-        }
-        Report report = reportRepository.findById(reportId).orElseThrow(() ->
-                new ApiException(ErrorStatus.NOT_FOUND_REPORT));
-
-        Item item = itemRepository.findById(report.getItem().getId()).orElseThrow(() ->
-                new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-
-        item.solfDelete(
-                Status.DELETED
-        );
-        itemRepository.save(item);
-
-    }
-
 
     /**
      * 주어진 id에 해당하는 Item을 찾고,

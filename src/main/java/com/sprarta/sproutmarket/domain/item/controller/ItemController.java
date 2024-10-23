@@ -68,14 +68,5 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
-    // 신고 매물 삭제
-    @DeleteMapping("/reports/{reportId}/items")
-    public ResponseEntity<ApiResponse<Void>> deleteReportedItem(
-            @PathVariable Long reportId,
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
-    ) {
-        itemService.deleteReportedItem(reportId, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-    }
 
 }
