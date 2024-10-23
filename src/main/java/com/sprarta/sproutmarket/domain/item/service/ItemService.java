@@ -16,6 +16,9 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -177,6 +180,37 @@ public class ItemService {
         );
     }
 
+
+    /**
+     * 현재 인증된 사용자의 모든 매물을 조회하는 로직
+     * @param page 페이지 번호(1부터 시작)
+     * @param size 페이지당 카드 수
+     * @param authUser 현재 인증된 사용자 정보
+     * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 현재 인증된 사용자의 매물 목록을 포함한 페이지 정보
+     *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
+     *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
+     */
+    public Page<ItemResponseDto> getMyItems(int page, int size, CustomUserDetails authUser){
+        // AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<Item> items = itemRepository.findBySeller(pageable, user);
+
+        return items.map(item -> new ItemResponseDto(
+            item.getId(),
+            item.getTitle(),
+            item.getDescription(),
+            item.getPrice(),
+            item.getSeller().getNickname(),
+            item.getItemSaleStatus(),
+            item.getCategory().getName(),
+            item.getStatus()
+            )
+        );
+    }
 
 
 

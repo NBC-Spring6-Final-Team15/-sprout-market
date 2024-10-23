@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -77,6 +78,21 @@ public class ItemController {
     @GetMapping("/{itemId}")
     public ResponseEntity<ApiResponse<ItemResponseDto>> getItem(@PathVariable Long itemId){
         ItemResponseDto itemResponseDto = itemService.getItem(itemId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
+    }
+
+    /**
+     * 현재 인증된 사용자의 모든 매물을 조회하는 로직
+     * @param page 페이지 번호(1부터 시작)
+     * @param size 페이지당 카드 수
+     * @param authUser 현재 인증된 사용자 정보
+     * @return ApiResponse - 메세지, 상태 코드, 로그인한 사용자의 모든 매물 상세 정보를 포함한 응답 객체
+     */
+    @GetMapping("/mine")
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getMyItems(@RequestParam(defaultValue = "1") int page,
+                                                                   @RequestParam(defaultValue = "10") int size,
+                                                                   @AuthenticationPrincipal CustomUserDetails authUser){
+        Page<ItemResponseDto> itemResponseDto = itemService.getMyItems(page, size, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
