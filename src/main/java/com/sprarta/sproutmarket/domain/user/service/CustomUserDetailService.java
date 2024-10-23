@@ -24,7 +24,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
         // 1. 소프트 삭제된 유저인지 확인
         if (user.getStatus() == Status.DELETED) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_USER);
+            throw new ApiException(ErrorStatus.NOT_FOUND_USER);
         }
 
         // User 엔티티를 기반으로 CustomUserDetails 객체 반환

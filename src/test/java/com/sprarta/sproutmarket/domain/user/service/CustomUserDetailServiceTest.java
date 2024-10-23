@@ -98,7 +98,7 @@ class CustomUserDetailServiceTest {
             customUserDetailService.loadUserByUsername("email@example.com");
         });
 
-        assertEquals(ErrorStatus.BAD_REQUEST_USER, exception.getErrorCode());
+        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
 
         // verify repository method call
         verify(userRepository).findByEmail("email@example.com");
