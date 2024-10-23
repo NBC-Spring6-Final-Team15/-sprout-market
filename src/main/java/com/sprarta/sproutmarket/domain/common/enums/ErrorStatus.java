@@ -33,7 +33,11 @@ public enum ErrorStatus implements BaseCode {
     FORBIDDEN_REPORT_DELETE(HttpStatus.FORBIDDEN,403,"삭제할 수 있는 권한이 없습니다."),
 
     // trade 예외
-    NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다.");
+    NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
+
+    // item 예외
+    NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다.");
+
 
 
     private final HttpStatus httpStatus;

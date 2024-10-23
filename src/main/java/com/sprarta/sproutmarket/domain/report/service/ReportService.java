@@ -32,7 +32,7 @@ public class ReportService {
 
     public ReportResponseDto createReport(Long itemId, ReportRequestDto dto, CustomUserDetails customUserDetails) {
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
-                new NullPointerException("아이템이 존재하지 않습니다."));
+                new ApiException(ErrorStatus.NOT_FOUND_ITEM));
         User user = User.fromAuthUser(customUserDetails);
 
         Report report = new Report(
@@ -53,7 +53,7 @@ public class ReportService {
 
     public ReportResponseDto getReport(Long reportId) {
         Report report = reportRepository.findById(reportId).orElseThrow(() ->
-                new NullPointerException("신고가 존재하지 않습니다."));
+                new ApiException(ErrorStatus.NOT_FOUND_REPORT));
 
         return new ReportResponseDto(
                 report.getId(),
@@ -66,7 +66,7 @@ public class ReportService {
 
     public List<ReportResponseDto> getReports(Long itemId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
-                new NullPointerException("아이템이 존재하지 않습니다."));
+                new ApiException(ErrorStatus.NOT_FOUND_ITEM));
 
         List<Report> reports = reportRepository.findByItemId(item.getId());
 
