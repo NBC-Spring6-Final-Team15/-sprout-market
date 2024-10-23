@@ -43,7 +43,6 @@ public class SecurityConfig {
                                 "/test/**",
                                 "/error/**",
                                 "/notifications/**").permitAll()
-                        .requestMatchers("/auth/**", "/notifications/**", "/items/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
                 )

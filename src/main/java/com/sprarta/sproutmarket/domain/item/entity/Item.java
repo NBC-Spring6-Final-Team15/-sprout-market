@@ -30,7 +30,7 @@ public class Item extends Timestamped {
     @Column(nullable = false)
     private int price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User seller;
 
