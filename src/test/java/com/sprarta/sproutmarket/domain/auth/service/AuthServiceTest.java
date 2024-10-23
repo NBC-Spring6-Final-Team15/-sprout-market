@@ -99,7 +99,7 @@ class AuthServiceTest {
 
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> authService.signup(request));
-        assertEquals(ErrorStatus.BAD_REQUEST_EMAIL, exception.getErrorCode());
+        assertEquals(ErrorStatus.NOT_FOUND_EMAIL, exception.getErrorCode());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -177,6 +177,6 @@ class AuthServiceTest {
 
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
-        assertEquals(ErrorStatus.BAD_REQUEST_USER, exception.getErrorCode());
+        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
     }
 }
