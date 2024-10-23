@@ -22,9 +22,9 @@ public enum ErrorStatus implements BaseCode {
     TEST_ERROR(HttpStatus.BAD_REQUEST, 400, "ApiException 예외 처리 테스트"),
 
     // user 예외처리
-    BAD_REQUEST_EMAIL(HttpStatus.BAD_REQUEST, 400, "이미 존재하는 이메일입니다."),
+    NOT_FOUND_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
     NOT_FOUND_AUTH_USER(HttpStatus.NOT_FOUND, 404, "가입되지 않은 유저입니다."),
-    BAD_REQUEST_USER(HttpStatus.BAD_REQUEST, 400, "비활성화된 계정입니다. 관리자에 문의하세요."),
+    BAD_REQUEST_USER(HttpStatus.BAD_REQUEST, 404, "비활성화된 계정입니다. 관리자에 문의하세요."),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
     BAD_REQUEST_PASSWORD(HttpStatus.BAD_REQUEST, 400, "잘못된 비밀번호입니다."),
     BAD_REQUEST_NEW_PASSWORD(HttpStatus.BAD_REQUEST, 400, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
