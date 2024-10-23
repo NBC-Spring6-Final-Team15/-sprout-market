@@ -39,6 +39,10 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**",
+                                "/test/**",
+                                "/error/**",
+                                "/notifications/**").permitAll()
                         .requestMatchers("/auth/**", "/notifications/**", "/items/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
