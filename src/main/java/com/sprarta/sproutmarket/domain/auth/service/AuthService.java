@@ -27,7 +27,7 @@ public class AuthService {
     public SignupResponse signup(SignupRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+            throw new ApiException(ErrorStatus.NOT_FOUND_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -56,7 +56,7 @@ public class AuthService {
 
         // 1소프트 삭제된 유저인지 확인
         if (user.getStatus() == Status.DELETED) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_USER);
+            throw new ApiException(ErrorStatus.NOT_FOUND_USER);
         }
 
         // 로그인 시 이메일과 비밀번호가 일치하지 않을 경우 401을 반환합니다.
