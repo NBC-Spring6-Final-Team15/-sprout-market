@@ -23,6 +23,15 @@ repositories {
     mavenCentral()
 }
 
+tasks.named('bootJar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
+tasks.named('test') {
+    outputs.dir file('build/generated-snippets')  // Spring REST Docs 스니펫 저장 경로 설정
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -45,11 +54,28 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // web socket
+    // 웹 소켓
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    //공간 데이터
+    implementation 'org.locationtech.jts:jts-core:1.19.0'
+    implementation 'org.hibernate:hibernate-spatial:6.6.1.Final'
+    implementation 'de.grundid.opendatalab:geojson-jackson:1.14'
+
 
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    //API 문서 자동화 관련
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    //Spring Rest Docs 사양의 문서를 OpenAPI3 사양으로 바꿔주는 의존성
+    testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.4'
+    //RestAssured : 통합테스트 관련 의존성
+    testImplementation 'org.springframework.restdocs:spring-restdocs-restassured'
+    // Swagger Generator (OpenAPI 스펙 기반 HTML 생성)
+    implementation 'io.swagger:swagger-generator:2.4.43'
+    // Swagger UI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 
 }
 
