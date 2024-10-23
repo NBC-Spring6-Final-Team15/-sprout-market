@@ -36,13 +36,14 @@ public class ReviewService {
                 new ApiException(ErrorStatus.NOT_FOUND_TRADE));
 
         User user = User.fromAuthUser(customUserDetails);
+        User sellerUser = trade.getItem().getSeller();
         if (dto.getReviewRating()==ReviewRating.GOOD) {
-            user.plusRate();
+            sellerUser.plusRate();
         }
         if (dto.getReviewRating()==ReviewRating.BAD) {
-            user.minusRate();
+            sellerUser.minusRate();
         }
-        userRepository.save(user);
+        userRepository.save(sellerUser);
 
         Review review = new Review(
                 dto.getComment(),
