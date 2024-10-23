@@ -96,4 +96,19 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
+    /**
+     * 특정 카테고리에 모든 매물을 조회
+     * @param page 페이지 번호(1부터 시작)
+     * @param size 페이지당 카드 수
+     * @param categoryId Category's ID
+     * @return ApiResponse - 메세지, 상태 코드, 특정 카테고리에 속하는 모든 매물 상세 정보를 포함한 응답 객체
+     */
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(defaultValue = "1") int page,
+                                                                         @RequestParam(defaultValue = "10") int size,
+                                                                         @PathVariable Long categoryId){
+        Page<ItemResponseDto> itemResponseDto = itemService.getCategoryItems(page, size, categoryId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
+    }
+
 }

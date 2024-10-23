@@ -213,6 +213,37 @@ public class ItemService {
     }
 
 
+    /**
+     * 특정 카테고리에 모든 매물을 조회
+     * @param page 페이지 번호(1부터 시작)
+     * @param size 페이지당 카드 수
+     * @param categoryId Category's ID
+     * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 특정 카테고리의 매물 목록을 포함한 페이지 정보
+     *      *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
+     *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
+     */
+    public Page<ItemResponseDto> getCategoryItems(int page, int size, Long categoryId){
+        // 카테고리 존재 확인
+        Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<Item> items = itemRepository.findByCategory(pageable, findCategory);
+
+        return items.map(item -> new ItemResponseDto(
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
+            )
+        );
+    }
+
+
 
 
 
