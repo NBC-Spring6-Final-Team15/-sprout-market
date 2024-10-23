@@ -58,9 +58,9 @@ public class ChatRoomService {
         ChatRoom saveChatRoom = chatRoomRepository.save(chatRoom);
 
         return new ChatRoomDto(
-                saveChatRoom.getBuyer(),
-                saveChatRoom.getSeller(),
-                saveChatRoom.getItem()
+                saveChatRoom.getBuyer().getId(),
+                saveChatRoom.getSeller().getId(),
+                saveChatRoom.getItem().getId()
         );
     }
 
@@ -71,9 +71,9 @@ public class ChatRoomService {
         chatRoomMatch(chatRoom, user.getId());
 
         return new ChatRoomDto(
-                chatRoom.getBuyer(),
-                chatRoom.getSeller(),
-                chatRoom.getItem()
+                chatRoom.getBuyer().getId(),
+                chatRoom.getSeller().getId(),
+                chatRoom.getItem().getId()
         );
     }
 
@@ -96,9 +96,9 @@ public class ChatRoomService {
         List<ChatRoomDto> chatRoomDtoList = new ArrayList<>();
         for (ChatRoom chatRoom : chatRoomList) {
             ChatRoomDto chatRoomDto = new ChatRoomDto(
-                    chatRoom.getBuyer(),
-                    chatRoom.getSeller(),
-                    chatRoom.getItem()
+                    chatRoom.getBuyer().getId(),
+                    chatRoom.getSeller().getId(),
+                    chatRoom.getItem().getId()
             );
             chatRoomDtoList.add(chatRoomDto);
         }
