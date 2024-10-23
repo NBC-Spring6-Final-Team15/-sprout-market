@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -17,6 +18,8 @@ import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -152,6 +155,31 @@ public class ItemService {
             user.getNickname()
         );
     }
+
+    /**
+     * 로그인 한 사용자가 특정 매물을 상세조회하는 로직
+     * @param itemId Item's ID
+     * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
+     */
+    public ItemResponseDto getItem(Long itemId){
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = findByIdOrElseThrow(itemId);
+
+        return new ItemResponseDto(
+            item.getId(),
+            item.getTitle(),
+            item.getDescription(),
+            item.getPrice(),
+            item.getSeller().getNickname(),
+            item.getItemSaleStatus(),
+            item.getCategory().getName(),
+            item.getStatus()
+        );
+    }
+
+
+
+
 
 
     /**
