@@ -5,6 +5,8 @@ import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
@@ -96,8 +98,8 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signup(request));
-        assertEquals("이미 존재하는 이메일입니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> authService.signup(request));
+        assertEquals(ErrorStatus.BAD_REQUEST_EMAIL, exception.getErrorCode());
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -146,8 +148,8 @@ class AuthServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signin(request));
-        assertEquals("가입되지 않은 유저입니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
+        assertEquals(ErrorStatus.NOT_FOUND_AUTH_USER, exception.getErrorCode());
     }
 
     @Test
@@ -160,8 +162,8 @@ class AuthServiceTest {
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signin(request));
-        assertEquals("잘못된 비밀번호입니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
+        assertEquals(ErrorStatus.BAD_REQUEST_PASSWORD, exception.getErrorCode());
     }
 
     @Test
@@ -174,7 +176,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> authService.signin(request));
-        assertEquals("비활성화된 계정입니다. 관리자에게 문의하세요.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
+        assertEquals(ErrorStatus.BAD_REQUEST_USER, exception.getErrorCode());
     }
 }

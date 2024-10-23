@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -20,7 +22,7 @@ public class UserService {
 
 
     public UserResponse getUser(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         return new UserResponse(user.getId(), user.getEmail());
     }
@@ -28,46 +30,35 @@ public class UserService {
     @Transactional
     public void changePassword(CustomUserDetails authUser, UserChangePasswordRequest userChangePasswordRequest) {
 
-        // 1. 유저 존재 여부 확인
-        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        // 유저 존재 여부 확인
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        // 2. 기존 비밀번호가 맞는지 확인
+        // 기존 비밀번호가 맞는지 확인
         if (!passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+            throw new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD);
         }
 
-        // 3. 새 비밀번호가 기존 비밀번호와 동일한지 확인 (암호화하지 않은 상태로 비교)
+        // 새 비밀번호가 기존 비밀번호와 동일한지 확인 (암호화하지 않은 상태로 비교)
         if (userChangePasswordRequest.getOldPassword().equals(userChangePasswordRequest.getNewPassword())) {
-            throw new IllegalArgumentException("새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
+            throw new ApiException(ErrorStatus.BAD_REQUEST_NEW_PASSWORD);
         }
 
-        // 4. 새 비밀번호가 유효한지 확인
-        validateNewPassword(userChangePasswordRequest);
-
-        // 5. 새 비밀번호 암호화 후 저장
+        // 새 비밀번호 암호화 후 저장
         user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
-    }
-
-    private static void validateNewPassword(UserChangePasswordRequest userChangePasswordRequest) {
-        if (userChangePasswordRequest.getNewPassword().length() < 8 ||
-                !userChangePasswordRequest.getNewPassword().matches(".*\\d.*") ||
-                !userChangePasswordRequest.getNewPassword().matches(".*[A-Z].*")) {
-            throw new IllegalArgumentException("새 비밀번호는 8자 이상이어야 하고, 숫자와 대문자를 포함해야 합니다.");
-        }
     }
 
     @Transactional
     public void deleteUser(CustomUserDetails authUser, UserDeleteRequest userDeleteRequest) {
 
-        // 1. 유저 존재 여부 확인
-        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        // 유저 존재 여부 확인
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        // 1. 비밀번호 일치 여부 확인
+        // 비밀번호 일치 여부 확인
         if (!passwordEncoder.matches(userDeleteRequest.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+            throw new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD);
         }
 
-        // 2. 유저 비활성화 및 삭제
+        // 유저 비활성화 및 삭제
         user.deactivate();
         userRepository.delete(user);
     }

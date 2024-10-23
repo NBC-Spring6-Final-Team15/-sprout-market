@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
-import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -93,11 +94,11 @@ class CustomUserDetailServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(deletedUser));
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        ApiException exception = assertThrows(ApiException.class, () -> {
             customUserDetailService.loadUserByUsername("email@example.com");
         });
 
-        assertEquals("비활성화된 계정입니다. 관리자에게 문의하세요.", exception.getMessage());
+        assertEquals(ErrorStatus.BAD_REQUEST_USER, exception.getErrorCode());
 
         // verify repository method call
         verify(userRepository).findByEmail("email@example.com");

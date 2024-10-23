@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.user.controller;
 
+import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -18,8 +19,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable long userId) {
-        return ResponseEntity.ok(userService.getUser(userId));
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable long userId) {
+        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getUser(userId)));
     }
 
     @PutMapping

@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -63,8 +65,8 @@ class UserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.getUser(1L));
-        assertEquals("유저를 찾을 수 없습니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> userService.getUser(1L));
+        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
         verify(userRepository, times(1)).findById(1L);
     }
 
@@ -73,25 +75,23 @@ class UserServiceTest {
         // Given
         UserChangePasswordRequest request = new UserChangePasswordRequest("oldPassword123", "newPassword456!");
 
-        // 기존 암호화된 비밀번호 설정
         String encodedOldPassword = "$2a$10$k8bk1sFsX0jntulcF2ryJ.TuC.1D5zzbv4D.HbHa1/7BGr3pv6ryy";
         String encodedNewPassword = "$2a$10$CUzO5QICg/F78291f4iy7uYVhzwSMA6jjD2uYkkrvfvPHu7gltHLG";
 
-        user.changePassword(encodedOldPassword); // user 객체의 비밀번호 설정
+        user.changePassword(encodedOldPassword);
 
         // When
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("oldPassword123", encodedOldPassword)).thenReturn(true); // 기존 비밀번호 확인
-        when(passwordEncoder.encode("newPassword456!")).thenReturn(encodedNewPassword); // 새 비밀번호 암호화
+        when(passwordEncoder.matches("oldPassword123", encodedOldPassword)).thenReturn(true);
+        when(passwordEncoder.encode("newPassword456!")).thenReturn(encodedNewPassword);
 
-        // 비밀번호 변경 실행
         userService.changePassword(authUser, request);
 
         // Then
         verify(userRepository, times(1)).findById(1L);
-        verify(passwordEncoder, times(1)).matches("oldPassword123", encodedOldPassword); // 기존 비밀번호 확인
-        verify(passwordEncoder, times(1)).encode("newPassword456!"); // 새 비밀번호 암호화 확인
-        assertEquals(encodedNewPassword, user.getPassword()); // 새 비밀번호가 정상적으로 변경되었는지 확인
+        verify(passwordEncoder, times(1)).matches("oldPassword123", encodedOldPassword);
+        verify(passwordEncoder, times(1)).encode("newPassword456!");
+        assertEquals(encodedNewPassword, user.getPassword());
     }
 
     @Test
@@ -100,13 +100,13 @@ class UserServiceTest {
         UserChangePasswordRequest request = new UserChangePasswordRequest("wrongOldPassword", "NewPassword123!");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrongOldPassword", user.getPassword())).thenReturn(false); // Wrong old password
+        when(passwordEncoder.matches("wrongOldPassword", user.getPassword())).thenReturn(false);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.changePassword(authUser, request));
-        assertEquals("잘못된 비밀번호입니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> userService.changePassword(authUser, request));
+        assertEquals(ErrorStatus.BAD_REQUEST_PASSWORD, exception.getErrorCode());
         verify(passwordEncoder, times(1)).matches("wrongOldPassword", user.getPassword());
-        verify(passwordEncoder, times(0)).encode(anyString()); // New password encoding should not occur
+        verify(passwordEncoder, times(0)).encode(anyString());
     }
 
     @Test
@@ -115,13 +115,13 @@ class UserServiceTest {
         UserChangePasswordRequest request = new UserChangePasswordRequest("encodedOldPassword", "encodedOldPassword");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("encodedOldPassword", user.getPassword())).thenReturn(true); // Old password matches
+        when(passwordEncoder.matches("encodedOldPassword", user.getPassword())).thenReturn(true);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.changePassword(authUser, request));
-        assertEquals("새 비밀번호는 기존 비밀번호와 같을 수 없습니다.", exception.getMessage());
+        ApiException exception = assertThrows(ApiException.class, () -> userService.changePassword(authUser, request));
+        assertEquals(ErrorStatus.BAD_REQUEST_NEW_PASSWORD, exception.getErrorCode());
         verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword());
-        verify(passwordEncoder, times(0)).encode(anyString()); // No encoding should happen
+        verify(passwordEncoder, times(0)).encode(anyString());
     }
 
     @Test
@@ -147,12 +147,12 @@ class UserServiceTest {
         UserDeleteRequest request = new UserDeleteRequest("wrongPassword");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrongPassword", user.getPassword())).thenReturn(false); // Incorrect password
+        when(passwordEncoder.matches("wrongPassword", user.getPassword())).thenReturn(false);
 
         // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(authUser, request));
-        assertEquals("잘못된 비밀번호입니다.", exception.getMessage());
-        verify(passwordEncoder, times(1)).matches("wrongPassword", user.getPassword()); // Password check
-        verify(userRepository, times(0)).delete(any()); // User should not be deleted
+        ApiException exception = assertThrows(ApiException.class, () -> userService.deleteUser(authUser, request));
+        assertEquals(ErrorStatus.BAD_REQUEST_PASSWORD, exception.getErrorCode());
+        verify(passwordEncoder, times(1)).matches("wrongPassword", user.getPassword());
+        verify(userRepository, times(0)).delete(any());
     }
 }
