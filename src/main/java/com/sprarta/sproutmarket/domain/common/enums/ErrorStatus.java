@@ -50,6 +50,9 @@ public enum ErrorStatus implements BaseCode {
     // trade 예외
     NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
 
+    //기타 Java 예외
+    BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
+
     ;
 
     private final HttpStatus httpStatus;
