@@ -40,6 +40,9 @@ public class User extends Timestamped {
     @Column(name = "address")
     private String address;
 
+    @Column(name = "rate")
+    private int rate;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole userRole;
@@ -85,4 +88,13 @@ public class User extends Timestamped {
     public void deactivate() {
         this.status = Status.DELETED;
     }
+
+    public void plusRate() {
+        this.rate++;
+    }
+
+    public void minusRate() {
+        this.rate--;
+    }
+
 }

@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
-    @Query("SELECT i FROM Item i WHERE i.id = :itemId AND i.sellerId.id = :sellerId")
-    Optional<Item> findByIdAndSellerId(@Param("itemId") Long itemId, @Param("sellerId") Long sellerId);
+
+    @Query("SELECT i FROM Item i WHERE i.id = :id AND i.seller.id = :sellerId")
+    Optional<Item> findByIdAndSellerId(@Param("id") Long id, @Param("sellerId") Long sellerId);
+
 }

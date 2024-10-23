@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.item.eto.request;
+package com.sprarta.sproutmarket.domain.item.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
