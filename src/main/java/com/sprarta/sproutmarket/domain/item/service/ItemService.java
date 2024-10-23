@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -29,11 +30,11 @@ public class ItemService {
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
-     * @param authUser 매물 수정을 유청한 사용자
-     * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
+     * @param authUser 매물 수정을 요청한 사용자
+     * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public String createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
+    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -54,18 +55,22 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return user.getEmail();
+        return new ItemResponse(
+            item.getTitle(),
+            item.getPrice(),
+            user.getNickname()
+        );
     }
 
     /**
      * 매물의 판매 상태만을 변경하는 로직
      * @param itemId Item's ID
      * @param itemSaleStatus 판매 상태
-     * @param authUser 매물 판매 상태 수정을 유청한 사용자
-     * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
+     * @param authUser 매물 판매 상태 수정을 요청한 사용자
+     * @return ItemResponse - 등록된 매물의 제목, 가격, 판매상태, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public String updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
+    public ItemResponse updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -77,18 +82,23 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return user.getEmail();
+        return new ItemResponse(
+            item.getTitle(),
+            item.getPrice(),
+            item.getItemSaleStatus(),
+            user.getNickname()
+        );
     }
 
     /**
-     *
+     * 매물의 내용(제목, 설명, 가격, 이미지URL)을 수정하는 로직
      * @param itemId Item's ID
      * @param itemContentsUpdateRequest 매물 수정 정보를 포함한 요청 객체(제목, 내용, 가격, 이미지URL)
-     * @param authUser 매물 내용 수정을 유청한 사용자
-     * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
+     * @param authUser 매물 내용 수정을 요청한 사용자
+     * @return ItemResponse - 등록된 매물의 제목, 설명, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public String updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
+    public ItemResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -105,18 +115,23 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return user.getEmail();
+        return new ItemResponse(
+            item.getTitle(),
+            item.getDescription(),
+            item.getPrice(),
+            user.getNickname()
+        );
     }
 
 
     /**
-     *
+     * 매물을 삭제하는 로직
      * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 유청한 사용자
-     * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
+     * @param authUser 매물 삭제를 요청한 사용자
+     * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public String solfDeleteItem(Long itemId, CustomUserDetails authUser){
+    public ItemResponse softDeleteItem(Long itemId, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -130,7 +145,11 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return user.getEmail();
+        return new ItemResponse(
+            item.getTitle(),
+            item.getStatus(),
+            user.getNickname()
+        );
     }
 
 
