@@ -1,6 +1,6 @@
 package com.sprarta.sproutmarket.domain.item.controller;
 
-import com.sprarta.sproutmarket.domain.common.dto.response.StatusResponse;
+import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
@@ -17,27 +17,27 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping("/create")
-    public ResponseEntity<StatusResponse> createItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
-        StatusResponse statusResponse = itemService.createItem(itemCreateRequest, authUser);
-        return ResponseEntity.ok(statusResponse);
+    public ResponseEntity<ApiResponse<String>> createItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
+        String email = itemService.createItem(itemCreateRequest, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(email));
     }
 
     @PostMapping("/{itemId}/update/sale-status")
-    public ResponseEntity<StatusResponse> updateItemSaleStatus(@PathVariable Long itemId, @RequestParam String saleStatus, @AuthenticationPrincipal CustomUserDetails authUser){
-        StatusResponse statusResponse = itemService.updateSaleStatus(itemId, saleStatus, authUser);
-        return ResponseEntity.ok(statusResponse);
+    public ResponseEntity<ApiResponse<String>> updateItemSaleStatus(@PathVariable Long itemId, @RequestParam String saleStatus, @AuthenticationPrincipal CustomUserDetails authUser){
+        String email = itemService.updateSaleStatus(itemId, saleStatus, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(email));
     }
 
     @PostMapping("/{itemId}/update/contents")
-    public ResponseEntity<StatusResponse> updateContents(@PathVariable Long itemId, @RequestBody ItemContentsUpdateRequest request, @AuthenticationPrincipal CustomUserDetails authUser){
-        StatusResponse statusResponse = itemService.updateContents(itemId, request, authUser);
-        return ResponseEntity.ok(statusResponse);
+    public ResponseEntity<ApiResponse<String>> updateContents(@PathVariable Long itemId, @RequestBody ItemContentsUpdateRequest request, @AuthenticationPrincipal CustomUserDetails authUser){
+        String email = itemService.updateContents(itemId, request, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(email));
     }
 
     @PostMapping("/{itemId}/delete")
-    public ResponseEntity<StatusResponse> solfDeleteItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
-        StatusResponse statusResponse = itemService.solfDeleteItem(itemId, authUser);
-        return ResponseEntity.ok(statusResponse);
+    public ResponseEntity<ApiResponse<String>> solfDeleteItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+        String email = itemService.solfDeleteItem(itemId, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(email));
     }
 
 }

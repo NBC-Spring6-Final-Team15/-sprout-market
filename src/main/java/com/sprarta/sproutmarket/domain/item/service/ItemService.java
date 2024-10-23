@@ -2,14 +2,13 @@ package com.sprarta.sproutmarket.domain.item.service;
 
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
-import com.sprarta.sproutmarket.domain.common.dto.response.StatusResponse;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.common.exception.NotFoundException;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
-import com.sprarta.sproutmarket.domain.item.exception.ItemNotFoundException;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -34,10 +33,10 @@ public class ItemService {
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
     @Transactional
-    public StatusResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
+    public String createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 카테고리 찾기
         Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
@@ -55,11 +54,7 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return new StatusResponse(
-            "매물이 성공적으로 등록되었습니다.",
-            user.getEmail(),
-            200
-        );
+        return user.getEmail();
     }
 
     /**
@@ -70,10 +65,10 @@ public class ItemService {
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
     @Transactional
-    public StatusResponse updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
+    public String updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
@@ -82,11 +77,7 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return new StatusResponse(
-            "매물의 판매 상태가 성공적으로 수정되었습니다.",
-            user.getEmail(),
-            200
-        );
+        return user.getEmail();
     }
 
     /**
@@ -97,10 +88,10 @@ public class ItemService {
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
     @Transactional
-    public StatusResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
+    public String updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
@@ -114,11 +105,7 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return new StatusResponse(
-            "매물의 내용이 성공적으로 수정되었습니다.",
-            user.getEmail(),
-            200
-        );
+        return user.getEmail();
     }
 
 
@@ -129,10 +116,10 @@ public class ItemService {
      * @return StatusResponse - 생성된 아이템에 대한 메세지, 사용자 이메일, 상태 코드를 포함한 응답 객체
      */
     @Transactional
-    public StatusResponse solfDeleteItem(Long itemId, CustomUserDetails authUser){
+    public String solfDeleteItem(Long itemId, CustomUserDetails authUser){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new NotFoundException("User not found"));
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
@@ -143,11 +130,7 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        return new StatusResponse(
-            "매물이 성공적으로 삭제되었습니다.",
-            user.getEmail(),
-            200
-        );
+        return user.getEmail();
     }
 
 
@@ -156,11 +139,11 @@ public class ItemService {
      * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
      * @param id Item's ID
      * @return Item 객체
-     * @throws ItemNotFoundException 해당 id의 매물이 존재하지 않을 경우 발생
+     * @throws ApiException 해당 id의 매물이 존재하지 않을 경우 발생
      */
     public Item findByIdOrElseThrow(Long id){
         return itemRepository.findById(id)
-            .orElseThrow(() -> new ItemNotFoundException());
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
     }
 
     /**
@@ -169,11 +152,11 @@ public class ItemService {
      * @param itemId Item's ID
      * @param sellerId User's ID
      * @return Item 객체
-     * @throws NotFoundException 해당 id의 사용자 id와 입력받은 sellerId와 동일하지 않을 경우 발생
+     * @throws ApiException 해당 id의 사용자 id와 입력받은 sellerId와 동일하지 않을 경우 발생
      */
     public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
         return itemRepository.findByIdAndSellerId(itemId, sellerId)
-            .orElseThrow(() -> new NotFoundException("해당 매물을 올린 사용자와 일치하지않습니다."));
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_OWNED_ITEM));
     }
 
 }
