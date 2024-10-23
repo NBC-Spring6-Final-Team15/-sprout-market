@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
@@ -17,9 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final AdministrativeAreaService administrativeAreaService;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -61,6 +63,17 @@ public class UserService {
         // 유저 비활성화 및 삭제
         user.deactivate();
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public void updateUserAddress(Long userId, double longitude, double latitude) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        String administrativeArea = administrativeAreaService.findAdministrativeAreaByCoordinates(longitude, latitude);
+
+        user.changeAddress(administrativeArea);
+
+        userRepository.save(user);
     }
 }
 

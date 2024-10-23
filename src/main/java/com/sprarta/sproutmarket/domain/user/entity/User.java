@@ -108,4 +108,10 @@ public class User extends Timestamped {
         this.rate--;
     }
 
+    public void changeAddress(String newAddress) {
+        if (newAddress == null || newAddress.isEmpty()) {
+            throw new IllegalArgumentException("유효하지 않은 주소입니다.");
+        }
+        this.address = newAddress;
+    }
 }

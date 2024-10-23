@@ -26,8 +26,8 @@ public class SignupRequest {
     @NotBlank
     private String phoneNumber;
 
-    @NotBlank
-    private String address;
+    private double longitude;
+    private double latitude;
 
     @NotBlank
     private String userRole;
