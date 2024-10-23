@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -30,6 +31,9 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private AdministrativeAreaService administrativeAreaService;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -52,7 +56,8 @@ class AuthServiceTest {
                 "password",
                 "nickname",
                 "010-1234-5678",
-                "address",
+                126.976889,
+                37.575651,
                 "USER"
         );
 
@@ -62,7 +67,7 @@ class AuthServiceTest {
                 "encodedPassword",
                 "nickname",
                 "010-1234-5678",
-                "address",
+                "서울특별시 종로구",
                 UserRole.USER
         );
 
@@ -71,6 +76,10 @@ class AuthServiceTest {
 
         // 모킹: 비밀번호 인코딩
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+
+        // 모킹: 위도와 경도를 통해 행정구역(주소) 조회
+        when(administrativeAreaService.findAdministrativeAreaByCoordinates(anyDouble(), anyDouble()))
+                .thenReturn("서울특별시 종로구");
 
         // 모킹: 유저 저장
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -93,7 +102,16 @@ class AuthServiceTest {
     @Test
     void signupFail_EmailAlreadyExists() {
         // Given
-        SignupRequest request = new SignupRequest("username", "email@example.com", "password", "nickname", "010-1234-5678", "address", "USER");
+        SignupRequest request = new SignupRequest(
+                "username",
+                "email@example.com",
+                "password",
+                "nickname",
+                "010-1234-5678",
+                126.976889,
+                37.575651,
+                "USER"
+        );
 
         when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
@@ -114,7 +132,7 @@ class AuthServiceTest {
                 "encodedPassword",
                 "nickname",
                 "010-1234-5678",
-                "address",
+                "서울특별시 종로구",
                 UserRole.USER
         );
 
@@ -156,7 +174,7 @@ class AuthServiceTest {
     void signinFail_WrongPassword() {
         // Given
         SigninRequest request = new SigninRequest("email@example.com", "password");
-        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
@@ -170,7 +188,7 @@ class AuthServiceTest {
     void signinFail_DeletedUser() {
         // Given
         SigninRequest request = new SigninRequest("email@example.com", "password");
-        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
         user.deactivate(); // 소프트 삭제 상태로 변경
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));

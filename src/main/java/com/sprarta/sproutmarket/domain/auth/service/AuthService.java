@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -22,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AdministrativeAreaService administrativeAreaService;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -34,13 +36,16 @@ public class AuthService {
 
         UserRole userRole = UserRole.of(request.getUserRole());
 
+        // 위도와 경도를 이용해 행정구역 조회
+        String address = administrativeAreaService.findAdministrativeAreaByCoordinates(request.getLongitude(), request.getLatitude());
+
         User newUser = new User(
                 request.getUsername(),
                 request.getEmail(),
                 encodedPassword,
                 request.getNickname(),
                 request.getPhoneNumber(),
-                request.getAddress(),
+                address,
                 userRole
         );
         User savedUser = userRepository.save(newUser);

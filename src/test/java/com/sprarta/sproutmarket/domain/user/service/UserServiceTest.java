@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
@@ -28,6 +29,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AdministrativeAreaService administrativeAreaService;
 
     @InjectMocks
     private UserService userService;
@@ -154,5 +158,39 @@ class UserServiceTest {
         assertEquals(ErrorStatus.BAD_REQUEST_PASSWORD, exception.getErrorCode());
         verify(passwordEncoder, times(1)).matches("wrongPassword", user.getPassword());
         verify(userRepository, times(0)).delete(any());
+    }
+
+    @Test
+    void updateUserAddress_Success() {
+        // Given
+        double longitude = 126.9784;
+        double latitude = 37.5665;
+        String newAddress = "서울특별시 종로구";
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(administrativeAreaService.findAdministrativeAreaByCoordinates(longitude, latitude)).thenReturn(newAddress);
+
+        // When
+        userService.updateUserAddress(1L, longitude, latitude);
+
+        // Then
+        verify(userRepository, times(1)).findById(1L);
+        verify(administrativeAreaService, times(1)).findAdministrativeAreaByCoordinates(longitude, latitude);
+        assertEquals(newAddress, user.getAddress());
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void updateUserAddress_Failure_UserNotFound() {
+        // Given
+        double longitude = 126.9784;
+        double latitude = 37.5665;
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
+        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
+        verify(userRepository, times(0)).save(any(User.class));
     }
 }
