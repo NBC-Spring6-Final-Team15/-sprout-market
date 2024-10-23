@@ -38,10 +38,10 @@ public class ReviewService {
         User user = User.fromAuthUser(customUserDetails);
         User sellerUser = trade.getItem().getSeller();
         if (dto.getReviewRating()==ReviewRating.GOOD) {
-            sellerUser.plusRate();
+            plusRate(sellerUser);
         }
         if (dto.getReviewRating()==ReviewRating.BAD) {
-            sellerUser.minusRate();
+            minusRate(sellerUser);
         }
         userRepository.save(sellerUser);
 
@@ -131,6 +131,14 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+    }
+
+    private void plusRate(User user) {
+        user.plusRate();
+    }
+
+    private void minusRate(User user) {
+        user.minusRate();
     }
 
 }
