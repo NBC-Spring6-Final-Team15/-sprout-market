@@ -73,11 +73,12 @@ public class ItemController {
     /**
      * 관리자가 신고된 매물을 (논리적)삭제하는 로직
      * @param itemId Item's ID
+     * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제된 아이템에 대한 정보를 포함한 응답 객체
      */
     @PostMapping("/{itemId}/report")
-    public ResponseEntity<ApiResponse<ItemResponse>> softDeleteReportedItem(@PathVariable Long itemId){
-        ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId);
+    public ResponseEntity<ApiResponse<ItemResponse>> softDeleteReportedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+        ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 

@@ -14,6 +14,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -166,8 +167,13 @@ public class ItemService {
      * @return ItemResponse - 삭제된 매물의 제목, 설명, 상태를 포함한 응답 객체
      */
     @Transactional
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public ItemResponse softDeleteReportedItem(Long itemId){
+    public ItemResponse softDeleteReportedItem(Long itemId, CustomUserDetails authUser){
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        if(!authUser.getRole().equals(UserRole.ADMIN)){
+            throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
+        }
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdOrElseThrow(itemId);
 
