@@ -163,7 +163,7 @@ public class UserControllerTest {
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
                                         fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                        fieldWithPath("data").description("응답 데이터").optional()
                                 ))
                                 .requestSchema(Schema.schema("비밀번호-변경-성공-요청"))
                                 .responseSchema(Schema.schema("비밀번호-변경-성공-응답"))
@@ -221,7 +221,7 @@ public class UserControllerTest {
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
                                         fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                        fieldWithPath("data").description("응답 데이터").optional()
                                 ))
                                 .requestSchema(Schema.schema("유저-삭제-성공-요청"))
                                 .responseSchema(Schema.schema("유저-삭제-성공-응답"))
@@ -280,7 +280,7 @@ public class UserControllerTest {
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
                                         fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                        fieldWithPath("data").description("응답 데이터").optional()
                                 ))
                                 .requestSchema(Schema.schema("주소-변경-성공-요청"))
                                 .responseSchema(Schema.schema("주소-변경-성공-응답"))
