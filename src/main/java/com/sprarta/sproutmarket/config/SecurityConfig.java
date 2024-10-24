@@ -44,6 +44,9 @@ public class SecurityConfig {
                                 "/error/**",
                                 "/notifications/**").permitAll()
                         .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
+                        //Swagger 관련 오픈
+                        .requestMatchers("/docs/**",
+                                "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
                 )
