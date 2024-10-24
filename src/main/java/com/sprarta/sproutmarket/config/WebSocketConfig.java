@@ -10,13 +10,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker // 웹소켓 메시징 활성화
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+
+
     // 노출할 endpoint 설정
     @Override
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
         // 웹소켓이 연결하는 endpoint
         stompEndpointRegistry.addEndpoint("/ws") // 연결 url 설정
-                .setAllowedOriginPatterns("*") // 모든 출처에서의 요청을 허용 이후 보안상 변경할 것
-                .withSockJS(); // SockJS를 사용하여 브라우저에서 웹소켓을 지원하지 않는 경우에도 대체 프로토콜로 연결
+                .setAllowedOriginPatterns("*"); // 모든 출처에서의 요청을 허용 이후 보안상 변경할 것
 
     }
 
@@ -29,4 +30,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 클라이언트->서버로 발행하는 메세지에 대한 endpoint 설정 : 구독에 대한 메세지
         messageBrokerRegistry.setApplicationDestinationPrefixes("/pub"); // 메시지를 발행할 때 사용할 접두사
     }
+
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+//        registration.interceptors(chatPreHandler);
+//    }
+
 }
