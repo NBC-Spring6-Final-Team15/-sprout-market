@@ -160,7 +160,13 @@ public class UserControllerTest {
                                         fieldWithPath("oldPassword").description("사용자의 기존 비밀번호"),
                                         fieldWithPath("newPassword").description("변경할 새로운 비밀번호")
                                 ))
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                ))
                                 .requestSchema(Schema.schema("비밀번호-변경-성공-요청"))
+                                .responseSchema(Schema.schema("비밀번호-변경-성공-응답"))
                                 .build())
                 ));
     }
@@ -212,7 +218,13 @@ public class UserControllerTest {
                                 .requestFields(List.of(
                                         fieldWithPath("password").description("사용자의 비밀번호")
                                 ))
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                ))
                                 .requestSchema(Schema.schema("유저-삭제-성공-요청"))
+                                .responseSchema(Schema.schema("유저-삭제-성공-응답"))
                                 .build())
                 ));
     }
@@ -265,7 +277,13 @@ public class UserControllerTest {
                                         fieldWithPath("longitude").description("사용자 주소의 경도"),
                                         fieldWithPath("latitude").description("사용자 주소의 위도")
                                 ))
-                                .requestSchema(Schema.schema("주소-변경-성공-응답"))
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 성공 시 null 반환").optional()
+                                ))
+                                .requestSchema(Schema.schema("주소-변경-성공-요청"))
+                                .responseSchema(Schema.schema("주소-변경-성공-응답"))
                                 .build())
                 ));
     }

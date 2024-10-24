@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.controller;
 
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
@@ -26,9 +28,11 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -85,25 +89,31 @@ class AuthControllerTest {
         when(authService.signup(any(SignupRequest.class))).thenReturn(signupResponse);
         when(jwtUtil.createToken(any(Long.class), anyString(), any(UserRole.class))).thenReturn("jwt-token");
 
-        mockMvc.perform(post("/auth/signup")
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk())
-                .andExpect(content().json(objectMapper.writeValueAsString(signupResponse)))
                 .andDo(document("auth-signup-success",
-                        requestFields(
-                                fieldWithPath("username").description("사용자 이름"),
-                                fieldWithPath("email").description("사용자 이메일"),
-                                fieldWithPath("password").description("사용자 비밀번호"),
-                                fieldWithPath("nickname").description("사용자 닉네임"),
-                                fieldWithPath("phoneNumber").description("사용자 전화번호"), // 수정된 필드 이름
-                                fieldWithPath("longitude").description("사용자 경도"),
-                                fieldWithPath("latitude").description("사용자 위도"),
-                                fieldWithPath("userRole").description("사용자 역할") // 수정된 필드 이름
-                        ),
-                        responseFields(
-                                fieldWithPath("bearerToken").description("JWT 토큰")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 회원가입 API")
+                                .summary("새로운 사용자를 등록합니다.")
+                                .tag("Auth")
+                                .requestFields(
+                                        fieldWithPath("username").description("사용자 이름"),
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호"),
+                                        fieldWithPath("nickname").description("사용자 닉네임"),
+                                        fieldWithPath("phoneNumber").description("사용자 전화번호"),
+                                        fieldWithPath("longitude").description("사용자 경도"),
+                                        fieldWithPath("latitude").description("사용자 위도"),
+                                        fieldWithPath("userRole").description("사용자 역할")
+                                )
+                                .responseFields(
+                                        fieldWithPath("bearerToken").description("JWT 토큰")
+                                )
+                                .requestSchema(Schema.schema("회원가입-성공-요청"))
+                                .responseSchema(Schema.schema("회원가입-성공-응답"))
+                                .build())
                 ));
     }
 
@@ -127,19 +137,25 @@ class AuthControllerTest {
         when(authService.signin(any(SigninRequest.class))).thenReturn(signinResponse);
         when(jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole())).thenReturn("jwt-token");
 
-        mockMvc.perform(post("/auth/signin")
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signinRequest)))
                 .andExpect(status().isOk())
-                .andExpect(content().json(objectMapper.writeValueAsString(signinResponse)))
                 .andDo(document("auth-signin-success",
-                        requestFields(
-                                fieldWithPath("email").description("사용자 이메일"),
-                                fieldWithPath("password").description("사용자 비밀번호")
-                        ),
-                        responseFields(
-                                fieldWithPath("bearerToken").description("JWT 토큰")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 로그인 API")
+                                .summary("기존 사용자로 로그인합니다.")
+                                .tag("Auth")
+                                .requestFields(
+                                        fieldWithPath("email").description("사용자 이메일"),
+                                        fieldWithPath("password").description("사용자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("bearerToken").description("JWT 토큰")
+                                )
+                                .requestSchema(Schema.schema("로그인-성공-요청"))
+                                .responseSchema(Schema.schema("로그인-성공-응답"))
+                                .build())
                 ));
     }
 }

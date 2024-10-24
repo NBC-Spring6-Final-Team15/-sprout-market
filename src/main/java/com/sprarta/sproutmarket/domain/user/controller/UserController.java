@@ -25,17 +25,19 @@ public class UserController {
     }
 
     @PutMapping
-    public void changePassword(
+    public ResponseEntity<ApiResponse<String>> changePassword(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser, userChangePasswordRequest);
+        return ResponseEntity.ok(ApiResponse.onSuccess("비밀번호가 설공적으로 변경되었습니다."));
     }
 
     @DeleteMapping
-    public void deleteUser(
+    public ResponseEntity<ApiResponse<String>> deleteUser(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserDeleteRequest userDeleteRequest) {
         userService.deleteUser(authUser, userDeleteRequest);
+        return ResponseEntity.ok(ApiResponse.onSuccess("탈퇴에 성공하였습니다."));
     }
 
     @PatchMapping()
