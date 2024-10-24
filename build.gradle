@@ -82,6 +82,7 @@ dependencies {
     implementation 'org.hibernate:hibernate-spatial:6.6.1.Final'
     implementation 'de.grundid.opendatalab:geojson-jackson:1.14'
 
+
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
@@ -95,7 +96,6 @@ dependencies {
     implementation 'io.swagger:swagger-generator:2.4.43'
     // Swagger UI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
-
 }
 
 tasks.named('test') {
