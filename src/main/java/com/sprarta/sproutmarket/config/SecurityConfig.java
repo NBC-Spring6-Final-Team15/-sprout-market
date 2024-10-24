@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/test/**",
                                 "/error/**",
                                 "/notifications/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
                 )
