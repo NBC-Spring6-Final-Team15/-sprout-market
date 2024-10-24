@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
+import com.sprarta.sproutmarket.domain.user.dto.request.UserAddressUpdateRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -24,26 +25,27 @@ public class UserController {
     }
 
     @PutMapping
-    public void changePassword(
+    public ResponseEntity<ApiResponse<String>> changePassword(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser, userChangePasswordRequest);
+        return ResponseEntity.ok(ApiResponse.onSuccess("비밀번호가 설공적으로 변경되었습니다."));
     }
 
     @DeleteMapping
-    public void deleteUser(
+    public ResponseEntity<ApiResponse<String>> deleteUser(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserDeleteRequest userDeleteRequest) {
         userService.deleteUser(authUser, userDeleteRequest);
+        return ResponseEntity.ok(ApiResponse.onSuccess("탈퇴에 성공하였습니다."));
     }
 
     @PatchMapping()
     public ResponseEntity<ApiResponse<String>> updateUserAddress(
-            @RequestParam double longitude,
-            @RequestParam double latitude,
+            @RequestBody UserAddressUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails authUser
     ) {
-        userService.updateUserAddress(authUser.getId(), longitude, latitude);
+        userService.updateUserAddress(authUser.getId(), request.getLongitude(), request.getLatitude());
         return ResponseEntity.ok(ApiResponse.onSuccess("주소가 성공적으로 업데이트되었습니다."));
     }
 }
