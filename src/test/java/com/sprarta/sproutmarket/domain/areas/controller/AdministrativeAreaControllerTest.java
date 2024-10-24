@@ -81,7 +81,7 @@ class AdministrativeAreaControllerTest {
                                                 fieldWithPath("data").type(JsonFieldType.STRING)
                                                         .description("성공했다는 메시지")
                                         ))
-                                        .responseSchema(Schema.schema("addGeoJson-success-Response"))
+                                        .responseSchema(Schema.schema("geojson-DB-추가-성공-응답"))
                                         .build())
                         )
                 );
@@ -118,7 +118,7 @@ class AdministrativeAreaControllerTest {
                                                 fieldWithPath("latitude").type(JsonFieldType.NUMBER)
                                                         .description("경도")
                                         ))
-                                        .requestSchema(Schema.schema("get-HJD-success-Request"))
+                                        .requestSchema(Schema.schema("행정동-조회-성공-요청"))
                                         .responseFields(List.of(
                                                 fieldWithPath("message").type(JsonFieldType.STRING)
                                                         .description("Ok"),
@@ -127,7 +127,7 @@ class AdministrativeAreaControllerTest {
                                                 fieldWithPath("data").type(JsonFieldType.STRING)
                                                         .description("행정구역('시도' '시군구' '읍면동')")
                                         ))
-                                        .responseSchema(Schema.schema("get-HJD-success-response"))
+                                        .responseSchema(Schema.schema("행정동-조회-성공-응답"))
                                         .build()
                                 )
                         )
@@ -170,7 +170,7 @@ class AdministrativeAreaControllerTest {
                                                 fieldWithPath("data[]")
                                                         .description("행정동 이름")
                                         )
-                                        .responseSchema(Schema.schema("행정동리스트-성공-응답"))
+                                        .responseSchema(Schema.schema("행정동리스트-조회-성공-응답"))
                                         .build()
                                 )
 
