@@ -43,7 +43,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**", "/v3/api-docs/**",
                                 "/test/**",
                                 "/error/**",
-                                "/notifications/**").permitAll()
+                                "/notifications/**",
+                                "/docs/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
                 )
