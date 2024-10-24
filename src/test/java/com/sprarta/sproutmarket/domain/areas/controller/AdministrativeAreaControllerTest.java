@@ -165,8 +165,6 @@ class AdministrativeAreaControllerTest {
                                                         .description("성공 시 응답 메시지"),
                                                 fieldWithPath("statusCode")
                                                         .description("성공 시 응답 코드 : 200"),
-                                                fieldWithPath("data")
-                                                        .description("응답 본문"),
                                                 fieldWithPath("data[]")
                                                         .description("행정동 이름")
                                         )
