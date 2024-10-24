@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.controller;
 
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
@@ -29,14 +31,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
@@ -86,16 +91,25 @@ public class UserControllerTest {
         given(userService.getUser(anyLong())).willReturn(userResponse);
 
         // when, then
-        mockMvc.perform(get("/users/{userId}", 1L)
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/users/{userId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document("get-user",
-                        responseFields(
-                                fieldWithPath("message").description("응답 메시지"),
-                                fieldWithPath("statusCode").description("응답 상태 코드"),
-                                fieldWithPath("data.id").description("유저 ID"),
-                                fieldWithPath("data.email").description("유저 이메일")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 조회 API")
+                                .summary("특정 사용자 정보를 조회합니다.")
+                                .tag("User")
+                                .pathParameters(
+                                        parameterWithName("userId").description("사용자 ID") // URL 템플릿 설명 추가
+                                )
+                                .responseFields(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data.id").description("유저 ID"),
+                                        fieldWithPath("data.email").description("유저 이메일")
+                                )
+                                .responseSchema(Schema.schema("유저-조회-성공-응답"))
+                                .build())
                 ));
     }
 
@@ -106,17 +120,24 @@ public class UserControllerTest {
         given(userService.getUser(anyLong())).willThrow(new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // when, then
-        mockMvc.perform(get("/users/{userId}", 999L) // 존재하지 않는 유저 ID
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/users/{userId}", 999L) // 존재하지 않는 유저 ID
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound()) // 404 Not Found 기대
                 .andDo(document("get-user-fail-not-found",
-                        responseFields(
-                                fieldWithPath("message").description("에러 메시지"),
-                                fieldWithPath("statusCode").description("응답 상태 코드"),
-                                fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional() // null일 수 있음
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 조회 실패 API")
+                                .summary("존재하지 않는 사용자 ID로 조회할 때")
+                                .tag("User")
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                ))
+                                .responseSchema(Schema.schema("유저-조회-실패-응답"))
+                                .build())
                 ));
     }
+
 
     @Test
     @WithMockUser
@@ -131,10 +152,16 @@ public class UserControllerTest {
                         .principal(() -> "email@example.com"))
                 .andExpect(status().isOk())
                 .andDo(document("change-password",
-                        requestFields(
-                                fieldWithPath("oldPassword").description("The user's old password"),
-                                fieldWithPath("newPassword").description("The new password to set")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("비밀번호 변경 API")
+                                .summary("사용자의 비밀번호를 변경합니다.")
+                                .tag("User")
+                                .requestFields(List.of(
+                                        fieldWithPath("oldPassword").description("사용자의 기존 비밀번호"),
+                                        fieldWithPath("newPassword").description("변경할 새로운 비밀번호")
+                                ))
+                                .requestSchema(Schema.schema("비밀번호-변경-성공-요청"))
+                                .build())
                 ));
     }
 
@@ -152,11 +179,17 @@ public class UserControllerTest {
                         .content("{\"oldPassword\":\"wrongOldPassword\",\"newPassword\":\"NewPass1!\"}"))
                 .andExpect(status().isBadRequest()) // 400 Bad Request 기대
                 .andDo(document("change-password-fail-wrong-old-password",
-                        responseFields(
-                                fieldWithPath("message").description("에러 메시지"),
-                                fieldWithPath("statusCode").description("응답 상태 코드"),
-                                fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional() // null일 수 있음
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("비밀번호 변경 실패 API")
+                                .summary("잘못된 기존 비밀번호로 인한 비밀번호 변경 실패")
+                                .tag("User")
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                ))
+                                .responseSchema(Schema.schema("비밀번호-변경-실패-응답"))
+                                .build())
                 ));
     }
 
@@ -172,9 +205,15 @@ public class UserControllerTest {
                         .content("{\"password\":\"password\"}"))
                 .andExpect(status().isOk())
                 .andDo(document("delete-user",
-                        requestFields(
-                                fieldWithPath("password").description("The password of the user")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 삭제 API")
+                                .summary("사용자를 삭제합니다.")
+                                .tag("User")
+                                .requestFields(List.of(
+                                        fieldWithPath("password").description("사용자의 비밀번호")
+                                ))
+                                .requestSchema(Schema.schema("유저-삭제-성공-요청"))
+                                .build())
                 ));
     }
 
@@ -192,11 +231,17 @@ public class UserControllerTest {
                         .content("{\"password\":\"wrongPassword\"}"))
                 .andExpect(status().isBadRequest()) // 400 Bad Request 기대
                 .andDo(document("delete-user-fail-wrong-password",
-                        responseFields(
-                                fieldWithPath("message").description("에러 메시지"),
-                                fieldWithPath("statusCode").description("응답 상태 코드"),
-                                fieldWithPath("data").description("null 값, 추가 데이터는 없음")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 삭제 실패 API")
+                                .summary("잘못된 비밀번호로 인한 사용자 삭제 실패")
+                                .tag("User")
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("에러 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                ))
+                                .responseSchema(Schema.schema("유저-삭제-실패-응답"))
+                                .build())
                 ));
     }
 
@@ -212,10 +257,16 @@ public class UserControllerTest {
                         .content(jsonBody)) // JSON body로 데이터 전달
                 .andExpect(status().isOk())
                 .andDo(document("update-user-address",
-                        requestFields( // requestFields로 JSON body를 문서화
-                                fieldWithPath("longitude").description("The longitude of the user address"),
-                                fieldWithPath("latitude").description("The latitude of the user address")
-                        )
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 주소 업데이트 API")
+                                .summary("사용자의 주소를 업데이트합니다.")
+                                .tag("User")
+                                .requestFields(List.of(
+                                        fieldWithPath("longitude").description("사용자 주소의 경도"),
+                                        fieldWithPath("latitude").description("사용자 주소의 위도")
+                                ))
+                                .requestSchema(Schema.schema("주소-변경-성공-응답"))
+                                .build())
                 ));
     }
 }
