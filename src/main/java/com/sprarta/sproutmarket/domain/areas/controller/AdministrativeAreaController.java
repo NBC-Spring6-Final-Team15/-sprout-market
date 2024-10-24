@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.areas.controller;
 
+import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,5 +44,17 @@ public class AdministrativeAreaController {
                 (ApiResponse.onSuccess(
                         administrativeAreaService.
                                 findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude())));
+    }
+
+
+    /**
+     * 어떤 특정 행정동 문자열을 불러와서 주변 반경의 행정동 리스트를 반환합니다.
+     * @param admNm : 행정동 문자열 (예시 : 경상남도 산청군 생초면)
+     * @return 행정동 이름 리스트 반환
+     */
+    @GetMapping("/test/getAreas")
+    public ResponseEntity<ApiResponse<List<AdmNameDto>>> getAreas(@RequestParam String admNm) {
+        List<AdmNameDto> areas = administrativeAreaService.findAdmNameListByAdmName(admNm);
+        return ResponseEntity.ok(ApiResponse.onSuccess(areas));
     }
 }

@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.areas.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
 
 @Getter
 @Setter
@@ -39,4 +40,7 @@ public class AdministrativeArea {
 
     @Column(name = "geometry", columnDefinition = "MULTIPOLYGON NOT NULL")
     private MultiPolygon geometry;
+
+    @Column(name = "adm_center", columnDefinition = "POINT NOT NULL")
+    private Point admCenter;
 }
