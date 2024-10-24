@@ -42,8 +42,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**",
                                 "/test/**",
                                 "/error/**",
-                                "/notifications/**",
-                                "/docs/**").permitAll()
+                                "/notifications/**").permitAll()
+                        //Swagger 관련 오픈
+                        .requestMatchers("/docs/**",
+                                "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/admin/**").hasAuthority(UserRole.ADMIN.name())
                         .anyRequest().authenticated()
                 )
