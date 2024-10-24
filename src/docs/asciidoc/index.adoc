@@ -1,0 +1,45 @@
+= API Documentation
+:toc: left
+:toclevels: 2
+:sectnums:
+
+== Authentication API
+
+=== Sign Up
+사용자가 회원가입할 수 있는 API입니다.
+
+include::{snippets}/auth-signup-success/http-request.adoc[]
+include::{snippets}/auth-signup-success/http-response.adoc[]
+include::{snippets}/auth-signup-success/request-fields.adoc[]
+include::{snippets}/auth-signup-success/response-fields.adoc[]
+
+=== Sign In
+사용자가 로그인할 수 있는 API입니다.
+
+include::{snippets}/auth-signin-success/http-request.adoc[]
+include::{snippets}/auth-signin-success/http-response.adoc[]
+include::{snippets}/auth-signin-success/request-fields.adoc[]
+include::{snippets}/auth-signin-success/response-fields.adoc[]
+
+== User API
+
+=== Get User
+특정 사용자의 정보를 조회하는 API입니다.
+
+include::{snippets}/get-user/http-request.adoc[]
+include::{snippets}/get-user/http-response.adoc[]
+include::{snippets}/get-user/response-fields.adoc[]
+
+=== Change Password
+사용자가 비밀번호를 변경하는 API입니다.
+
+include::{snippets}/change-password/http-request.adoc[]
+include::{snippets}/change-password/http-response.adoc[]
+include::{snippets}/change-password/request-fields.adoc[]
+
+=== Delete User
+사용자가 회원 탈퇴할 수 있는 API입니다.
+
+include::{snippets}/delete-user/http-request.adoc[]
+include::{snippets}/delete-user/http-response.adoc[]
+include::{snippets}/delete-user/request-fields.adoc[]
