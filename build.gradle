@@ -85,6 +85,8 @@ dependencies {
 
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    //embedded-redis
+    implementation group: 'it.ozimov', name: 'embedded-redis', version: '0.7.2'
 
     //API 문서 자동화 관련
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'

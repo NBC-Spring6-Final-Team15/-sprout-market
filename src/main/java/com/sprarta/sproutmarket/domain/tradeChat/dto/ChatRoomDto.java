@@ -7,14 +7,14 @@ import lombok.Getter;
 @Getter
 public class ChatRoomDto {
 
-    private User buyer;
-    private User seller;
-    private Item item;
+    private Long buyerId;
+    private Long sellerId;
+    private Long itemId;
 
-    public ChatRoomDto(User buyer, User seller, Item item) {
-        this.buyer = buyer;
-        this.seller = seller;
-        this.item = item;
+    public ChatRoomDto(Long buyerId, Long sellerId, Long itemId) {
+        this.buyerId = buyerId;
+        this.sellerId = sellerId;
+        this.itemId = itemId;
     }
 
 }
