@@ -1,8 +1,7 @@
-package com.sprarta.sproutmarket.domain.review;
+package com.sprarta.sproutmarket.domain.review.controller;
 
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
-import com.sprarta.sproutmarket.domain.report.dto.ReportResponseDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.service.ReviewService;
