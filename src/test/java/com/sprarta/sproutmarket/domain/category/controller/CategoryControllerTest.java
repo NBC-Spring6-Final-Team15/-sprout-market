@@ -1,0 +1,131 @@
+package com.sprarta.sproutmarket.domain.category.controller;
+
+import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
+import com.epages.restdocs.apispec.ResourceSnippet;
+import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
+import com.sprarta.sproutmarket.domain.category.dto.CategoryResponseDto;
+import com.sprarta.sproutmarket.domain.category.entity.Category;
+import com.sprarta.sproutmarket.domain.category.service.CategoryService;
+import com.sprarta.sproutmarket.domain.report.controller.ReportController;
+import com.sprarta.sproutmarket.domain.report.service.ReportService;
+import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
+import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
+import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.MediaType;
+import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+
+import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
+import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(CategoryController.class)
+@Import(SecurityConfig.class)
+@AutoConfigureRestDocs
+@AutoConfigureMockMvc(addFilters = false)
+class CategoryControllerTest {
+    @Autowired
+    MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @MockBean
+    CategoryService categoryService;
+
+    @MockBean
+    JwtUtil jwtUtil;
+
+    @MockBean
+    CustomUserDetailService customUserDetailService;
+
+    @MockBean
+    JpaMetamodelMappingContext jpaMappingContext;
+
+    @MockBean
+    CustomUserDetails mockAuthUser;
+
+    @BeforeEach
+    void setUp() {
+        User mockUser = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.ADMIN);
+        CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
+
+        // 인증 유저 스프링 컨텍스트 홀더에 저장
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    @Test
+    void create() throws Exception {
+        CategoryRequestDto requestDto = new CategoryRequestDto("가구");
+        when(categoryService.create(any(CategoryRequestDto.class))).thenReturn(new CategoryResponseDto(1L,"가구"));
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("어드민 권한을 가진 사람이 카테고리를 생성할 수 있습니다.")
+                .summary("카테고리 생성")
+                .tag("admin")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .requestFields(
+                        fieldWithPath("categoryName").type(JsonFieldType.STRING)
+                                .description("카테고리 이름")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 201"),
+                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                .description("응답 본문"),
+                        fieldWithPath("data.categoryId").type(JsonFieldType.NUMBER)
+                                .description("카테고리 ID"),
+                        fieldWithPath("data.categoryName").type(JsonFieldType.STRING)
+                                .description("카테고리 이름")
+                )
+                .requestSchema(Schema.schema("카테고리-생성-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-생성-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto))
+                .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "create-category",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.categoryId").value(1L))
+                .andExpect(jsonPath("$.data.categoryName").value("가구"));
+    }
+}
