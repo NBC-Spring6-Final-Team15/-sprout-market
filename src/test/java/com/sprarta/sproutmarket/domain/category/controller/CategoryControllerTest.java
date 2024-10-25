@@ -1,9 +1,6 @@
 package com.sprarta.sproutmarket.domain.category.controller;
 
-import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
-import com.epages.restdocs.apispec.ResourceSnippet;
-import com.epages.restdocs.apispec.ResourceSnippetParameters;
-import com.epages.restdocs.apispec.Schema;
+import com.epages.restdocs.apispec.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
@@ -38,10 +35,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
-import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -92,7 +89,7 @@ class CategoryControllerTest {
         ResourceSnippetParameters params = ResourceSnippetParameters.builder()
                 .description("어드민 권한을 가진 사람이 카테고리를 생성할 수 있습니다.")
                 .summary("카테고리 생성")
-                .tag("admin")
+                .tag("Admin")
                 .requestHeaders(
                         headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
@@ -178,5 +175,102 @@ class CategoryControllerTest {
                 .andExpect(jsonPath("$.data[0].categoryName").value("가구"))
                 .andExpect(jsonPath("$.data[1].categoryId").value(2L))
                 .andExpect(jsonPath("$.data[1].categoryName").value("문구"));
+    }
+
+    @Test
+    void 카테고리_수정_성공() throws Exception {
+        Long categoryId = 1L;
+        CategoryRequestDto requestDto = new CategoryRequestDto("가구");
+        when(categoryService.update(anyLong() ,any(CategoryRequestDto.class))).thenReturn(new CategoryResponseDto(1L,"가구"));
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("어드민 권한을 가진 사람이 카테고리를 수정할 수 있습니다.")
+                .summary("카테고리 수정")
+                .tag("Admin")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .pathParameters(
+                        parameterWithName("categoryId")
+                                .type(SimpleType.NUMBER)
+                                .description("수정할 카테고리 ID")
+                )
+                .requestFields(
+                        fieldWithPath("categoryName").type(JsonFieldType.STRING)
+                                .description("수정된 카테고리 이름")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                .description("응답 본문"),
+                        fieldWithPath("data.categoryId").type(JsonFieldType.NUMBER)
+                                .description("수정된 카테고리 ID"),
+                        fieldWithPath("data.categoryName").type(JsonFieldType.STRING)
+                                .description("수정된 카테고리 이름")
+                )
+                .requestSchema(Schema.schema("카테고리-수정-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-수정-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.patch("/admin/categories/{categoryId}",categoryId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "update-category",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.categoryId").value(1L))
+                .andExpect(jsonPath("$.data.categoryName").value("가구"));
+    }
+
+    @Test
+    void 카테고리_삭제_성공() throws Exception {
+        Long categoryId = 3L;
+        String returnString  = "삭제가 완료되었습니다.|삭제된 카테고리 ID : 3|삭제된 카테고리 제목 : 디지털";
+        when(categoryService.delete(categoryId)).thenReturn(returnString);
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("어드민 권한을 가진 사람이 카테고리를 삭제할 수 있습니다.")
+                .summary("카테고리 삭제")
+                .tag("Admin")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .pathParameters(
+                        parameterWithName("categoryId")
+                                .type(SimpleType.NUMBER)
+                                .description("삭제할 카테고리 ID")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.STRING)
+                                .description("삭제된 카테고리 ID, 이름 정보")
+                )
+                .requestSchema(Schema.schema("카테고리-삭제-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-삭제-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/admin/categories/{categoryId}",categoryId)
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "delete-category",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(returnString));
     }
 }

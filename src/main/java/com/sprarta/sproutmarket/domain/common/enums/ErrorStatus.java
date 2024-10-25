@@ -37,6 +37,7 @@ public enum ErrorStatus implements BaseCode {
     // Category
     NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, 404, "존재하지 않는 카테고리입니다."),
     BAD_REQUEST_ALREADY_EXISTS_CATETORY(HttpStatus.BAD_REQUEST, 400, "해당 카테고리는 이미 존재합니다."),
+    BAD_REQUEST_SAME_NAME(HttpStatus.BAD_REQUEST,400,"이미 해당 카테고리 이름이 수정 요청된 이름과 같습니다."),
 
     // review 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, 404, "해당 리뷰를 찾을 수 없습니다."),
