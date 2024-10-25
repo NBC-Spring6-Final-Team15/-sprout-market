@@ -120,11 +120,10 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 특정 카테고리에 속하는 모든 매물 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(defaultValue = "1") int page,
-                                                                               @RequestParam(defaultValue = "10") int size,
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestBody @Valid FindItemsInMyAreaRequestDto requestDto,
                                                                                @PathVariable Long categoryId,
                                                                                @AuthenticationPrincipal CustomUserDetails authUser){
-        Page<ItemResponseDto> itemResponseDto = itemService.getCategoryItems(page, size, categoryId, authUser);
+        Page<ItemResponseDto> itemResponseDto = itemService.getCategoryItems(requestDto, categoryId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
