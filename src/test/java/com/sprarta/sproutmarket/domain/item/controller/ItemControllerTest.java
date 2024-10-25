@@ -15,6 +15,7 @@ import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
+import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
@@ -22,6 +23,7 @@ import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
+import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,31 +73,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ItemControllerTest {
     @MockBean
-    ItemService itemService;
+    private ItemService itemService;
 
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     @MockBean
-    JwtUtil jwtUtil;
+    private JwtUtil jwtUtil;
 
     @MockBean
-    CustomUserDetailService customUserDetailService;
+    private CustomUserDetailService customUserDetailService;
 
     @MockBean
-    JpaMetamodelMappingContext jpaMappingContext;
+    private JpaMetamodelMappingContext jpaMappingContext;
 
     @MockBean
     private CustomUserDetails mockAuthUser;
+
+    @MockBean
+    private ItemRepository itemRepository;
 
     @MockBean
     private UserService userService;
 
     @InjectMocks
     private ItemController itemController;
+
 
     private Item mockItem;
     private Category mockCategory;
@@ -129,7 +135,7 @@ class ItemControllerTest {
         ReflectionTestUtils.setField(mockItem, "id", 1L);
 
         // 아이템을 반환하도록 Mock 설정
-        given(itemService.findByIdAndSellerIdOrElseThrow(mockItem.getId(), mockUser)).willReturn(mockItem);
+        given(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem.getId(), mockUser)).willReturn(mockItem);
         // UserService Mock 설정
         when(userService.getUser(anyLong())).thenReturn(new UserResponse(mockUser.getId(), mockUser.getEmail()));
         doNothing().when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
@@ -145,14 +151,14 @@ class ItemControllerTest {
             3000,
             "김커피"
         );
-        ItemContentsUpdateRequest requestDto = new ItemContentsUpdateRequest("만년필","한번도안썼습니다",3000,"imageUrl");
         Long itemId = 1L;
-        given(itemService.updateContents(any(Long.class),any(ItemContentsUpdateRequest.class),any(CustomUserDetails.class))).willReturn(itemResponse);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/update/contents",itemId)
+        given(itemService.updateContents(any(Long.class), any(ItemContentsUpdateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/contents", itemId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                .header("Authorization", "Bearer (JWT 토큰)"))
+                .content("{\"title\":\"만년필\",\"description\":\"한번도안썼습니다\",\"price\":3000,\"imageUrl\":\"이미지 주소\"}")
+            .header("Authorization", "Bearer (JWT 토큰)"))
             .andDo(
                 MockMvcRestDocumentationWrapper.document(
                     "update-Contents",
@@ -162,8 +168,8 @@ class ItemControllerTest {
                             parameterWithName("itemId").description("수정할 매물 ID")
                         )
                         .summary("매물 정보 업데이트")
-                        .tag("Item")
-                        .requestFields(List.of(
+                        .tag("Items")
+                        .requestFields(
                             fieldWithPath("title").type(JsonFieldType.STRING)
                                 .description("수정할 제목"),
                             fieldWithPath("description").type(JsonFieldType.STRING)
@@ -172,7 +178,7 @@ class ItemControllerTest {
                                 .description("수정할 가격"),
                             fieldWithPath("imageUrl").type(JsonFieldType.STRING)
                                 .description("변경할 이미지")
-                        ))
+                        )
                         .requestHeaders(
                             headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
@@ -444,71 +450,7 @@ class ItemControllerTest {
             ));
     }
 
-    @Test
-    @WithMockUser
-    void 매물_수정_성공_승재님() throws Exception {
-        ItemResponse itemResponse = new ItemResponse("만년필","한번도안썼습니다",3000,"김커피");
-        ItemContentsUpdateRequest requestDto = new ItemContentsUpdateRequest("만년필","한번도안썼습니다",3000,"imageUrl");
-        Long itemId = 1L;
-        given(itemService.updateContents(any(Long.class),any(ItemContentsUpdateRequest.class),any(CustomUserDetails.class))).willReturn(itemResponse);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/update/contents",itemId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto))
-                        .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(
-                        MockMvcRestDocumentationWrapper.document(
-                                "update-Contents",
-                                resource(ResourceSnippetParameters.builder()
-                                        .description("매물의 정보를 변경합니다.")
-                                        .pathParameters(
-                                                parameterWithName("itemId").description("수정할 매물 ID")
-                                        )
-                                        .summary("매물 정보 업데이트")
-                                        .tag("Item")
-                                        .requestFields(List.of(
-                                                fieldWithPath("title").type(JsonFieldType.STRING)
-                                                        .description("수정할 제목"),
-                                                fieldWithPath("description").type(JsonFieldType.STRING)
-                                                        .description("수정할 내용"),
-                                                fieldWithPath("price").type(JsonFieldType.NUMBER)
-                                                        .description("수정할 가격"),
-                                                fieldWithPath("imageUrl").type(JsonFieldType.STRING)
-                                                        .description("변경할 이미지")
-                                        ))
-                                        .requestHeaders(
-                                                headerWithName("Authorization")
-                                                        .description("Bearer (JWT 토큰)")
-                                        )
-                                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
-                                        .responseFields(
-                                                fieldWithPath("message").type(JsonFieldType.STRING)
-                                                        .description("성공 시 메시지"),
-                                                fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                        .description("200 상태 코드"),
-                                                fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                                        .description("반환된 정보"),
-                                                fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                                        .description("수정된 제목"),
-                                                fieldWithPath("data.description").type(JsonFieldType.STRING)
-                                                        .description("수정된 내용"),
-                                                fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                                        .description("수정된 가격"),
-                                                fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                                        .description("수정한 유저 닉네임")
-                                        )
-                                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
-                                        .build()
-                                )
-                        )
-                );
-
-        verify(itemService, times(1)).updateContents(any(Long.class),any(ItemContentsUpdateRequest.class),any(CustomUserDetails.class));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))
-                .andExpect(jsonPath("$.data.description").value(itemResponse.getDescription()))
-                .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()));
-    }
 
     @Test
     @WithMockUser
