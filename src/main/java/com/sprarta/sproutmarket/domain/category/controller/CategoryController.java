@@ -8,9 +8,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,10 +27,19 @@ public class CategoryController {
      * @param requestDto : validation 사용하기 위해 dto 로 정보를 받습니다.
      * @return : id, 카테고리 이름을 담은 응답 dto
      */
-    @PostMapping("/admin/category")
+    @PostMapping("/admin/categories")
     public ResponseEntity<ApiResponse<CategoryResponseDto>> create(@RequestBody CategoryRequestDto requestDto) {
         CategoryResponseDto responseDto = categoryService.create(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,responseDto));
+    }
+
+    /**
+     * 카테고리 전체 조회
+     * @return CategoryResponseDto 를 담은 리스트
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<List<CategoryResponseDto>>> getAll() {
+        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.findAll()));
     }
 
 

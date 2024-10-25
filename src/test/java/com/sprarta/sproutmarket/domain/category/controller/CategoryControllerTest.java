@@ -35,6 +35,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,7 +85,7 @@ class CategoryControllerTest {
     }
 
     @Test
-    void create() throws Exception {
+    void 카테고리_생성_성공() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("가구");
         when(categoryService.create(any(CategoryRequestDto.class))).thenReturn(new CategoryResponseDto(1L,"가구"));
 
@@ -114,7 +117,7 @@ class CategoryControllerTest {
                 .responseSchema(Schema.schema("카테고리-생성-성공-응답"))
                 .build();
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/category")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
                 .header("Authorization", "Bearer (JWT 토큰)"))
@@ -127,5 +130,53 @@ class CategoryControllerTest {
         result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.categoryId").value(1L))
                 .andExpect(jsonPath("$.data.categoryName").value("가구"));
+    }
+
+    @Test
+    void 카테고리_전체_조회_성공 () throws Exception {
+        List<CategoryResponseDto> responseDtoList = new ArrayList<>();
+        CategoryResponseDto response1 = new CategoryResponseDto(1L,"가구");
+        CategoryResponseDto response2 = new CategoryResponseDto(2L, "문구");
+        responseDtoList.add(response1);
+        responseDtoList.add(response2);
+        when(categoryService.findAll()).thenReturn(responseDtoList);
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("전체 카테고리를 조회할 수 있습니다.")
+                .summary("전체 카테고리 조회")
+                .tag("Category")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 200"),
+                        fieldWithPath("data[]").type(JsonFieldType.ARRAY)
+                                .description("응답 본문"),
+                        fieldWithPath("data[].categoryId").type(JsonFieldType.NUMBER)
+                                .description("카테고리 ID"),
+                        fieldWithPath("data[].categoryName").type(JsonFieldType.STRING)
+                                .description("카테고리 이름")
+                )
+                .requestSchema(Schema.schema("카테고리-생성-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-생성-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/categories")
+                .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "category-get-all",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].categoryId").value(1L))
+                .andExpect(jsonPath("$.data[0].categoryName").value("가구"))
+                .andExpect(jsonPath("$.data[1].categoryId").value(2L))
+                .andExpect(jsonPath("$.data[1].categoryName").value("문구"));
     }
 }
