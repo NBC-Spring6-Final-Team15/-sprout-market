@@ -88,7 +88,7 @@ public class ChatRoomServiceTest {
         ReflectionTestUtils.setField(mockUser, "id", 3L);
 
         // 가짜 카테고리 생성
-        mockCategory = new Category(1L, "나무 상품");
+        mockCategory = new Category(1L, "나무 상품", Status.ACTIVE);
 
         // 가짜 상품 생성
         mockItem1 = Item.builder()
