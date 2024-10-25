@@ -2,6 +2,8 @@ package com.sprarta.sproutmarket.domain.item.repository;
 
 import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
@@ -18,7 +20,17 @@ import java.util.Optional;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
+    default Item findByIdOrElseThrow(Long id) {
+        return findById(id)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+    }
+
     Optional<Item> findByIdAndSeller(@Param("id") Long id, @Param("seller") User seller);
+
+    default Item findByIdAndSellerIdOrElseThrow(Long itemId, User seller) {
+        return findByIdAndSeller(itemId, seller)
+            .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
+    }
 
     @Query("SELECT i FROM Item i " +
         "JOIN FETCH i.category " +

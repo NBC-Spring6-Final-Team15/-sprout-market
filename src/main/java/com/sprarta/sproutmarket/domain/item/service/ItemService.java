@@ -86,12 +86,11 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user);
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -115,7 +114,7 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user);
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
@@ -124,7 +123,6 @@ public class ItemService {
             itemContentsUpdateRequest.getImageUrl()
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -148,13 +146,12 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user);
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -178,13 +175,12 @@ public class ItemService {
             throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
         }
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -201,7 +197,7 @@ public class ItemService {
      */
     public ItemResponseDto getItem(Long itemId){
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         return new ItemResponseDto(
             item.getId(),
@@ -306,31 +302,4 @@ public class ItemService {
             )
         );
     }
-
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param id Item's ID
-     * @return Item 객체
-     * @throws ApiException 해당 id의 매물이 존재하지 않을 경우 발생
-     */
-    public Item findByIdOrElseThrow(Long id){
-        return itemRepository.findById(id)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-    }
-
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param itemId Item's ID
-     * @param seller 로그인한 유저
-     * @return Item 객체
-     * @throws ApiException 해당 id의 사용자 id와 입력받은 sellerId와 동일하지 않을 경우 발생
-     */
-    public Item findByIdAndSellerIdOrElseThrow(Long itemId, User seller){
-
-        return itemRepository.findByIdAndSeller(itemId, seller)
-            .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
-    }
-
 }
