@@ -9,16 +9,24 @@ import com.sprarta.sproutmarket.config.SecurityConfig;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
+import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
+import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
+import com.sprarta.sproutmarket.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,11 +39,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -45,16 +55,17 @@ import java.util.List;
 import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ItemController.class)
 @Import(SecurityConfig.class)
-@AutoConfigureRestDocs
+@MockBean(JpaMetamodelMappingContext.class) // JPA 사용
+@ExtendWith(RestDocumentationExtension.class)   // Restful API 자동 생성(Spring REST Docs 사용)
+@AutoConfigureRestDocs(outputDir = "build/generated-snippets")  // REST Docs의 출력 디렉토리 설정
 @AutoConfigureMockMvc(addFilters = false)
 class ItemControllerTest {
     @MockBean
@@ -78,15 +89,143 @@ class ItemControllerTest {
     @MockBean
     private CustomUserDetails mockAuthUser;
 
-    @BeforeEach
-    void setUp() {
-        User mockUser = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
-        CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
+    @MockBean
+    private UserService userService;
 
-        // 인증 유저 시큐리티 컨텍스트 홀더에 저장
+    @InjectMocks
+    private ItemController itemController;
+
+    private Item mockItem;
+
+    @BeforeEach // 테스트 전 수행
+    void setUp() {
+        // 클래스 인스턴스 생성
+        User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+//        CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
+        mockAuthUser = new CustomUserDetails(mockUser);
+
+        // 객체 생성
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
+        // 인증 정보 설정(인증된 사용자 정보 사용O)
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Mock Item 생성
+        mockItem = Item.builder()
+            .title("가짜 아이템")
+            .price(10000)
+            .itemSaleStatus(ItemSaleStatus.WAITING)
+            .seller(mockUser)
+            .build();
+        ReflectionTestUtils.setField(mockItem, "id", 1L);
+
+        // 아이템을 반환하도록 Mock 설정
+        given(itemService.findByIdAndSellerIdOrElseThrow(mockItem.getId(), mockUser)).willReturn(mockItem);
+        // UserService Mock 설정
+        when(userService.getUser(anyLong())).thenReturn(new UserResponse(mockUser.getId(), mockUser.getEmail()));
+        doNothing().when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
+        doNothing().when(userService).deleteUser(any(CustomUserDetails.class), any(UserDeleteRequest.class));
     }
+
+
+    @Test
+    @WithMockUser
+    void 매물_등록_성공() throws Exception {
+        // Given
+        // 결과값 설정
+        ItemResponse itemResponse = new ItemResponse(
+            "가짜11",
+            1000,
+            "오만한천원"
+        );
+        given(itemService.createItem(any(ItemCreateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
+
+        // when, then
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                // 요청 본문
+                .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1,\"imageUrl\":\"http://example.com/image.jpg\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
+            .andDo(document("create-item",
+                resource(ResourceSnippetParameters.builder()
+                    .description("매물 생성 API")
+                    .summary("로그인한 사용자가 매물을 등록합니다.")
+                    .tag("Items")
+                    .requestFields(
+                        fieldWithPath("title").description("등록할 제목"),
+                        fieldWithPath("description").description("등록할 설명"),
+                        fieldWithPath("price").description("등록할 가격"),
+                        fieldWithPath("categoryId").description("등록할 카테고리 아이디"),
+                        fieldWithPath("imageUrl").description("매물의 이미지")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("등록된 제목"),
+                        fieldWithPath("data.price").description("등록된 가격"),
+                        fieldWithPath("data.nickname").description("유저 닉네임")
+                    )
+                    .responseSchema(Schema.schema("매물-생성-성공-응답"))
+                    .build())
+            ));
+
+    }
+
+    @Test
+    @WithMockUser
+    void 매물_판매상태_변경_성공() throws Exception {
+        ItemSaleStatus saleStatus = ItemSaleStatus.SOLD;
+        String SsaleStatus = ItemSaleStatus.SOLD.toString();
+
+        // Given
+        ItemResponse itemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            mockItem.getPrice(),
+            mockItem.getItemSaleStatus(),
+            mockItem.getSeller().getNickname()
+        );
+
+        given(itemService.updateSaleStatus(mockItem.getId(), SsaleStatus, mockAuthUser)).willReturn(itemResponse);
+
+
+        // when, then
+        mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/sale-status", mockItem.getId())
+                .param("saleStatus", SsaleStatus)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"itemSaleStatus\":\"" + SsaleStatus + "\"}")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
+            .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
+            .andExpect(jsonPath("$.data.itemSaleStatus").value(itemResponse.getItemSaleStatus().toString()))
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
+            .andDo(document("update-item-sale-status",
+                resource(ResourceSnippetParameters.builder()
+                    .description("매물 판매 상태 수정 API")
+                    .summary("로그인한 사용자가 매물의 판매상태를 수정합니다.")
+                    .tag("Items")
+                    .pathParameters(parameterWithName("itemId").description("수정할 매물 ID"))
+                    .queryParameters(parameterWithName("saleStatus").description("판매 상태 수정 내용"))
+                    .requestFields(
+                        fieldWithPath("itemSaleStatus").description("판매 상태 수정 내용")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("판매상태를 수정한 매물의 제목"),
+                        fieldWithPath("data.price").description("판매상태를 수정한 매물의 가격"),
+                        fieldWithPath("data.itemSaleStatus").description("수정된 판매상태"),
+                        fieldWithPath("data.nickname").description("수정을 한 유저 닉네임")
+                    )
+                    .responseSchema(Schema.schema("매물-상태수정-성공-응답"))
+                    .build())
+            ));
+    }
+
+
 
     @Test
     @WithMockUser
