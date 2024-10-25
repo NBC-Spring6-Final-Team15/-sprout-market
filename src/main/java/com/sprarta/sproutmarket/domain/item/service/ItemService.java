@@ -1,11 +1,13 @@
 package com.sprarta.sproutmarket.domain.item.service;
 
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
+import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
@@ -36,6 +38,7 @@ public class ItemService {
     private final CategoryService categoryService;
     private final NotificationController notificationController;
     private final InterestedItemService interestedItemService;
+    private final AdministrativeAreaService admAreaService;
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -117,9 +120,6 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
 
-        // 이전 가격 저장 (가격 변경 확인을 위해)
-        int oldPrice = item.getPrice();
-
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
@@ -129,11 +129,6 @@ public class ItemService {
 
         itemRepository.save(item);
 
-        // 가격이 변경된 경우 가격 변동 알림 전송
-        if (itemContentsUpdateRequest.getPrice() != oldPrice) {
-            notifyPriceChange(item.getId(), itemContentsUpdateRequest.getPrice());
-        }
-
         return new ItemResponse(
             item.getTitle(),
             item.getDescription(),
@@ -141,6 +136,7 @@ public class ItemService {
             user.getNickname()
         );
     }
+
 
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
@@ -220,6 +216,7 @@ public class ItemService {
         );
     }
 
+
     /**
      * 현재 인증된 사용자의 모든 매물을 조회하는 로직
      * @param page 페이지 번호(1부터 시작)
@@ -251,6 +248,7 @@ public class ItemService {
         );
     }
 
+
     /**
      * 특정 카테고리에 모든 매물을 조회
      * @param page 페이지 번호(1부터 시작)
@@ -278,6 +276,35 @@ public class ItemService {
                 item.getCategory().getName(),
                 item.getStatus()
             )
+        );
+    }
+
+    /**
+     * 내 주변에 있는 매물을 조회하는 메서드입니다.
+     * 추후 논의를 통해 다른 조회 시에도 해당 기능을 합칠 예정입니다.
+     * @param authUser : 현재 인증받은 사용자
+     * @param requestDto : 페이지번호, 크기가 들어있는 requestDto, @valid 사용하기 위해 파라미터로 안 받고 DTO 로 받았습니다.
+     * @return 페이징해서 찾은 매물들 DTO 로 매핑해서 반환
+     */
+    public Page<ItemResponseDto> findItemsByMyArea (CustomUserDetails authUser, FindItemsInMyAreaRequestDto requestDto) {
+        //User.fromAuthUser 쓰면 User 안에 있는 Address를 못 불러와서 이렇게 꺼냈습니다.
+        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String myArea = currentUser.getAddress();
+
+        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+        Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
+        Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
+
+        return result.map(item -> new ItemResponseDto(
+                        item.getId(),
+                        item.getTitle(),
+                        item.getDescription(),
+                        item.getPrice(),
+                        item.getSeller().getNickname(),
+                        item.getItemSaleStatus(),
+                        item.getCategory().getName(),
+                        item.getStatus()
+                )
         );
     }
 
