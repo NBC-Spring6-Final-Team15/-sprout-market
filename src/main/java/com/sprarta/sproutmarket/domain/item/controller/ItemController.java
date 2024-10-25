@@ -104,8 +104,8 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 로그인한 사용자의 모든 매물 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> findMyItems(@RequestParam(defaultValue = "1") int page,
-                                                                          @RequestParam(defaultValue = "10") int size,
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> findMyItems(@RequestParam(name = "page", defaultValue = "1") int page,
+                                                                          @RequestParam(name = "size", defaultValue = "10") int size,
                                                                           @AuthenticationPrincipal CustomUserDetails authUser){
         Page<ItemResponseDto> itemResponseDto = itemService.getMyItems(page, size, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
