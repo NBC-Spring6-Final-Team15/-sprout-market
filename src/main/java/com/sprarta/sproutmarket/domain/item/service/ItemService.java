@@ -159,6 +159,7 @@ public class ItemService {
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
+            item.getPrice(),
             user.getNickname()
         );
     }

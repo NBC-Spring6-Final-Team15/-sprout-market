@@ -37,9 +37,10 @@ public class ItemResponse {
         this.status = status;
     }
 
-    public ItemResponse(String title, Status status, String nickname) {
+    public ItemResponse(String title, Status status, int price, String nickname) {
         this.title = title;
         this.status = status;
+        this.price = price;
         this.nickname = nickname;
     }
 

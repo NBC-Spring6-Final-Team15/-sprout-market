@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -99,9 +100,10 @@ class ItemControllerTest {
 
     @BeforeEach // 테스트 전 수행
     void setUp() {
+        MockitoAnnotations.openMocks(this);
         // 클래스 인스턴스 생성
         User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
-//        CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
+        // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
 
         // 객체 생성
@@ -235,7 +237,7 @@ class ItemControllerTest {
         Long itemId = 1L;
         given(itemService.updateContents(any(Long.class),any(ItemContentsUpdateRequest.class),any(CustomUserDetails.class))).willReturn(itemResponse);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/{itemId}/update/contents",itemId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/update/contents",itemId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
@@ -292,6 +294,50 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.data.description").value(itemResponse.getDescription()))
                 .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()));
     }
+
+    @Test
+    @WithMockUser
+    void 매물_삭제_성공() throws Exception {
+        // Given
+        ItemResponse itemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            Status.DELETED,
+            mockItem.getPrice(),
+            mockItem.getSeller().getNickname()
+        );
+
+        given(itemService.softDeleteItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
+
+        // When, Then
+        mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}", mockItem.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
+            .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
+            .andDo(document("soft-delete-my-item",
+                resource(ResourceSnippetParameters.builder()
+                    .description("매물 삭제 API")
+                    .summary("로그인한 사용자가 매물을 삭제합니다.")
+                    .tag("Items")
+                    .pathParameters(parameterWithName("itemId").description("삭제할 매물 ID"))
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("삭제된 매물의 제목"),
+                        fieldWithPath("data.price").description("삭제된 매물의 가격"),
+                        fieldWithPath("data.status").description("삭제된 매물의 상태"),
+                        fieldWithPath("data.nickname").description("삭제를 한 유저의 닉네임")
+                    )
+                    .responseSchema(Schema.schema("매물-삭제-성공-응답"))
+                    .build())
+            ));
+    }
+
+
 
     @Test
     @WithMockUser
