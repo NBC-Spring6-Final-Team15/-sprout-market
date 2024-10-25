@@ -113,8 +113,7 @@ public class ItemController {
 
     /**
      * 특정 카테고리에 모든 매물을 조회
-     * @param page 페이지 번호(1부터 시작)
-     * @param size 페이지당 카드 수
+     * @param requestDto 페이지 번호와 페이지당 매물 수를 포함하는 요청 객체
      * @param categoryId Category's ID
      * @param authUser 현재 인증된 사용자 정보
      * @return ApiResponse - 메세지, 상태 코드, 특정 카테고리에 속하는 모든 매물 상세 정보를 포함한 응답 객체

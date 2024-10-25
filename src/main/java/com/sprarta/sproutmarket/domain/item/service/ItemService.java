@@ -246,8 +246,7 @@ public class ItemService {
 
     /**
      * 특정 카테고리에 모든 매물을 조회
-     * @param page 페이지 번호(1부터 시작)
-     * @param size 페이지당 카드 수
+     * @param requestDto 페이지 번호와 페이지당 매물 수를 포함하는 요청 객체
      * @param categoryId Category's ID
      * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 특정 카테고리의 매물 목록을 포함한 페이지 정보
      *      *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
