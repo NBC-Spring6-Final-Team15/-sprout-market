@@ -5,13 +5,15 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
-import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
-import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
+import com.sprarta.sproutmarket.domain.notification.controller.NotificationController;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -20,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,8 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final CategoryService categoryService;
-
+    private final NotificationController notificationController;
+    private final InterestedItemService interestedItemService;
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -115,6 +117,9 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
 
+        // 이전 가격 저장 (가격 변경 확인을 위해)
+        int oldPrice = item.getPrice();
+
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
@@ -124,6 +129,11 @@ public class ItemService {
 
         itemRepository.save(item);
 
+        // 가격이 변경된 경우 가격 변동 알림 전송
+        if (itemContentsUpdateRequest.getPrice() != oldPrice) {
+            notifyPriceChange(item.getId(), itemContentsUpdateRequest.getPrice());
+        }
+
         return new ItemResponse(
             item.getTitle(),
             item.getDescription(),
@@ -131,7 +141,6 @@ public class ItemService {
             user.getNickname()
         );
     }
-
 
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
@@ -211,7 +220,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 현재 인증된 사용자의 모든 매물을 조회하는 로직
      * @param page 페이지 번호(1부터 시작)
@@ -243,7 +251,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 특정 카테고리에 모든 매물을 조회
      * @param page 페이지 번호(1부터 시작)
@@ -274,10 +281,6 @@ public class ItemService {
         );
     }
 
-
-
-
-
     /**
      * 주어진 id에 해당하는 Item을 찾고,
      * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
@@ -303,4 +306,20 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
     }
 
+    @Transactional
+    public void notifyPriceChange(Long itemId, int newPrice) {
+        // Item 정보를 가져와서 가격 비교
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+        int oldPrice = item.getPrice();
+
+        if (newPrice != oldPrice) {
+            // 관심 목록에 있는 모든 사용자에게 알림 전송
+            List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
+            for (User user : interestedUsers) {
+                // 알림 전송 로직
+                notificationController.sendPriceChangeNotification(user.getUsername(), item.getTitle(), oldPrice, newPrice);
+            }
+        }
+    }
 }
