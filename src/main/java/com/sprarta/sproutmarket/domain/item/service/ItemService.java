@@ -253,15 +253,20 @@ public class ItemService {
      *      *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
-    public Page<ItemResponseDto> getCategoryItems(int page, int size, Long categoryId){
+    public Page<ItemResponseDto> getCategoryItems(int page, int size, Long categoryId, CustomUserDetails authUser){
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String area = user.getAddress();
         // 카테고리 존재 확인
         Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
 
+        // 반경 5km 행정동 이름 반환
+        List<String> areaList = admAreaService.findAdmNameListByAdmName(area);
+
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Item> items = itemRepository.findByCategory(pageable, findCategory);
+        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, findCategory.getId());
 
-        return items.map(item -> new ItemResponseDto(
+        return result.map(item -> new ItemResponseDto(
                 item.getId(),
                 item.getTitle(),
                 item.getDescription(),
