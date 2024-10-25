@@ -79,7 +79,7 @@ public class ItemController {
      * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제된 아이템에 대한 정보를 포함한 응답 객체
      */
-    @PutMapping("/{itemId}/report")
+    @DeleteMapping("/{itemId}/report")
     public ResponseEntity<ApiResponse<ItemResponse>> softRemoveReportedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));

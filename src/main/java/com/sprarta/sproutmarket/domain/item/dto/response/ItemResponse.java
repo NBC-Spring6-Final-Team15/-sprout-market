@@ -31,9 +31,10 @@ public class ItemResponse {
         this.nickname = nickname;
     }
 
-    public ItemResponse(String title, String description, Status status) {
+    public ItemResponse(String title, String description, int price, Status status) {
         this.title = title;
         this.description = description;
+        this.price = price;
         this.status = status;
     }
 

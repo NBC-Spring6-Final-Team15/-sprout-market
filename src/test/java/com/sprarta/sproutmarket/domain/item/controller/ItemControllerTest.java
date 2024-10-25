@@ -6,6 +6,7 @@ import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -97,6 +98,7 @@ class ItemControllerTest {
     private ItemController itemController;
 
     private Item mockItem;
+    private Category mockCategory;
 
     @BeforeEach // 테스트 전 수행
     void setUp() {
@@ -110,13 +112,20 @@ class ItemControllerTest {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
         // 인증 정보 설정(인증된 사용자 정보 사용O)
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        mockCategory = new Category("청소");
+
         // Mock Item 생성
         mockItem = Item.builder()
             .title("가짜 아이템")
+            .description("가짜 설명")
             .price(10000)
             .itemSaleStatus(ItemSaleStatus.WAITING)
             .seller(mockUser)
+            .category(mockCategory)
+            .status(Status.ACTIVE)
             .build();
+
         ReflectionTestUtils.setField(mockItem, "id", 1L);
 
         // 아이템을 반환하도록 Mock 설정
@@ -333,6 +342,52 @@ class ItemControllerTest {
                         fieldWithPath("data.nickname").description("삭제를 한 유저의 닉네임")
                     )
                     .responseSchema(Schema.schema("매물-삭제-성공-응답"))
+                    .build())
+            ));
+    }
+
+
+
+
+    @Test
+    @WithMockUser
+    void 관리자_신고매물_삭제_성공 () throws Exception {
+        // Given
+        ItemResponse itemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            mockItem.getDescription(),
+            mockItem.getPrice(),
+            Status.DELETED
+        );
+
+        given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
+
+        // When, Then
+        mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/report", mockItem.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
+            .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.description").value(itemResponse.getDescription()))  // 응답 검증
+            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
+            .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
+            .andDo(document("soft-delete-report-item",
+                resource(ResourceSnippetParameters.builder()
+                    .description("신고된 매물 삭제 API")
+                    .summary("관리자가 신고된 매물을 삭제합니다.")
+                    .tag("Items")
+                    .pathParameters(parameterWithName("itemId").description("삭제할 매물 ID"))
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("삭제된 매물의 제목"),
+                        fieldWithPath("data.description").description("삭제된 매물의 설명"),
+                        fieldWithPath("data.price").description("삭제된 매물의 가격"),
+                        fieldWithPath("data.status").description("삭제된 매물의 상태")
+                    )
+                    .responseSchema(Schema.schema("신고매물-삭제-성공-응답"))
                     .build())
             ));
     }
