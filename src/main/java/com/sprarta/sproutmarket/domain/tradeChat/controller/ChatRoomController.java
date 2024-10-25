@@ -7,12 +7,11 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class ChatRoomController {
 
@@ -32,9 +31,9 @@ public class ChatRoomController {
     // 채팅방 조회
     @GetMapping("/chatrooms/{chatroomId}")
     public ResponseEntity<ApiResponse<ChatRoomDto>> getChatRoom(
-            @PathVariable Long chatRoomId, @AuthenticationPrincipal CustomUserDetails authUser) {
+            @PathVariable Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(
-                chatRoomId, authUser);
+                chatroomId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(chatRoomDto));
     }
 
@@ -47,10 +46,10 @@ public class ChatRoomController {
     }
 
     // 채팅방 삭제
-    @DeleteMapping("/chatrooms/{chatRoomId}")
+    @DeleteMapping("/chatrooms/{chatroomId}")
     public ResponseEntity<ApiResponse<Void>> deleteChatRoom(
-            @PathVariable Long chatRoomId, @AuthenticationPrincipal CustomUserDetails authUser) {
-        chatRoomService.deleteChatRoom(chatRoomId, authUser);
+            @PathVariable Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
+        chatRoomService.deleteChatRoom(chatroomId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
