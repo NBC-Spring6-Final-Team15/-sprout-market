@@ -77,7 +77,7 @@ class AdministrativeAreaServiceTest {
                 .thenReturn(Optional.of(expectedAreaName));
 
         // when
-        administrativeAreaService.findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
+        administrativeAreaService.getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
 
         // then: 포인트 문자열이 예상한 대로 생성되었는지 검증
         String expectedPoint = String.format("POINT(%f %f)", requestDto.getLatitude(), requestDto.getLongitude());

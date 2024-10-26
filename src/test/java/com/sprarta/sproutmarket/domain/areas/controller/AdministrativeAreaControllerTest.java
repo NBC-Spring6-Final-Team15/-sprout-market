@@ -99,7 +99,7 @@ class AdministrativeAreaControllerTest {
         AdministrativeAreaRequestDto requestDto = new AdministrativeAreaRequestDto(126.927872, 37.523254);
         String returnString = "서울특별시 영등포구 여의동";
         when(administrativeAreaService
-                .findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
+                .getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
                 .thenReturn(returnString);
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/getHJD")
@@ -132,7 +132,7 @@ class AdministrativeAreaControllerTest {
                                 )
                         )
                 );
-        verify(administrativeAreaService, times(1)).findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
+        verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
         result.andExpect(status().isOk());
         result.andExpect(jsonPath("data").value(returnString));
         result.andExpect(jsonPath("statusCode").value(200));
@@ -147,7 +147,7 @@ class AdministrativeAreaControllerTest {
         String admNameDto2 = "경상남도 산청군 생초면";
         listResult.add(admNameDto1);
         listResult.add(admNameDto2);
-        given(administrativeAreaService.findAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
+        given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/getAreas")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(

@@ -288,7 +288,7 @@ public class ItemService {
         User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
         String myArea = currentUser.getAddress();
 
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
