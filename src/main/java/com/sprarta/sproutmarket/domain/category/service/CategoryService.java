@@ -52,7 +52,7 @@ public class CategoryService {
     //카테고리 수정
     @Transactional
     public CategoryResponseDto update(Long categoryId, CategoryRequestDto requestDto) {
-        Category category = categoryRepository.findById(categoryId).orElseThrow(
+        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
                 () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
 
         //수정될 이름과 현재 이름이 이미 같은지 확인
@@ -71,13 +71,8 @@ public class CategoryService {
      */
     @Transactional
     public void delete(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId).orElseThrow(
+        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
                 () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-
-        //이미 삭제된 카테고리인지 검증
-        if(category.getStatus().equals(Status.DELETED)) {
-            throw new ApiException(ErrorStatus.NOT_FOUND_CATEGORY);
-        }
 
         category.deactivate();
     }

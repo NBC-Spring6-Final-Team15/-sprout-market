@@ -53,11 +53,11 @@ class CategoryServiceTest {
     void 카테고리_수정_성공() {
         CategoryRequestDto requestDto = new CategoryRequestDto("가구");
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+        given(categoryRepository.findByIdAndStatusIsActive(1L)).willReturn(Optional.of(category));
 
         categoryService.update(1L,requestDto);
 
-        verify(categoryRepository,times(1)).findById(1L);
+        verify(categoryRepository,times(1)).findByIdAndStatusIsActive(1L);
         assertEquals(requestDto.getCategoryName(),category.getName());
     }
 
@@ -65,19 +65,19 @@ class CategoryServiceTest {
     void 카테고리_수정_실패__수정할_이름과_현재_이름이_같음() {
         CategoryRequestDto requestDto = new CategoryRequestDto("디지털");
 
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+        given(categoryRepository.findByIdAndStatusIsActive(1L)).willReturn(Optional.of(category));
 
         assertThrows(ApiException.class, () -> categoryService.update(1L,requestDto));
-        verify(categoryRepository,times(1)).findById(1L);
+        verify(categoryRepository,times(1)).findByIdAndStatusIsActive(1L);
     }
 
     @Test
     void 카테고리_삭제_성공() {
-        given(categoryRepository.findById(1L)).willReturn(Optional.of(category));
+        given(categoryRepository.findByIdAndStatusIsActive(1L)).willReturn(Optional.of(category));
 
         categoryService.delete(1L);
 
-        verify(categoryRepository, times(1)).findById(1L);
+        verify(categoryRepository, times(1)).findByIdAndStatusIsActive(1L);
         assertEquals(Status.DELETED, category.getStatus());
     }
 }
