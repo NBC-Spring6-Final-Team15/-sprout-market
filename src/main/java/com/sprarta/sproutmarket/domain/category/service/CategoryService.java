@@ -45,13 +45,16 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getActiveCategories() {
         List<Category> categories = categoryRepository.findAllByActiveStatus(Status.ACTIVE);
+
         return categories.stream().map(CategoryResponseDto::new).toList();
     }
 
     //카테고리 수정
     @Transactional
     public CategoryResponseDto update(Long categoryId, CategoryRequestDto requestDto) {
-        Category category = findByIdOrElseThrow(categoryId);
+        Category category = categoryRepository.findById(categoryId).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
+
         //수정될 이름과 현재 이름이 이미 같은지 확인
         if(category.getName().equals(requestDto.getCategoryName())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_SAME_NAME);
@@ -68,10 +71,11 @@ public class CategoryService {
      */
     @Transactional
     public void delete(Long categoryId) {
-        Category category = findByIdOrElseThrow(categoryId);
+        Category category = categoryRepository.findById(categoryId).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
 
         //이미 삭제된 카테고리인지 검증
-        if(category.getActiveStatus().equals(Status.DELETED)) {
+        if(category.getStatus().equals(Status.DELETED)) {
             throw new ApiException(ErrorStatus.NOT_FOUND_CATEGORY);
         }
 
