@@ -40,20 +40,7 @@ class AdministrativeAreaServiceTest {
     void 정상적으로_geojson_파일이_객체로_변환돼서_DB에_접근하는지_확인 () throws IOException {
         //given
         String filePath = "test.geojson";
-
-        FeatureCollection featureCollection = new FeatureCollection();
-        Feature feature = new Feature();
-        MultiPolygon multiPolygon = new MultiPolygon();
-
-        feature.setGeometry(multiPolygon);
-        feature.setProperty("adm_nm", "어쩌구시 어쩌구 어쩌구동");
-        feature.setProperty("adm_cd2", "1111053000");
-        feature.setProperty("sgg", "11110");
-        feature.setProperty("sido", "11");
-        feature.setProperty("sidonm", "어쩌구시");
-        feature.setProperty("sggnm", "어쩌구");
-        feature.setProperty("adm_cd", "11010530");
-        featureCollection.setFeatures(Collections.singletonList(feature));
+        FeatureCollection featureCollection = getFeatures();
 
         // objectMapper.readValue가 호출될 때 featureCollection을 반환하도록 설정
         when(objectMapper.readValue(any(File.class), eq(FeatureCollection.class)))
@@ -64,6 +51,22 @@ class AdministrativeAreaServiceTest {
 
         // then
         verify(administrativeAreaRepository, times(1)).saveAll(anyList());
+    }
+
+    private static FeatureCollection getFeatures() {
+        FeatureCollection featureCollection = new FeatureCollection();
+        Feature feature = new Feature();
+        MultiPolygon multiPolygon = new MultiPolygon();
+        feature.setGeometry(multiPolygon);
+        feature.setProperty("adm_nm", "어쩌구시 어쩌구 어쩌구동");
+        feature.setProperty("adm_cd2", "1111053000");
+        feature.setProperty("sgg", "11110");
+        feature.setProperty("sido", "11");
+        feature.setProperty("sidonm", "어쩌구시");
+        feature.setProperty("sggnm", "어쩌구");
+        feature.setProperty("adm_cd", "11010530");
+        featureCollection.setFeatures(Collections.singletonList(feature));
+        return featureCollection;
     }
 
     @Test

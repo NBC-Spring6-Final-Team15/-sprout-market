@@ -38,7 +38,7 @@ public class AdministrativeAreaService {
         File file = new File(filePath);
         FeatureCollection featureCollection = objectMapper.readValue(file, FeatureCollection.class);
 
-        List<AdministrativeArea> areas = new ArrayList<>();
+        List<AdministrativeArea> areaList = new ArrayList<>();
         for (Feature feature : featureCollection.getFeatures()) {
             String admNm = feature.getProperties().get("adm_nm").toString();
             String admCd2 = feature.getProperties().get("adm_cd2").toString();
@@ -70,11 +70,11 @@ public class AdministrativeAreaService {
                     .admCenter(centroid)
                     .build();
 
-            areas.add(area);
+            areaList.add(area);
         }
 
         //데이터 저장
-        administrativeAreaRepository.saveAll(areas);
+        administrativeAreaRepository.saveAll(areaList);
     }
 
     /**

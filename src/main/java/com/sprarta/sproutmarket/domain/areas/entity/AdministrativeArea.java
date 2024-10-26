@@ -6,10 +6,7 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "administrative_areas")
 public class AdministrativeArea {
@@ -43,4 +40,18 @@ public class AdministrativeArea {
 
     @Column(name = "adm_center", columnDefinition = "POINT NOT NULL")
     private Point admCenter;
+
+    @Builder
+    public AdministrativeArea(String admNm, String admCd2, String sgg, String sido, String sidonm,
+                              String sggnm, String admCd, MultiPolygon geometry, Point admCenter) {
+        this.admNm = admNm;
+        this.admCd2 = admCd2;
+        this.sgg = sgg;
+        this.sido = sido;
+        this.sidonm = sidonm;
+        this.sggnm = sggnm;
+        this.admCd = admCd;
+        this.geometry = geometry;
+        this.admCenter = admCenter;
+    }
 }
