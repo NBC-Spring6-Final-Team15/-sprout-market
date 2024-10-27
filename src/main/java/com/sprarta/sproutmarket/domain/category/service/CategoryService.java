@@ -41,10 +41,10 @@ public class CategoryService {
         return new CategoryResponseDto(category.getId(),category.getName());
     }
 
-    //카테고리 전체 조회
+    //활성 상태인 카테고리 전체 조회
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getActiveCategories() {
-        List<Category> categories = categoryRepository.findAllByActiveStatus(Status.ACTIVE);
+        List<Category> categories = categoryRepository.findAllByStatus(Status.ACTIVE);
 
         return categories.stream().map(CategoryResponseDto::new).toList();
     }

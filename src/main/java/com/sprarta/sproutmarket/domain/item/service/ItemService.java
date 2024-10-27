@@ -259,7 +259,7 @@ public class ItemService {
         Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(area);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
 
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
 

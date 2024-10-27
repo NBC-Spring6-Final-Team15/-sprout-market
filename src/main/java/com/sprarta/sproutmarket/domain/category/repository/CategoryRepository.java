@@ -14,8 +14,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     boolean existsByName(@NotBlank String categoryName);
 
-    List<Category> findAllByActiveStatus(Status activeStatus);
+    List<Category> findAllByStatus(Status status);
 
-    @Query("SELECT c FROM Category c where c.id = :categoryid AND c.status = 'ACTIVE'")
+    @Query("SELECT c FROM Category c where c.id = :categoryId AND c.status = 'ACTIVE'")
     Optional<Category> findByIdAndStatusIsActive(@Param("categoryId") Long categoryId);
 }
