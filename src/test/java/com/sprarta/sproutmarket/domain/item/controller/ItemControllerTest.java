@@ -390,8 +390,6 @@ class ItemControllerTest {
     @WithMockUser // 인증된 사용자로 테스트
     void 나의_모든_매물_조회_성공() throws Exception {
         // Given
-        int page = 1;
-        int size = 10;
         //페이지 직접 만들어주기
         FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1,10);
         List<ItemResponseDto> dtoList = new ArrayList<>();
@@ -522,7 +520,6 @@ class ItemControllerTest {
     @Test
     @WithMockUser
     void 매물_판매상태_변경_성공() throws Exception {
-        ItemSaleStatus saleStatus = ItemSaleStatus.SOLD;
         String SsaleStatus = ItemSaleStatus.SOLD.toString();
 
         // Given

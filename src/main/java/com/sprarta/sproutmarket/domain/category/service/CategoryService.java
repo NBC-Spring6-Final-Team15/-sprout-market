@@ -67,7 +67,6 @@ public class CategoryService {
     /**
      * 카테고리 논리삭제
      * @param categoryId 삭제처리할 카테고리 ID
-     * @return : 삭제된 카테고리 ID, 이름을 담은 String
      */
     @Transactional
     public void delete(Long categoryId) {
