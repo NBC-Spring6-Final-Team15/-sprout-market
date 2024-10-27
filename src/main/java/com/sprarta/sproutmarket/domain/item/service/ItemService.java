@@ -6,7 +6,6 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -15,7 +14,6 @@ import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
-import com.sprarta.sproutmarket.domain.notification.controller.NotificationController;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -36,8 +34,6 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final CategoryService categoryService;
-    private final NotificationController notificationController;
-    private final InterestedItemService interestedItemService;
     private final AdministrativeAreaService admAreaService;
 
     /**
@@ -331,22 +327,5 @@ public class ItemService {
     public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
         return itemRepository.findByIdAndSellerId(itemId, sellerId)
             .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
-    }
-
-    @Transactional
-    public void notifyPriceChange(Long itemId, int newPrice) {
-        // Item 정보를 가져와서 가격 비교
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-        int oldPrice = item.getPrice();
-
-        if (newPrice != oldPrice) {
-            // 관심 목록에 있는 모든 사용자에게 알림 전송
-            List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
-            for (User user : interestedUsers) {
-                // 알림 전송 로직
-                notificationController.sendPriceChangeNotification(user.getUsername(), item.getTitle(), oldPrice, newPrice);
-            }
-        }
     }
 }
