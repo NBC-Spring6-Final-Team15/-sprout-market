@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
@@ -16,6 +17,8 @@ import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.junit.jupiter.api.BeforeEach;
+
+import static org.assertj.core.api.ClassBasedNavigableIterableAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.Test;
@@ -29,20 +32,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ItemServiceTest {
-
-    // 가짜 객체 사용
     @Mock
     private ItemRepository itemRepository;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private CategoryService categoryService;
-
     @InjectMocks
     private ItemService itemService;
-
     private User mockUser;
     private Category mockCategory1;
     private Category mockCategory2;
@@ -62,7 +59,7 @@ public class ItemServiceTest {
             "Mock1234!",
             "오만한천원",
             "01012341234",
-            "서울시 노원구 공릉동",
+            "서울시 관악구 신림동",
             UserRole.USER
         );
         ReflectionTestUtils.setField(mockUser, "id", 1L);
@@ -135,32 +132,46 @@ public class ItemServiceTest {
         assertEquals("오만한천원", itemResponse.getNickname());
     }
 
-//    @Test
-//    void 매물_판매상태_변경_성공() {
-//        // Given
-//        String newSaleStatus = "SOLD";
-//
-//        // userRepository에서 mockUser를 반환하도록 설정
-//        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-//
-//        // itemRepository에서 mockItem2를 반환하도록 설정
-//        when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
-//
-//        // findByIdAndSellerIdOrElseThrow 메서드가 mockItem2를 반환하도록 설정
-//        when(itemService.findByIdAndSellerIdOrElseThrow(mockItem2.getId(), mockUser.getId())).thenReturn(mockItem2);
-//
-//        // save 메서드 호출 시 mockItem2를 반환하도록 설정
-//        when(itemRepository.save(any(Item.class))).thenReturn(mockItem2);
-//
-//        // When
-//        ItemResponse itemResponse = itemService.updateSaleStatus(mockItem2.getId(), newSaleStatus, authUser);
-//
-//        // Then
-//        assertEquals("가짜 매물2", itemResponse.getTitle());
-//        assertEquals(3000, itemResponse.getPrice());
-//        assertEquals(ItemSaleStatus.SOLD, itemResponse.getItemSaleStatus());
-//        assertEquals("오만한천원", itemResponse.getNickname());
-//    }
+    @Test
+    void 매물_판매상태_변경_성공() {
+        // Given
+        String newSaleStatus = "SOLD";
+
+        // userRepository에서 mockUser를 반환하도록 설정
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        // itemRepository에서 mockItem2를 반환하도록 설정
+        when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
+        // findByIdAndSellerIdOrElseThrow 메서드가 mockItem2를 반환하도록 설정
+        when(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem2.getId(), mockUser)).thenReturn(mockItem2);
+
+        // When
+        ItemResponse itemResponse = itemService.updateSaleStatus(mockItem2.getId(), newSaleStatus, authUser);
+
+        // Then
+        assertEquals("가짜 매물2", itemResponse.getTitle());
+        assertEquals(3000, itemResponse.getPrice());
+        assertEquals(ItemSaleStatus.SOLD, itemResponse.getItemSaleStatus());
+        assertEquals("오만한천원", itemResponse.getNickname());
+    }
+
+    @Test
+    void 사용자_자신_매물_삭제_성공(){
+        // Given
+        // userRepository에서 mockUser를 반환하도록 설정
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        // findByIdAndSellerIdOrElseThrow 메서드가 mockItem2를 반환하도록 설정
+        when(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem1.getId(), mockUser)).thenReturn(mockItem1);
+
+        // When
+        ItemResponse itemResponse = itemService.softDeleteItem(mockItem1.getId(), authUser);
+
+        // Then
+        assertEquals("가짜 매물1", itemResponse.getTitle());
+        assertEquals(10000, itemResponse.getPrice());
+        assertEquals(Status.DELETED, itemResponse.getStatus());
+        assertEquals("오만한천원", itemResponse.getNickname());
+    }
+
 
 
 
