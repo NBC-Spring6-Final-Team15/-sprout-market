@@ -29,8 +29,8 @@ public class ItemController {
      * @param authUser 매물 등록을 요청한 사용자
      * @return ApiResponse - 생성된 아이템에 대한 메세지, 상태 코드를 포함한 응답 객체
      */
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<ItemResponse>> createItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
+    @PostMapping
+    public ResponseEntity<ApiResponse<ItemResponse>> addItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
@@ -42,7 +42,7 @@ public class ItemController {
      * @param authUser 매물 판매 상태 수정을 요청한 사용자
      * @return ApiResponse - 판매상태가 수정된 아이템에 대한 메세지, 상태 코드를 포함한 응답 객체
      */
-    @PostMapping("/{itemId}/update/sale-status")
+    @PutMapping("/{itemId}/sale-status")
     public ResponseEntity<ApiResponse<ItemResponse>> updateItemSaleStatus(@PathVariable Long itemId, @RequestParam String saleStatus, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.updateSaleStatus(itemId, saleStatus, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
@@ -55,8 +55,8 @@ public class ItemController {
      * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 내용이 수정된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
      */
-    @PostMapping("/{itemId}/update/contents")
-    public ResponseEntity<ApiResponse<ItemResponse>> updateContents(@PathVariable Long itemId, @RequestBody ItemContentsUpdateRequest itemContentsUpdateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
+    @PutMapping("/{itemId}/contents")
+    public ResponseEntity<ApiResponse<ItemResponse>> updateContent(@PathVariable Long itemId, @RequestBody ItemContentsUpdateRequest itemContentsUpdateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.updateContents(itemId, itemContentsUpdateRequest, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
@@ -67,8 +67,8 @@ public class ItemController {
      * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제한 아이템에 대한 정보를 포함한 응답 객체
      */
-    @PostMapping("/{itemId}/delete")
-    public ResponseEntity<ApiResponse<ItemResponse>> solfDeleteItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<ApiResponse<ItemResponse>> softRemoveItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.softDeleteItem(itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
@@ -79,8 +79,8 @@ public class ItemController {
      * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제된 아이템에 대한 정보를 포함한 응답 객체
      */
-    @PostMapping("/{itemId}/report")
-    public ResponseEntity<ApiResponse<ItemResponse>> softDeleteReportedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+    @DeleteMapping("/{itemId}/report")
+    public ResponseEntity<ApiResponse<ItemResponse>> softRemoveReportedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
@@ -91,7 +91,7 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 아이템의 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/{itemId}")
-    public ResponseEntity<ApiResponse<ItemResponseDto>> getItem(@PathVariable Long itemId){
+    public ResponseEntity<ApiResponse<ItemResponseDto>> findItem(@PathVariable Long itemId){
         ItemResponseDto itemResponseDto = itemService.getItem(itemId);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
@@ -104,25 +104,25 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 로그인한 사용자의 모든 매물 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/mine")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getMyItems(@RequestParam(defaultValue = "1") int page,
-                                                                   @RequestParam(defaultValue = "10") int size,
-                                                                   @AuthenticationPrincipal CustomUserDetails authUser){
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> findMyItems(@RequestParam(name = "page", defaultValue = "1") int page,
+                                                                          @RequestParam(name = "size", defaultValue = "10") int size,
+                                                                          @AuthenticationPrincipal CustomUserDetails authUser){
         Page<ItemResponseDto> itemResponseDto = itemService.getMyItems(page, size, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
     /**
      * 특정 카테고리에 모든 매물을 조회
-     * @param page 페이지 번호(1부터 시작)
-     * @param size 페이지당 카드 수
+     * @param requestDto 페이지 번호와 페이지당 매물 수를 포함하는 요청 객체
      * @param categoryId Category's ID
+     * @param authUser 현재 인증된 사용자 정보
      * @return ApiResponse - 메세지, 상태 코드, 특정 카테고리에 속하는 모든 매물 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(defaultValue = "1") int page,
-                                                                         @RequestParam(defaultValue = "10") int size,
-                                                                         @PathVariable Long categoryId){
-        Page<ItemResponseDto> itemResponseDto = itemService.getCategoryItems(page, size, categoryId);
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestBody @Valid FindItemsInMyAreaRequestDto requestDto,
+                                                                               @PathVariable Long categoryId,
+                                                                               @AuthenticationPrincipal CustomUserDetails authUser){
+        Page<ItemResponseDto> itemResponseDto = itemService.getCategoryItems(requestDto, categoryId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
@@ -131,7 +131,7 @@ public class ItemController {
      */
     @GetMapping("/myAreas")
     public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getMyAreasItems(@RequestBody @Valid FindItemsInMyAreaRequestDto requestDto,
-                                                                   @AuthenticationPrincipal CustomUserDetails authUser) {
+                                                                              @AuthenticationPrincipal CustomUserDetails authUser) {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemService.findItemsByMyArea(authUser, requestDto)));
     }
 

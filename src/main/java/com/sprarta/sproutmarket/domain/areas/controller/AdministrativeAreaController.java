@@ -1,6 +1,5 @@
 package com.sprarta.sproutmarket.domain.areas.controller;
 
-import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
@@ -43,7 +42,7 @@ public class AdministrativeAreaController {
         return ResponseEntity.ok
                 (ApiResponse.onSuccess(
                         administrativeAreaService.
-                                findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude())));
+                                getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude())));
     }
 
 
@@ -54,7 +53,7 @@ public class AdministrativeAreaController {
      */
     @GetMapping("/test/getAreas")
     public ResponseEntity<ApiResponse<List<String>>> getAreas(@RequestParam String admNm) {
-        List<String> areas = administrativeAreaService.findAdmNameListByAdmName(admNm);
+        List<String> areas = administrativeAreaService.getAdmNameListByAdmName(admNm);
         return ResponseEntity.ok(ApiResponse.onSuccess(areas));
     }
 }

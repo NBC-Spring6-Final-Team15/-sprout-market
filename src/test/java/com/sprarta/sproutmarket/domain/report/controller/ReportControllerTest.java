@@ -3,9 +3,7 @@ package com.sprarta.sproutmarket.domain.report.controller;
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.report.dto.ReportRequestDto;
 import com.sprarta.sproutmarket.domain.report.dto.ReportResponseDto;
 import com.sprarta.sproutmarket.domain.report.enums.ReportStatus;
@@ -13,23 +11,17 @@ import com.sprarta.sproutmarket.domain.report.service.ReportService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -45,30 +37,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReportController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureRestDocs
 @AutoConfigureMockMvc(addFilters = false)
-class ReportControllerTest {
-    @Autowired
-    MockMvc mockMvc;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
+class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     ReportService reportService;
-
-    @MockBean
-    JwtUtil jwtUtil;
-
-    @MockBean
-    CustomUserDetailService customUserDetailService;
-
-    @MockBean
-    JpaMetamodelMappingContext jpaMappingContext;
-
-    @MockBean
-    CustomUserDetails mockAuthUser;
 
     Long itemId;
     String reportingReason;
@@ -92,7 +64,7 @@ class ReportControllerTest {
 
     @Test
     @WithMockUser
-    void createReport() throws Exception {
+    void 신고_생성_성공() throws Exception {
         //given
         when(reportService.createReport(anyLong(), any(ReportRequestDto.class), any(CustomUserDetails.class)))
                 .thenReturn(responseDto);
@@ -148,7 +120,7 @@ class ReportControllerTest {
 
     @Test
     @WithMockUser
-    void getReport() throws Exception {
+    void 신고_단건_조회_성공() throws Exception {
         Long reportId = 1L;
         when(reportService.getReport(anyLong())).thenReturn(responseDto);
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/reports/{reportId}", reportId)
@@ -194,7 +166,7 @@ class ReportControllerTest {
 
     @Test
     @WithMockUser
-    void getReports() throws Exception {
+    void 신고_다건_조회_성공() throws Exception {
         ReportResponseDto responseDto2 = new ReportResponseDto(2L, 1L, "직거래 약속 잡았는데 안 나와요", ReportStatus.WAITING);
         List<ReportResponseDto> responseDtoList = new ArrayList<>();
         responseDtoList.add(responseDto);
@@ -243,7 +215,7 @@ class ReportControllerTest {
 
     @Test
     @WithMockUser
-    void updateReport() throws Exception {
+    void 신고_수정_성공() throws Exception {
         //given
         Long reportId = 1L;
         when(reportService.updateReport(anyLong(), any(ReportRequestDto.class), any(CustomUserDetails.class)))
@@ -300,7 +272,7 @@ class ReportControllerTest {
 
     @Test
     @WithMockUser
-    void deleteReport() throws Exception {
+    void 신고_삭제_성공() throws Exception {
         //given
         Long reportId = 1L;
         doNothing().when(reportService).deleteReport(anyLong(),any(CustomUserDetails.class));

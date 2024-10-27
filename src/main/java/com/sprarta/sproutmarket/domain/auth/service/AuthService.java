@@ -37,7 +37,7 @@ public class AuthService {
         UserRole userRole = UserRole.of(request.getUserRole());
 
         // 위도와 경도를 이용해 행정구역 조회
-        String address = administrativeAreaService.findAdministrativeAreaByCoordinates(request.getLongitude(), request.getLatitude());
+        String address = administrativeAreaService.getAdministrativeAreaByCoordinates(request.getLongitude(), request.getLatitude());
 
         User newUser = new User(
                 request.getUsername(),
