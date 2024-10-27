@@ -2,7 +2,6 @@ package com.sprarta.sproutmarket.domain.review.controller;
 
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
-import com.sprarta.sproutmarket.domain.report.dto.ReportResponseDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.service.ReviewService;
@@ -43,7 +42,7 @@ public class ReviewController {
     }
 
     // 유저 리뷰 전체 조회
-    @GetMapping("/reviews/{userId}")
+    @GetMapping("/reviews/users/{userId}")
     public ResponseEntity<ApiResponse<List<ReviewResponseDto>>> getReviews(
             @PathVariable Long userId
     ) {

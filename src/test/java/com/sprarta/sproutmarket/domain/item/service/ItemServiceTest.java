@@ -68,8 +68,8 @@ public class ItemServiceTest {
         ReflectionTestUtils.setField(mockUser, "id", 1L);
 
         // 가짜 카테고리 생성
-        mockCategory1 = new Category(1L, "생활");
-        mockCategory2 = new Category(2L, "가구");
+        mockCategory1 = new Category(1L, "생활", Status.ACTIVE);
+        mockCategory2 = new Category(2L, "가구", Status.ACTIVE);
 
         // 가짜 매물 생성
         mockItem1 = Item.builder()

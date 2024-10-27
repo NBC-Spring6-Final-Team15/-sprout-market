@@ -1,11 +1,7 @@
 package com.sprarta.sproutmarket.domain.review.service;
 
 
-import com.sprarta.sproutmarket.domain.category.entity.Category;
-import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
-import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
-import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
@@ -16,7 +12,6 @@ import com.sprarta.sproutmarket.domain.trade.entity.Trade;
 import com.sprarta.sproutmarket.domain.trade.repository.TradeRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
-import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 

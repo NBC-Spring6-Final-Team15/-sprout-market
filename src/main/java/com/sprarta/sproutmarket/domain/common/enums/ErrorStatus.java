@@ -32,10 +32,13 @@ public enum ErrorStatus implements BaseCode {
     // Item
     NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, 404, "존재하지 않는 아이템입니다."),
     FORBIDDEN_NOT_OWNED_ITEM(HttpStatus.FORBIDDEN, 403, "해당 매물은 로그인한 사용자의 매물이 아닙니다."),
+    FORBIDDEN_NOT_SELLER(HttpStatus.FORBIDDEN, 403, "해당 물건의 판매자가 아닙니다."),
     NOT_FOUND_ITEM_SALE_STATUS(HttpStatus.NOT_FOUND, 404, "존재하지 않는 판매상태입니다."),
 
     // Category
     NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, 404, "존재하지 않는 카테고리입니다."),
+    BAD_REQUEST_ALREADY_EXISTS_CATETORY(HttpStatus.BAD_REQUEST, 400, "해당 카테고리는 이미 존재합니다."),
+    BAD_REQUEST_SAME_NAME(HttpStatus.BAD_REQUEST,400,"이미 해당 카테고리 이름이 수정 요청된 이름과 같습니다."),
 
     // review 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, 404, "해당 리뷰를 찾을 수 없습니다."),
@@ -49,9 +52,20 @@ public enum ErrorStatus implements BaseCode {
 
     // trade 예외
     NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
+    BAD_REQUEST_CONFLICT_TRADE_RESERVATION(HttpStatus.CONFLICT, 400, "이미 물건이 예약됐습니다."),
+    BAD_REQUEST_CONFLICT_TRADE(HttpStatus.CONFLICT, 400, "이미 물건이 거래됐습니다."),
+
+    // tradeChat 예외
+    NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, 404, "해당 채팅방을 찾을 수 없습니다."),
+    FORBIDDEN_NOT_OWNED_CHATROOM(HttpStatus.FORBIDDEN, 403, "해당 채팅방은 로그인한 사용자의 채팅방이 아닙니다."),
+    FORBIDDEN_CHATROOM_CREATE(HttpStatus.FORBIDDEN,403,"생성할 수 있는 권한이 없습니다."),
+    CONFLICT_CHATROOM(HttpStatus.CONFLICT, 409, "이미 존재하는 채팅방입니다."),
+
 
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
+
+    NOT_FOUND_ADMINISTRATIVE_AREA(HttpStatus.NOT_FOUND,404,"해당 좌표로 행정구역을 찾을 수 없습니다.")
 
     ;
 

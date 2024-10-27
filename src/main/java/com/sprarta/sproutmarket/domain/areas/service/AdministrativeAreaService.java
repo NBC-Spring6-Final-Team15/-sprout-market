@@ -1,8 +1,11 @@
 package com.sprarta.sproutmarket.domain.areas.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.areas.entity.AdministrativeArea;
 import com.sprarta.sproutmarket.domain.areas.repository.AdministrativeAreaRepository;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.geojson.Feature;
@@ -53,6 +56,9 @@ public class AdministrativeAreaService {
             // SRID 설정 (경도,위도 정보로 DB 조회할 수 있게 설정하는 ID)
             jtsMultiPolygon.setSRID(4326);
 
+            Point centroid = jtsMultiPolygon.getCentroid();
+            centroid.setSRID(4326);
+
             //엔티티 생성
             AdministrativeArea area = AdministrativeArea.builder()
                     .admNm(admNm)
@@ -63,6 +69,7 @@ public class AdministrativeAreaService {
                     .sggnm(sggnm)
                     .admCd(admCd)
                     .geometry(jtsMultiPolygon)  // WKT 형식의 문자열을 저장합니다.
+                    .admCenter(centroid)
                     .build();
 
             areas.add(area);
@@ -128,7 +135,21 @@ public class AdministrativeAreaService {
      */
     public String findAdministrativeAreaByCoordinates(double longitude, double latitude) {
         String point = String.format("POINT(%f %f)",latitude, longitude);
-        return administrativeAreaRepository.findAdministrativeAreaByPoint(point);
+        return administrativeAreaRepository.findAdministrativeAreaByPoint(point).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_ADMINISTRATIVE_AREA)
+        );
+    }
+
+    /**
+     * 특정 행정동 이름으로 주변 5km에 있는 행정동 이름 리스트를 반환합니다.
+     * @param admNm : 행정동 이름 (예시 : 부산광역시 남구 대연1동)
+     * @return : 주변 5km 행정동 이름 AdmNameDto 리스트 (예시 admName : 부산광역시 남구 용당동 << 들어있는 리스트)
+     */
+    public List<String> findAdmNameListByAdmName(String admNm) {
+        AdministrativeArea foundArea = administrativeAreaRepository.findByAdmNm(admNm).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_ADMINISTRATIVE_AREA)
+        );
+        return administrativeAreaRepository.findAdministrativeAreasByAdmCenter(foundArea.getAdmCenter());
     }
 
 }
