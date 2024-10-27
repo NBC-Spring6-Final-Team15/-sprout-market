@@ -33,8 +33,13 @@ public class TradeService {
     public TradeResponseDto reserveTrade(Long itemId, TradeRequestDto dto, CustomUserDetails customUserDetails) {
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-        if (item.getItemSaleStatus()!=ItemSaleStatus.WAITING) {
-            throw new ApiException(ErrorStatus.CONFLICT_TRADE);
+
+        if (item.getItemSaleStatus()==ItemSaleStatus.RESERVED) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_CONFLICT_TRADE_RESERVATION);
+        }
+
+        if (item.getItemSaleStatus()==ItemSaleStatus.SOLD) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_CONFLICT_TRADE);
         }
 
         item.changeSaleStatus(ItemSaleStatus.RESERVED);
