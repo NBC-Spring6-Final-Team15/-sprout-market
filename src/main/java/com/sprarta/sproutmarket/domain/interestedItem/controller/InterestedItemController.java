@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.interestedItem;
+package com.sprarta.sproutmarket.domain.interestedItem.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
