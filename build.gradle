@@ -37,12 +37,16 @@ jacocoTestReport {
 jacocoTestCoverageVerification {
     violationRules {
         rule {
+            // 줄 % 기준으로 커버리지 설정
             limit {
-                minimum = 0.3  // 커버리지 최소 기준 80%
+                counter = 'LINE' // 커버리지 기준을 줄(Line)로 설정
+                value = 'COVEREDRATIO' // 커버리지가 충족되어야 할 비율로 설정
+                minimum = 0.3 // 최소 기준 30% 설정
             }
         }
     }
 }
+
 
 test {
     finalizedBy jacocoTestReport  // 테스트 후 커버리지 리포트 생성
