@@ -42,8 +42,9 @@ public enum ErrorStatus implements BaseCode {
 
     // review 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, 404, "해당 리뷰를 찾을 수 없습니다."),
-    FORBIDDEN_REVIEW_UPDATE(HttpStatus.FORBIDDEN,403,"수정할 수 있는 권한이 없습니다."),
-    FORBIDDEN_REVIEW_DELETE(HttpStatus.FORBIDDEN,403,"삭제할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_CREATE(HttpStatus.FORBIDDEN,403,"리뷰를 생성할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_UPDATE(HttpStatus.FORBIDDEN,403,"리뷰를 수정할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_DELETE(HttpStatus.FORBIDDEN,403,"리뷰를 삭제할 수 있는 권한이 없습니다."),
 
     // report 예외,
     NOT_FOUND_REPORT(HttpStatus.NOT_FOUND, 404, "해당 신고를 찾을 수 없습니다."),

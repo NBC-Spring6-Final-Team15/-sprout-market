@@ -51,7 +51,7 @@ public class User extends Timestamped {
 //    @JoinColumn(name = "activity_address_id")
 //    private ActivityArea activityAddress;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "seller", fetch = FetchType.LAZY)
     private List<Review> reviews;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
