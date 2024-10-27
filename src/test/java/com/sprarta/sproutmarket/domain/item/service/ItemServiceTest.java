@@ -1,10 +1,12 @@
 package com.sprarta.sproutmarket.domain.item.service;
 
+import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
@@ -16,10 +18,9 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
-import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.junit.jupiter.api.BeforeEach;
 
-import static org.assertj.core.api.ClassBasedNavigableIterableAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,8 @@ public class ItemServiceTest {
     private UserRepository userRepository;
     @Mock
     private CategoryService categoryService;
+    @Mock
+    private AdministrativeAreaService admAreaService;
     @InjectMocks
     private ItemService itemService;
     private User mockUser;
@@ -53,6 +56,7 @@ public class ItemServiceTest {
     private Item mockItem2;
     private CustomUserDetails authUser;
     private CustomUserDetails authAdmin;
+    private FindItemsInMyAreaRequestDto requestDto;
 
     @BeforeEach // 코드 실행 전 작동 + 테스트 환경 초기화
     void setup(){
@@ -109,6 +113,8 @@ public class ItemServiceTest {
             .status(Status.ACTIVE)
             .build();
         ReflectionTestUtils.setField(mockItem2, "id", 2L);
+
+        requestDto = new FindItemsInMyAreaRequestDto(1, 10);
 
         // CustomUserDetails(사용자 정보) 모킹 => 로그인된 사용자의 정보 모킹
         authUser = mock(CustomUserDetails.class);
@@ -174,6 +180,29 @@ public class ItemServiceTest {
     }
 
     @Test
+    void 매물_내용_변경_성공() {
+        // Given
+        ItemContentsUpdateRequest contentsUpdateRequest = new ItemContentsUpdateRequest(
+            "변경된 제목",
+            "변경된 설명",
+            5000,
+            ""
+        );
+
+        // userRepository에서 mockUser를 반환하도록 설정
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        // findByIdAndSellerIdOrElseThrow 메서드가 mockItem2를 반환하도록 설정
+        when(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem2.getId(), mockUser)).thenReturn(mockItem2);
+
+        // When
+        ItemResponse itemResponse = itemService.updateContents(mockItem2.getId(), contentsUpdateRequest, authUser);
+
+        // Then
+        assertEquals("변경된 제목", itemResponse.getTitle());
+        assertEquals(5000, itemResponse.getPrice());
+    }
+
+    @Test
     void 사용자_자신_매물_논리적_삭제_성공(){
         // Given
         // userRepository에서 mockUser를 반환하도록 설정
@@ -213,76 +242,96 @@ public class ItemServiceTest {
         assertEquals(Status.DELETED, result.getStatus());
     }
 
+    @Test
+    void 관리자_신고매물_논리적_삭제_실패_권한없음() {
+        // Given
+        when(userRepository.findById(mockAdmin.getId())).thenReturn(Optional.of(mockAdmin));
+        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
 
-//    @Test
-//    void getItem_성공() {
-//        // Given
-//        when(itemRepository.findByIdOrElseThrow(mockItem.getId())).thenReturn(mockItem);
-//
-//        // When
-//        ItemResponseDto result = itemService.getItem(mockItem.getId());
-//
-//        // Then
-//        assertEquals(mockItem.getId(), result.getId());
-//        assertEquals("가짜 매물1", result.getTitle());
-//        assertEquals(10000, result.getPrice());
-//        assertEquals("오만한천원", result.getNickname());
-//        assertEquals("가전제품", result.getCategoryName());
-//    }
-//
-//    @Test
-//    void getMyItems_성공() {
-//        // Given
-//        PageRequest pageable = PageRequest.of(0, 10);
-//        Page<Item> pageResult = new PageImpl<>(List.of(mockItem), pageable, 1);
-//
-//        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-//        when(itemRepository.findBySeller(pageable, mockUser)).thenReturn(pageResult);
-//
-//        // When
-//        Page<ItemResponseDto> result = itemService.getMyItems(1, 10, authUser);
-//
-//        // Then
-//        assertEquals(1, result.getTotalElements());
-//        assertThat(result.getContent().get(0), hasProperty("title", equalTo("가짜 매물1")));
-//    }
-//
-//    @Test
-//    void getCategoryItems_성공() {
-//        // Given
-//        PageRequest pageable = PageRequest.of(0, 10);
-//        Page<Item> pageResult = new PageImpl<>(List.of(mockItem), pageable, 1);
-//
-//        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-//        when(categoryService.findByIdOrElseThrow(mockCategory.getId())).thenReturn(mockCategory);
-//        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("강남구"));
-//        when(itemRepository.findItemByAreaAndCategory(pageable, List.of("강남구"), mockCategory.getId())).thenReturn(pageResult);
-//
-//        // When
-//        Page<ItemResponseDto> result = itemService.getCategoryItems(requestDto, mockCategory.getId(), authUser);
-//
-//        // Then
-//        assertEquals(1, result.getTotalElements());
-//        assertThat(result.getContent().get(0), hasProperty("categoryName", equalTo("가전제품")));
-//    }
-//
-//    @Test
-//    void findItemsByMyArea_성공() {
-//        // Given
-//        PageRequest pageable = PageRequest.of(0, 10);
-//        Page<Item> pageResult = new PageImpl<>(List.of(mockItem), pageable, 1);
-//
-//        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-//        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("강남구"));
-//        when(itemRepository.findByAreaListAndUserArea(pageable, List.of("강남구"))).thenReturn(pageResult);
-//
-//        // When
-//        Page<ItemResponseDto> result = itemService.findItemsByMyArea(authUser, requestDto);
-//
-//        // Then
-//        assertEquals(1, result.getTotalElements());
-//        assertThat(result.getContent().get(0), hasProperty("title", equalTo("가짜 매물1")));
-//    }
+        // CustomUserDetails(사용자 정보) 모킹 => 로그인된 사용자의 정보 모킹
+        authAdmin = mock(CustomUserDetails.class);
+        when(authAdmin.getId()).thenReturn(mockAdmin.getId()); // authUser의 ID를 mockUser의 ID로 설정
+        when(authAdmin.getEmail()).thenReturn(mockAdmin.getEmail());
+        when(authAdmin.getRole()).thenReturn(UserRole.USER); // ADMIN이 아닌 다른 역할 설정
+
+        // When & Then
+        ApiException thrown = assertThrows(ApiException.class, () -> {
+            itemService.softDeleteReportedItem(mockItem1.getId(), authAdmin);
+        });
+
+        assertEquals(ErrorStatus.FORBIDDEN_TOKEN, thrown.getErrorCode()); // 예외의 상태가 FORBIDDEN_TOKEN인지 확인
+    }
+
+
+    @Test
+    void 매물_단건_상세_조회_성공() {
+        // Given
+        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
+
+        // When
+        ItemResponseDto result = itemService.getItem(mockItem1.getId());
+
+        // Then
+        assertEquals(mockItem1.getId(), result.getId());
+        assertEquals(mockItem1.getTitle(), result.getTitle());
+        assertEquals(mockItem1.getPrice(), result.getPrice());
+        assertEquals(mockItem1.getSeller().getNickname(), result.getNickname());
+        assertEquals(mockItem1.getCategory().getName(), result.getCategoryName());
+    }
+
+    @Test
+    void 자신매물_전체_조회_성공() {
+        // Given
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
+
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        when(itemRepository.findBySeller(pageable, mockUser)).thenReturn(pageResult);
+
+        // When
+        Page<ItemResponseDto> result = itemService.getMyItems(1, 10, authUser);
+
+        // Then
+        assertEquals(1, result.getTotalElements());
+        assertThat(result.getContent().get(0).getNickname()).isEqualTo(mockItem1.getSeller().getNickname());
+    }
+
+    @Test
+    void 근처_매물_중_특정카테고리_전체_조회_성공() {
+        // Given
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
+
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"));
+        when(itemRepository.findItemByAreaAndCategory(pageable, List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"), mockCategory1.getId())).thenReturn(pageResult);
+
+        // When
+        Page<ItemResponseDto> result = itemService.getCategoryItems(requestDto, mockCategory1.getId(), authUser);
+
+        // Then
+        assertEquals(1, result.getTotalElements());
+        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo(mockItem1.getCategory().getName());
+    }
+
+    @Test
+    void 로그인한_사용자_주변_매물_전체_조회_성공() {
+        // Given
+        PageRequest pageable = PageRequest.of(0, 10);
+        Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
+
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동"));
+        when(itemRepository.findByAreaListAndUserArea(pageable, List.of("서울시 관악구 신림동"))).thenReturn(pageResult);
+
+        // When
+        Page<ItemResponseDto> result = itemService.findItemsByMyArea(authUser, requestDto);
+
+        // Then
+        assertEquals(1, result.getTotalElements());
+        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo(mockItem1.getCategory().getName());
+    }
 
 
 }
