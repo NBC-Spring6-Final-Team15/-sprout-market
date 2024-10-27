@@ -57,6 +57,8 @@ public enum ErrorStatus implements BaseCode {
     FORBIDDEN_NOT_OWNED_CHATROOM(HttpStatus.FORBIDDEN, 403, "해당 채팅방은 로그인한 사용자의 채팅방이 아닙니다."),
     FORBIDDEN_CHATROOM_CREATE(HttpStatus.FORBIDDEN,403,"생성할 수 있는 권한이 없습니다."),
     CONFLICT_CHATROOM(HttpStatus.CONFLICT, 409, "이미 존재하는 채팅방입니다."),
+    NOT_FOUND_CHAT(HttpStatus.NOT_FOUND, 404, "해당 채팅을 찾을 수 없습니다."),
+    FORBIDDEN_NOT_OWNED_CHAT(HttpStatus.FORBIDDEN, 403, "해당 채팅은 로그인한 사용자의 채팅이 아닙니다."),
 
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
