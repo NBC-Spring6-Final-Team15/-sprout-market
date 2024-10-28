@@ -21,8 +21,18 @@ public enum ErrorStatus implements BaseCode {
 
     TEST_ERROR(HttpStatus.BAD_REQUEST, 400, "ApiException 예외 처리 테스트"),
 
+    // fiel 에외처리
+    EMPTY_FILE_EXCEPTION(HttpStatus.BAD_REQUEST, 400, "파일이 비어있습니다."),
+    IO_EXCEPTION_ON_IMAGE_UPLOAD(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 업로드 중 오류가 발생했습니다."),
+    NO_FILE_EXTENSION(HttpStatus.BAD_REQUEST, 400, "파일 확장자가 없습니다."),
+    PUT_OBJECT_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, 500, "객체를 저장하는 과정에서 오류가 발생했습니다."),
+    S3_SERVICE_EXCEPTION(HttpStatus.SERVICE_UNAVAILABLE, 503, "S3 서비스와의 통신 중 오류가 발생했습니다."),
+    UNKNOWN_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, 500, "알 수 없는 오류가 발생했습니다."),
+    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, 400, "잘못된 파일 확장자입니다."),
+    IO_EXCEPTION_ON_IMAGE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 삭제 중 오류가 발생했습니다."),
+
     // user 예외처리
-    NOT_FOUND_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
+    BAD_REQUEST_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
     NOT_FOUND_AUTH_USER(HttpStatus.NOT_FOUND, 404, "가입되지 않은 유저입니다."),
     BAD_REQUEST_USER(HttpStatus.BAD_REQUEST, 404, "비활성화된 계정입니다. 관리자에 문의하세요."),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
@@ -32,6 +42,7 @@ public enum ErrorStatus implements BaseCode {
     // Item
     NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, 404, "존재하지 않는 아이템입니다."),
     FORBIDDEN_NOT_OWNED_ITEM(HttpStatus.FORBIDDEN, 403, "해당 매물은 로그인한 사용자의 매물이 아닙니다."),
+    FORBIDDEN_NOT_SELLER(HttpStatus.FORBIDDEN, 403, "해당 물건의 판매자가 아닙니다."),
     NOT_FOUND_ITEM_SALE_STATUS(HttpStatus.NOT_FOUND, 404, "존재하지 않는 판매상태입니다."),
 
     // Category
@@ -51,6 +62,8 @@ public enum ErrorStatus implements BaseCode {
 
     // trade 예외
     NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
+    BAD_REQUEST_CONFLICT_TRADE_RESERVATION(HttpStatus.CONFLICT, 400, "이미 물건이 예약됐습니다."),
+    BAD_REQUEST_CONFLICT_TRADE(HttpStatus.CONFLICT, 400, "이미 물건이 거래됐습니다."),
 
     // tradeChat 예외
     NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, 404, "해당 채팅방을 찾을 수 없습니다."),
@@ -59,6 +72,7 @@ public enum ErrorStatus implements BaseCode {
     CONFLICT_CHATROOM(HttpStatus.CONFLICT, 409, "이미 존재하는 채팅방입니다."),
     NOT_FOUND_CHAT(HttpStatus.NOT_FOUND, 404, "해당 채팅을 찾을 수 없습니다."),
     FORBIDDEN_NOT_OWNED_CHAT(HttpStatus.FORBIDDEN, 403, "해당 채팅은 로그인한 사용자의 채팅이 아닙니다."),
+
 
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),

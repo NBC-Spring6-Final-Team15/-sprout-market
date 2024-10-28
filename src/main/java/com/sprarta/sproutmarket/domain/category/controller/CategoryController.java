@@ -37,7 +37,7 @@ public class CategoryController {
      */
     @GetMapping("/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponseDto>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.findAll()));
+        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.getActiveCategories()));
     }
 
     /**
@@ -58,8 +58,8 @@ public class CategoryController {
      * @return 삭제처리된 카테고리 ID, 이름을 담은 String
      */
     @DeleteMapping("/admin/categories/{categoryId}")
-    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Long categoryId) {
-        String result = categoryService.delete(categoryId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(result));
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long categoryId) {
+        categoryService.delete(categoryId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 }

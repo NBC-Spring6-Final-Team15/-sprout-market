@@ -17,7 +17,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry stompEndpointRegistry) {
         // 웹소켓이 연결하는 endpoint
         stompEndpointRegistry.addEndpoint("/ws") // 연결 url 설정
-                .setAllowedOriginPatterns("*"); // 모든 출처에서의 요청을 허용 이후 보안상 변경할 것
+                .setAllowedOriginPatterns("*") // 모든 출처에서의 요청을 허용 이후 보안상 변경할 것
+                .withSockJS();
 
     }
 
