@@ -61,6 +61,18 @@
         .link a:hover {
             text-decoration: underline;
         }
+
+        /* 메시지 표시를 위한 스타일 */
+        #messages {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
     </style>
 </head>
 <body>
@@ -71,6 +83,10 @@
         <input type="password" id="password" placeholder="Password" required>
         <button type="submit">Sign In</button>
     </form>
+
+    <!-- 여기서 메시지가 표시됨 -->
+    <div id="messages"></div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
@@ -158,7 +174,12 @@
 
             // 해당 사용자(userId)에 대한 구독 경로
             stompClient.subscribe('/sub/user/' + userId + '/notifications', function (message) {
-                document.getElementById('messages').innerHTML += '<p>' + message.body + '</p>';
+                const messageContainer = document.getElementById('messages');
+                if (messageContainer) {
+                    messageContainer.innerHTML += '<p>' + message.body + '</p>';
+                } else {
+                    console.error('Message container not found!');
+                }
             });
         });
     }
