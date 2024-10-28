@@ -69,7 +69,7 @@ public class UserService {
     public void updateUserAddress(Long userId, double longitude, double latitude) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        String administrativeArea = administrativeAreaService.findAdministrativeAreaByCoordinates(longitude, latitude);
+        String administrativeArea = administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
 
         user.changeAddress(administrativeArea);
 

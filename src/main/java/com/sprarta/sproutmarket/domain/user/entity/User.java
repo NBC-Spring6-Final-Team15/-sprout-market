@@ -2,6 +2,8 @@ package com.sprarta.sproutmarket.domain.user.entity;
 
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.interestedItem.entity.InterestedItem;
+import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.report.entity.Report;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -10,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -47,10 +50,6 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private UserRole userRole;
 
-//    @ManyToOne
-//    @JoinColumn(name = "activity_address_id")
-//    private ActivityArea activityAddress;
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Review> reviews;
 
@@ -60,6 +59,9 @@ public class User extends Timestamped {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<InterestedItem> interestedItems = new ArrayList<>();
 
     public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
         this.username = username;
@@ -113,5 +115,19 @@ public class User extends Timestamped {
             throw new IllegalArgumentException("유효하지 않은 주소입니다.");
         }
         this.address = newAddress;
+    }
+
+    // 관심 상품 추가 메서드
+    public void addInterestedItem(Item item) {
+        InterestedItem interestedItem = InterestedItem.builder()
+                .user(this)
+                .item(item)
+                .build();
+        interestedItems.add(interestedItem);
+    }
+
+    // 관심 상품 제거 메서드
+    public void removeInterestedItem(Item item) {
+        interestedItems.removeIf(interestedItem -> interestedItem.getItem().equals(item));
     }
 }

@@ -173,7 +173,7 @@ class ItemControllerTest {
                 resource(ResourceSnippetParameters.builder()
                     .description("우리 동네의 특정 카테고리에 속하는 매물을 조회합니다.")
                     .summary("동네 특정 카테고리 매물 조회")
-                    .tag("item")
+                    .tag("Items")
                     .requestHeaders(
                         headerWithName("Authorization")
                             .description("Bearer (JWT 토큰)")
@@ -390,8 +390,6 @@ class ItemControllerTest {
     @WithMockUser // 인증된 사용자로 테스트
     void 나의_모든_매물_조회_성공() throws Exception {
         // Given
-        int page = 1;
-        int size = 10;
         //페이지 직접 만들어주기
         FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1,10);
         List<ItemResponseDto> dtoList = new ArrayList<>();
@@ -408,7 +406,7 @@ class ItemControllerTest {
             );
             dtoList.add(dto);
         }
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(0, 10);
         Page<ItemResponseDto> pageResult = new PageImpl<>(dtoList,pageable,2);
         given(itemService.getMyItems(any(int.class), any(int.class), any(CustomUserDetails.class))).willReturn(pageResult);
 
@@ -437,13 +435,13 @@ class ItemControllerTest {
                         fieldWithPath("data").type(JsonFieldType.OBJECT).description("응답본문"),
                         fieldWithPath("data.content").type(JsonFieldType.ARRAY).description("아이템 리스트"),
                         fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER).description("아이템 ID"),
-                        fieldWithPath("data.content[0].title").type(JsonFieldType.STRING).description("제목"),
-                        fieldWithPath("data.content[0].description").type(JsonFieldType.STRING).description("설명"),
-                        fieldWithPath("data.content[0].price").type(JsonFieldType.NUMBER).description("가격"),
-                        fieldWithPath("data.content[0].nickname").type(JsonFieldType.STRING).description("닉네임"),
-                        fieldWithPath("data.content[0].itemSaleStatus").type(JsonFieldType.STRING).description("판매상태"),
-                        fieldWithPath("data.content[0].categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
-                        fieldWithPath("data.content[0].status").type(JsonFieldType.STRING).description("활성상태"),
+                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING).description("제목"),
+                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING).description("설명"),
+                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER).description("가격"),
+                        fieldWithPath("data.content[].nickname").type(JsonFieldType.STRING).description("닉네임"),
+                        fieldWithPath("data.content[].itemSaleStatus").type(JsonFieldType.STRING).description("판매상태"),
+                        fieldWithPath("data.content[].categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
+                        fieldWithPath("data.content[].status").type(JsonFieldType.STRING).description("활성상태"),
                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT).description("페이지 관련 정보"),
                         fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER).description("현재 페이지 번호 (0부터 시작)"),
                         fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER).description("페이지 크기"),
@@ -522,7 +520,6 @@ class ItemControllerTest {
     @Test
     @WithMockUser
     void 매물_판매상태_변경_성공() throws Exception {
-        ItemSaleStatus saleStatus = ItemSaleStatus.SOLD;
         String SsaleStatus = ItemSaleStatus.SOLD.toString();
 
         // Given
@@ -692,7 +689,7 @@ class ItemControllerTest {
                         resource(ResourceSnippetParameters.builder()
                                 .description("우리 동네의 매물을 조회합니다.")
                                 .summary("동네 매물 조회")
-                                .tag("item")
+                                .tag("Items")
                                 .requestHeaders(
                                         headerWithName("Authorization")
                                                 .description("Bearer (JWT 토큰)")

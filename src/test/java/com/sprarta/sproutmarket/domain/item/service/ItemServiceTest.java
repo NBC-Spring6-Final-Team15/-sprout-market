@@ -88,8 +88,8 @@ public class ItemServiceTest {
         ReflectionTestUtils.setField(mockAdmin, "id", 1L);
 
         // 가짜 카테고리 생성
-        mockCategory1 = new Category(1L, "생활", Status.ACTIVE);
-        mockCategory2 = new Category(2L, "가구", Status.ACTIVE);
+        mockCategory1 = new Category("생활");
+        mockCategory2 = new Category( "가구");
 
         // 가짜 매물 생성
         mockItem1 = Item.builder()
@@ -304,7 +304,7 @@ public class ItemServiceTest {
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
         when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
-        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"));
+        when(admAreaService.getAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"));
         when(itemRepository.findItemByAreaAndCategory(pageable, List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"), mockCategory1.getId())).thenReturn(pageResult);
 
         // When
@@ -322,7 +322,7 @@ public class ItemServiceTest {
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-        when(admAreaService.findAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동"));
+        when(admAreaService.getAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동"));
         when(itemRepository.findByAreaListAndUserArea(pageable, List.of("서울시 관악구 신림동"))).thenReturn(pageResult);
 
         // When
