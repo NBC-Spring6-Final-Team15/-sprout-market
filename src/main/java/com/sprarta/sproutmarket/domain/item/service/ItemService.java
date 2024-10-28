@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,6 +49,9 @@ public class ItemService {
     private final AdministrativeAreaService admAreaService;
     private final ImageService imageService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final InterestedItemService interestedItemService;
+
 
 
     /**
@@ -442,6 +447,20 @@ public class ItemService {
     private void incrementViewCount(Long itemId) {
         String redisKey = "ViewCount:ItemId:" + itemId;
         viewCountRedisTemplate.opsForValue().increment(redisKey);
+    }
+
+    /**
+     * 관심 상품으로 등록한 사용자들에게 가격 변경 알림을 보내는 메서드
+     */
+    private void notifyUsersAboutPriceChange(Long itemId, int newPrice) {
+        // 관심 상품 사용자 조회
+        List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
+
+        // 관심 사용자들에게 알림 전송
+        for (User user : interestedUsers) {
+            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
+                    "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+        }
     }
 
 

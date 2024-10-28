@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -30,6 +31,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -46,6 +48,10 @@ public class ItemServiceTest {
     private CategoryService categoryService;
     @Mock
     private AdministrativeAreaService admAreaService;
+    @Mock
+    private SimpMessagingTemplate simpMessagingTemplate;
+    @Mock
+    private InterestedItemService interestedItemService;
     @InjectMocks
     private ItemService itemService;
     private User mockUser;
@@ -133,29 +139,28 @@ public class ItemServiceTest {
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
     }
 
-//    @Test
-//    void 매물_생성_성공(){
-//        // Given
-//        ItemCreateRequest itemCreateRequest = new ItemCreateRequest(
-//            "가짜 매물1",
-//            "가짜 설명1",
-//            10000,
-//            1L,
-//            ""
-//        );
-//
-//        when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-//        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
-//        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
-//
-//        // When
-//        ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
-//
-//        // Then
-//        assertEquals("가짜 매물1", itemResponse.getTitle());
-//        assertEquals(10000, itemResponse.getPrice());
-//        assertEquals("오만한천원", itemResponse.getNickname());
-//    }
+    @Test
+    void 매물_생성_성공(){
+        // Given
+        ItemCreateRequest itemCreateRequest = new ItemCreateRequest(
+            "가짜 매물1",
+            "가짜 설명1",
+            10000,
+            1L
+        );
+
+        when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
+        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
+        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+
+        // When
+        ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
+
+        // Then
+        assertEquals("가짜 매물1", itemResponse.getTitle());
+        assertEquals(10000, itemResponse.getPrice());
+        assertEquals("오만한천원", itemResponse.getNickname());
+    }
 
     @Test
     void 매물_판매상태_변경_성공() {
@@ -185,8 +190,7 @@ public class ItemServiceTest {
         ItemContentsUpdateRequest contentsUpdateRequest = new ItemContentsUpdateRequest(
             "변경된 제목",
             "변경된 설명",
-            5000,
-            ""
+            5000
         );
 
         // userRepository에서 mockUser를 반환하도록 설정

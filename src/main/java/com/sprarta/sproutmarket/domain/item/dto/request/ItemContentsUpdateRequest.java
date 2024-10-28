@@ -13,5 +13,4 @@ public class ItemContentsUpdateRequest {
         private String description;
 
         private int price;
-        private String imageUrl;
 }

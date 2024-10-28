@@ -117,13 +117,10 @@ public class User extends Timestamped {
         this.address = newAddress;
     }
 
-    // 관심 상품 추가 메서드
-    public void addInterestedItem(Item item) {
-        InterestedItem interestedItem = InterestedItem.builder()
-                .user(this)
-                .item(item)
-                .build();
+    // 양방향 관계 설정을 위한 메서드
+    public void addInterestedItem(InterestedItem interestedItem) {
         interestedItems.add(interestedItem);
+        interestedItem.setUser(this);
     }
 
     // 관심 상품 제거 메서드
