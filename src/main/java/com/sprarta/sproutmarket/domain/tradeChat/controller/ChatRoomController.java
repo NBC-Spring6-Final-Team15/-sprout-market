@@ -22,7 +22,7 @@ public class ChatRoomController {
     // 채팅방 생성
     @PostMapping("/items/{itemId}/chatrooms")
     public ResponseEntity<ApiResponse<ChatRoomDto>> createChatRoom(
-            @PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
+            @PathVariable("itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
         ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(
                 itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(chatRoomDto));
@@ -31,7 +31,7 @@ public class ChatRoomController {
     // 채팅방 조회
     @GetMapping("/chatrooms/{chatroomId}")
     public ResponseEntity<ApiResponse<ChatRoomDto>> getChatRoom(
-            @PathVariable Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
+            @PathVariable("chatroomId") Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(
                 chatroomId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(chatRoomDto));
@@ -48,7 +48,7 @@ public class ChatRoomController {
     // 채팅방 삭제
     @DeleteMapping("/chatrooms/{chatroomId}")
     public ResponseEntity<ApiResponse<Void>> deleteChatRoom(
-            @PathVariable Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
+            @PathVariable("chatroomId") Long chatroomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         chatRoomService.deleteChatRoom(chatroomId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }

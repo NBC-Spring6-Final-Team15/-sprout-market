@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            height: 100vh;
+        }
+
+        .container {
+            width: 600px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .message-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px; /* 최대 높이 설정 */
+        }
+
+        .message {
+            margin: 5px 0;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 22px); /* padding 및 border 제외 */
+            padding: 10px;
+            margin-right: 5px; /* 버튼과의 간격 */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            flex-grow: 1; /* 남은 공간 차지 */
+        }
+
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Chat Room ID: <span id="chatRoomId"></span></h2>
+    <div class="message-list" id="messageList"></div>
+    <form id="sendMessageForm" style="display: flex; align-items: center;">
+        <input type="text" id="message" placeholder="Type your message..." required>
+        <button type="submit">Send</button>
+    </form>
+    <button id="leaveChatRoomButton" style="margin-top: 10px;">Leave Chat Room</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatRoomId = urlParams.get('roomId'); // 'roomId' 파라미터를 가져옴
+    document.getElementById('chatRoomId').textContent = chatRoomId;
+
+    const socket = new SockJS('/ws'); // WebSocket 엔드포인트
+    const stompClient = Stomp.over(socket);
+    const token = localStorage.getItem('token'); // JWT 토큰 가져오기
+
+    stompClient.connect({ Authorization: `Bearer ${token}` }, function (frame) {
+        console.log('Connected: ' + frame);
+
+        // 클라이언트가 /sub/chatroomId 경로로 구독
+        stompClient.subscribe(`/sub/chat/${chatRoomId}`, function (message) {
+            displayMessage(JSON.parse(message.body));
+        });
+    });
+
+    document.getElementById('sendMessageForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const messageContent = document.getElementById('message').value;
+        // 클라이언트가 /pub/chatroomId 경로로 메시지를 전송
+        stompClient.send(`/pub/chat/${chatRoomId}`, {}, JSON.stringify({ content: messageContent }));
+
+        document.getElementById('message').value = ''; // 입력 필드 초기화
+    });
+
+    document.getElementById('leaveChatRoomButton').addEventListener('click', function() {
+        stompClient.disconnect(); // 구독 종료
+        window.location.href = '/chatroom.html'; // 채팅방 목록으로 이동
+    });
+
+    function displayMessage(message) {
+        const messageList = document.getElementById('messageList');
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.textContent = `${message.sender}: ${message.content}`; // 메시지 형식
+        messageList.appendChild(messageElement);
+        messageList.scrollTop = messageList.scrollHeight; // 스크롤을 가장 아래로 이동
+    }
+</script>
+</body>
+</html>

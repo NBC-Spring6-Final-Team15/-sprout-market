@@ -20,7 +20,7 @@ public class ChatController {
 
     @PostMapping("/chatrooms/{chatroomId}/chats")
     public ResponseEntity<ApiResponse<ChatResponse>> createChat(
-            @PathVariable Long chatroomId, @RequestBody ChatRequest chatRequest,
+            @PathVariable("chatroomId") Long chatroomId, @RequestBody ChatRequest chatRequest,
             @AuthenticationPrincipal CustomUserDetails authUser) {
         return ResponseEntity.ok(ApiResponse.onSuccess(
                 chatService.createChat(chatroomId, chatRequest, authUser)));
@@ -28,7 +28,7 @@ public class ChatController {
 
     @GetMapping("/chatrooms/{chatroomId}/chats")
     public ResponseEntity<ApiResponse<List<ChatResponse>>> getChats(
-            @PathVariable Long chatroomId,
+            @PathVariable("chatroomId") Long chatroomId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.onSuccess(
                 chatService.getChats(chatroomId, userDetails)
@@ -37,7 +37,7 @@ public class ChatController {
 
     @PutMapping("/chats/{chatId}")
     public ResponseEntity<ApiResponse<ChatResponse>> deleteChat(
-            @PathVariable Long chatId,
+            @PathVariable("chatId") Long chatId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.onSuccess(
                 chatService.deleteChat(chatId, userDetails)

@@ -41,7 +41,7 @@ public class TradeChatController {
     }
 
     @GetMapping("/chatRoom/{roomId}/chat")
-    public ResponseEntity<TradeChatDto> getChat(@PathVariable Long roomId){
+    public ResponseEntity<TradeChatDto> getChat(@PathVariable("roomId") Long roomId){
 
         TradeChat tradeChat = tradeChatRepository.findById(roomId)
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));;
