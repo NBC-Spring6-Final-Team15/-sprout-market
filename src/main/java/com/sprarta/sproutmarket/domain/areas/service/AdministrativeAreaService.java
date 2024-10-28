@@ -1,7 +1,6 @@
 package com.sprarta.sproutmarket.domain.areas.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.areas.entity.AdministrativeArea;
 import com.sprarta.sproutmarket.domain.areas.repository.AdministrativeAreaRepository;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
@@ -39,7 +38,7 @@ public class AdministrativeAreaService {
         File file = new File(filePath);
         FeatureCollection featureCollection = objectMapper.readValue(file, FeatureCollection.class);
 
-        List<AdministrativeArea> areas = new ArrayList<>();
+        List<AdministrativeArea> areaList = new ArrayList<>();
         for (Feature feature : featureCollection.getFeatures()) {
             String admNm = feature.getProperties().get("adm_nm").toString();
             String admCd2 = feature.getProperties().get("adm_cd2").toString();
@@ -55,7 +54,6 @@ public class AdministrativeAreaService {
 
             // SRID 설정 (경도,위도 정보로 DB 조회할 수 있게 설정하는 ID)
             jtsMultiPolygon.setSRID(4326);
-
             Point centroid = jtsMultiPolygon.getCentroid();
             centroid.setSRID(4326);
 
@@ -72,11 +70,11 @@ public class AdministrativeAreaService {
                     .admCenter(centroid)
                     .build();
 
-            areas.add(area);
+            areaList.add(area);
         }
 
         //데이터 저장
-        administrativeAreaRepository.saveAll(areas);
+        administrativeAreaRepository.saveAll(areaList);
     }
 
     /**
@@ -133,7 +131,7 @@ public class AdministrativeAreaService {
      * @param latitude : 위도 (예시 : 37.575651 )
      * @return : 행정구역 (예시 : 서울특별시 마포구 합정동 )
      */
-    public String findAdministrativeAreaByCoordinates(double longitude, double latitude) {
+    public String getAdministrativeAreaByCoordinates(double longitude, double latitude) {
         String point = String.format("POINT(%f %f)",latitude, longitude);
         return administrativeAreaRepository.findAdministrativeAreaByPoint(point).orElseThrow(
                 () -> new ApiException(ErrorStatus.NOT_FOUND_ADMINISTRATIVE_AREA)
@@ -145,11 +143,11 @@ public class AdministrativeAreaService {
      * @param admNm : 행정동 이름 (예시 : 부산광역시 남구 대연1동)
      * @return : 주변 5km 행정동 이름 AdmNameDto 리스트 (예시 admName : 부산광역시 남구 용당동 << 들어있는 리스트)
      */
-    public List<String> findAdmNameListByAdmName(String admNm) {
-        AdministrativeArea foundArea = administrativeAreaRepository.findByAdmNm(admNm).orElseThrow(
+    public List<String> getAdmNameListByAdmName(String admNm) {
+        AdministrativeArea area = administrativeAreaRepository.findByAdmNm(admNm).orElseThrow(
                 () -> new ApiException(ErrorStatus.NOT_FOUND_ADMINISTRATIVE_AREA)
         );
-        return administrativeAreaRepository.findAdministrativeAreasByAdmCenter(foundArea.getAdmCenter());
+        return administrativeAreaRepository.findAdministrativeAreasByAdmCenter(area.getAdmCenter());
     }
 
 }

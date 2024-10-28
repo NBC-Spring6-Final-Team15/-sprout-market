@@ -3,25 +3,17 @@ package com.sprarta.sproutmarket.domain.areas.controller;
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -37,27 +29,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AdministrativeAreaController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureRestDocs
-@AutoConfigureMockMvc
-class AdministrativeAreaControllerTest {
+@AutoConfigureMockMvc(addFilters = false)
+class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     AdministrativeAreaService administrativeAreaService;
-
-    @Autowired
-    MockMvc mockMvc;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @MockBean
-    JwtUtil jwtUtil;
-
-    @MockBean
-    CustomUserDetailService customUserDetailService;
-
-    @MockBean
-    JpaMetamodelMappingContext jpaMappingContext;
 
     @Test
     @WithMockUser
@@ -99,7 +74,7 @@ class AdministrativeAreaControllerTest {
         AdministrativeAreaRequestDto requestDto = new AdministrativeAreaRequestDto(126.927872, 37.523254);
         String returnString = "서울특별시 영등포구 여의동";
         when(administrativeAreaService
-                .findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
+                .getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
                 .thenReturn(returnString);
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/getHJD")
@@ -132,7 +107,7 @@ class AdministrativeAreaControllerTest {
                                 )
                         )
                 );
-        verify(administrativeAreaService, times(1)).findAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
+        verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude());
         result.andExpect(status().isOk());
         result.andExpect(jsonPath("data").value(returnString));
         result.andExpect(jsonPath("statusCode").value(200));
@@ -147,7 +122,7 @@ class AdministrativeAreaControllerTest {
         String admNameDto2 = "경상남도 산청군 생초면";
         listResult.add(admNameDto1);
         listResult.add(admNameDto2);
-        given(administrativeAreaService.findAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
+        given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/getAreas")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(

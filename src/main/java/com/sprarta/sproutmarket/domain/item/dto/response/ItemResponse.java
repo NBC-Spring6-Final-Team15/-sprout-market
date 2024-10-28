@@ -2,10 +2,13 @@ package com.sprarta.sproutmarket.domain.item.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -17,6 +20,8 @@ public class ItemResponse {
     private ItemSaleStatus itemSaleStatus;
     private Status status;
     private String nickname;
+    private String imageUrl;
+    private List<Image> images;
 
     public ItemResponse(String title, int price, String nickname) {
         this.title = title;
@@ -31,15 +36,17 @@ public class ItemResponse {
         this.nickname = nickname;
     }
 
-    public ItemResponse(String title, String description, Status status) {
+    public ItemResponse(String title, String description, int price, Status status) {
         this.title = title;
         this.description = description;
+        this.price = price;
         this.status = status;
     }
 
-    public ItemResponse(String title, Status status, String nickname) {
+    public ItemResponse(String title, Status status, int price, String nickname) {
         this.title = title;
         this.status = status;
+        this.price = price;
         this.nickname = nickname;
     }
 
@@ -47,6 +54,19 @@ public class ItemResponse {
         this.title = title;
         this.price = price;
         this.itemSaleStatus = itemSaleStatus;
+        this.nickname = nickname;
+    }
+
+    public ItemResponse(String title, String name, String nickname) {
+        this.title = title;
+        this.imageUrl = name;
+        this.nickname = nickname;
+    }
+
+    public ItemResponse(String title, Status status, List<Image> images, String nickname) {
+        this.title = title;
+        this.status = status;
+        this.images = images;
         this.nickname = nickname;
     }
 }

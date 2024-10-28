@@ -6,7 +6,8 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
+import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -20,38 +21,37 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-@Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
-    private final RedisTemplate<String, Long> viewCountRedisTemplate;
+    private final ImageService imageService;
 
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
      * @param authUser 매물 수정을 요청한 사용자
+     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser, MultipartFile image){
+        // 유저 조회
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
@@ -69,7 +69,13 @@ public class ItemService {
             .status(Status.ACTIVE)
             .build();
 
-        itemRepository.save(item);
+        Item saveItem = itemRepository.save(item);
+
+        String imageUrl = imageService.upload(image, saveItem.getId(), authUser);
+
+        Image images = Image.builder().name(imageUrl).item(saveItem).build();
+        imageRepository.save(images);
+
 
         return new ItemResponse(
             item.getTitle(),
@@ -92,12 +98,11 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -121,7 +126,7 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
@@ -130,12 +135,69 @@ public class ItemService {
             itemContentsUpdateRequest.getImageUrl()
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
             item.getDescription(),
             item.getPrice(),
+            user.getNickname()
+        );
+    }
+
+    /**
+     * 생성되어있는 매물의 이미지를 추가하는 로직
+     * @param itemId Item's ID
+     * @param authUser 매물 내용 수정을 요청한 사용자
+     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
+     * @return ItemResponse - 수정된 매물의 제목, 이미지 이름, 수정한 사용자의 닉네임을 포함한 응답 객체
+     */
+    @Transactional
+    public ItemResponse addImage(Long itemId, CustomUserDetails authUser, MultipartFile image){
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+
+        String imageUrl = imageService.upload(image, item.getId(), authUser);
+
+        Image images = Image.builder().name(imageUrl).item(item).build();
+
+        imageRepository.save(images);
+
+        return new ItemResponse(
+            item.getTitle(),
+            images.getName(),
+            user.getNickname()
+        );
+    }
+
+    /**
+     * 저장되어있는 매물의 이미지를 삭제하는 로직
+     * @param itemId  수정할 Item's ID
+     * @param authUser  매물의 이미지를 삭제 요청한 사용자
+     * @param imageId 삭제할 이미지 id
+     * @return ItemResponse - 이미지가 삭제된 매물의 제목, 상태, 저장되어있는 이미지 리스트, 수정한 사용자의 닉네임을 포함한 응답 객체
+     */
+    @Transactional
+    public ItemResponse deleteImage(Long itemId, CustomUserDetails authUser, Long imageId){
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+
+        Image image = imageRepository.findById(imageId)
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_IMAGE));
+
+        imageRepository.deleteById(image.getId());
+
+        return new ItemResponse(
+            item.getTitle(),
+            item.getStatus(),
+            item.getImages(),
             user.getNickname()
         );
     }
@@ -154,17 +216,17 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
+            item.getPrice(),
             user.getNickname()
         );
     }
@@ -183,17 +245,17 @@ public class ItemService {
             throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
         }
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
             item.getDescription(),
+            item.getPrice(),
             item.getStatus()
         );
     }
@@ -205,9 +267,7 @@ public class ItemService {
      */
     public ItemResponseDto getItem(Long itemId){
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
-
-        incrementViewCount(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         return new ItemResponseDto(
             item.getId(),
@@ -220,7 +280,6 @@ public class ItemService {
             item.getStatus()
         );
     }
-
 
 
     /**
@@ -242,14 +301,14 @@ public class ItemService {
         Page<Item> items = itemRepository.findBySeller(pageable, user);
 
         return items.map(item -> new ItemResponseDto(
-            item.getId(),
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            item.getSeller().getNickname(),
-            item.getItemSaleStatus(),
-            item.getCategory().getName(),
-            item.getStatus()
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
             )
         );
     }
@@ -257,22 +316,26 @@ public class ItemService {
 
     /**
      * 특정 카테고리에 모든 매물을 조회
-     * @param page 페이지 번호(1부터 시작)
-     * @param size 페이지당 카드 수
+     * @param requestDto 페이지 번호와 페이지당 매물 수를 포함하는 요청 객체
      * @param categoryId Category's ID
      * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 특정 카테고리의 매물 목록을 포함한 페이지 정보
      *      *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
-    public Page<ItemResponseDto> getCategoryItems(int page, int size, Long categoryId){
+    public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String area = user.getAddress();
         // 카테고리 존재 확인
         Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        // 반경 5km 행정동 이름 반환
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
 
-        Page<Item> items = itemRepository.findByCategory(pageable, findCategory);
+        Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
 
-        return items.map(item -> new ItemResponseDto(
+        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, findCategory.getId());
+
+        return result.map(item -> new ItemResponseDto(
                 item.getId(),
                 item.getTitle(),
                 item.getDescription(),
@@ -302,57 +365,16 @@ public class ItemService {
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
         return result.map(item -> new ItemResponseDto(
-                        item.getId(),
-                        item.getTitle(),
-                        item.getDescription(),
-                        item.getPrice(),
-                        item.getSeller().getNickname(),
-                        item.getItemSaleStatus(),
-                        item.getCategory().getName(),
-                        item.getStatus()
-                )
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
+            )
         );
-    }
-
-
-    public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
-        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-        String myArea = currentUser.getAddress();
-
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
-
-        // 근처 아이템 모두 조회
-        List<Item> items = itemRepository.findByUserArea(areaList);
-
-        // Redis에서 조회수를 가져와 정렬하기 위해, 아이템과 조회수를 Map에 저장
-        List<ItemWithViewCount> itemWithViewCounts = items.stream()
-                .map(item -> {
-                    // Redis에서 조회수 가져오기
-                    Long viewCount = viewCountRedisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
-                    Long finalViewCount = (viewCount != null) ? viewCount : 0L; // 조회수가 null일 경우 0으로 설정
-
-                    // 로그로 아이템별 조회수 출력
-                    log.info("Item ID: {}, Title: {}, View Count: {}", item.getId(), item.getTitle(), finalViewCount);
-
-                    return new ItemWithViewCount(item, finalViewCount);
-                })
-                .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
-                .limit(5) // 상위 3개 선택
-                .collect(Collectors.toList());
-
-        // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
-        return itemWithViewCounts.stream()
-                .map(itemWithViewCount -> new ItemResponseDto(
-                        itemWithViewCount.getItem().getId(),
-                        itemWithViewCount.getItem().getTitle(),
-                        itemWithViewCount.getItem().getDescription(),
-                        itemWithViewCount.getItem().getPrice(),
-                        itemWithViewCount.getItem().getSeller().getNickname(),
-                        itemWithViewCount.getItem().getItemSaleStatus(),
-                        itemWithViewCount.getItem().getCategory().getName(),
-                        itemWithViewCount.getItem().getStatus()
-                ))
-                .collect(Collectors.toList());
     }
 
     /**
@@ -366,28 +388,4 @@ public class ItemService {
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
     }
-
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param itemId Item's ID
-     * @param sellerId User's ID
-     * @return Item 객체
-     * @throws ApiException 해당 id의 사용자 id와 입력받은 sellerId와 동일하지 않을 경우 발생
-     */
-    public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
-        return itemRepository.findByIdAndSellerId(itemId, sellerId)
-            .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
-    }
-
-    private void incrementViewCount(Long itemId) {
-        String redisKey = "ViewCount:ItemId:" + itemId;
-        viewCountRedisTemplate.opsForValue().increment(redisKey);
-    }
-
-    public Long getViewCount(Long itemId) {
-        String redisKey = "ViewCount:ItemId:" + itemId;
-        return viewCountRedisTemplate.opsForValue().get(redisKey);
-    }
-
 }
