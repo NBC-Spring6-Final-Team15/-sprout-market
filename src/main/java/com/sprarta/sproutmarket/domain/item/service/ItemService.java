@@ -282,6 +282,8 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdOrElseThrow(itemId);
 
+        incrementViewCount(itemId);
+
         return new ItemResponseDto(
             item.getId(),
             item.getTitle(),
@@ -441,6 +443,11 @@ public class ItemService {
     public Item findByIdOrElseThrow(Long id){
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+    }
+
+    private void incrementViewCount(Long itemId) {
+        String redisKey = "ViewCount:ItemId:" + itemId;
+        viewCountRedisTemplate.opsForValue().increment(redisKey);
     }
 
     /**
