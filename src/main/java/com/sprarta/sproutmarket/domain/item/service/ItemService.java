@@ -131,6 +131,9 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
+        // 기존 가격 저장
+        int oldPrice = item.getPrice();
+
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
@@ -138,6 +141,13 @@ public class ItemService {
             itemContentsUpdateRequest.getImageUrl()
         );
 
+        // 가격이 변경되었는지 확인
+        boolean isPriceChanged = oldPrice != itemContentsUpdateRequest.getPrice();
+
+        // 가격이 변경되었으면 알림 발송
+        if (isPriceChanged) {
+            notifyUsersAboutPriceChange(item.getId(), itemContentsUpdateRequest.getPrice());
+        }
 
         return new ItemResponse(
             item.getTitle(),

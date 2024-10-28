@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -64,8 +65,8 @@ class InterestedItemServiceTest {
         interestedItemService.addInterestedItem(1L, authUser);
 
         // then
-        verify(userRepository).save(user);
-        verify(user).addInterestedItem(item);
+        verify(interestedItemRepository).save(any(InterestedItem.class));  // 관심 상품 저장을 확인
+        verify(user).addInterestedItem(any(InterestedItem.class));  // 유저에 관심 상품 추가를 확인
     }
 
     @Test
@@ -97,8 +98,8 @@ class InterestedItemServiceTest {
         interestedItemService.removeInterestedItem(1L, authUser);
 
         // then
-        verify(userRepository).save(user);
         verify(user).removeInterestedItem(item);
+        verify(userRepository).save(user);  // 관심 상품 삭제 후 유저 저장 확인
     }
 
     @Test
