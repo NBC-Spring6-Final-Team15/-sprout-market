@@ -93,6 +93,8 @@
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <script>
+    let stompClient = null; // 전역 변수로 설정하여 중복 연결 방지
+
     function parseJwt(token) {
         try {
             const base64Url = token.split('.')[1];
