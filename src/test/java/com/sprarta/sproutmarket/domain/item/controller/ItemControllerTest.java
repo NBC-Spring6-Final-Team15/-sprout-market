@@ -42,6 +42,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -51,6 +52,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +61,7 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -101,10 +104,13 @@ class ItemControllerTest {
 
     private Item mockItem;
     private Category mockCategory;
+    private MockMultipartFile mockImage;
 
     @BeforeEach // 테스트 전 수행
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
+
         // 클래스 인스턴스 생성
         User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
@@ -137,6 +143,38 @@ class ItemControllerTest {
         when(userService.getUser(anyLong())).thenReturn(new UserResponse(mockUser.getId(), mockUser.getEmail()));
         doNothing().when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
         doNothing().when(userService).deleteUser(any(CustomUserDetails.class), any(UserDeleteRequest.class));
+    }
+
+    @Test
+    @WithMockUser
+    void 매물_이미지_추가_성공 () throws Exception {
+        // given
+        Long itemId = 1L;
+        ItemResponse mockItemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            Status.ACTIVE,
+            mockItem.getImages(),
+            mockAuthUser.getUsername()
+        );
+        when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
+
+        // when & then
+        mockMvc.perform(multipart("/items/{itemId}/image", itemId)
+                .file(mockImage)
+                .with(request -> {
+                    request.setMethod("PUT");
+                    return request;
+                })
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer (JWT 토큰)")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.status").value(mockItemResponse.getStatus().toString()))  // 응답 검증
+            .andExpect(jsonPath("$.data.images").value(mockItemResponse.getImages()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(mockItemResponse.getNickname()));
+
+        verify(itemService, times(1)).addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class));
     }
 
     @Test
