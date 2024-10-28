@@ -21,7 +21,7 @@ public enum ErrorStatus implements BaseCode {
 
     TEST_ERROR(HttpStatus.BAD_REQUEST, 400, "ApiException 예외 처리 테스트"),
 
-    // fiel 에외처리
+    // file 에외처리
     EMPTY_FILE_EXCEPTION(HttpStatus.BAD_REQUEST, 400, "파일이 비어있습니다."),
     IO_EXCEPTION_ON_IMAGE_UPLOAD(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 업로드 중 오류가 발생했습니다."),
     NO_FILE_EXTENSION(HttpStatus.BAD_REQUEST, 400, "파일 확장자가 없습니다."),
@@ -30,6 +30,9 @@ public enum ErrorStatus implements BaseCode {
     UNKNOWN_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, 500, "알 수 없는 오류가 발생했습니다."),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, 400, "잘못된 파일 확장자입니다."),
     IO_EXCEPTION_ON_IMAGE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 삭제 중 오류가 발생했습니다."),
+
+    // image 예외처리
+    NOT_FOUND_IMAGE(HttpStatus.NOT_FOUND, 404, "존재하지 않는 이미지입니다."),
 
     // user 예외처리
     NOT_FOUND_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),

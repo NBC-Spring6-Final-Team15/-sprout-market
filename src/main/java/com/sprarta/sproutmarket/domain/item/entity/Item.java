@@ -43,9 +43,9 @@ public class Item extends Timestamped {
     private Category category;
 
     // 파일
-//    @Column(nullable = false)
-//    @OneToMany(mappedBy = "item_id")
-//    private List<Image> images = new ArrayList<>();
+    @Column(nullable = false)
+    @OneToMany(mappedBy = "item_id", cascade = CascadeType.REMOVE)
+    private List<Image> images = new ArrayList<>();
 
 
     // 삭제 상태
