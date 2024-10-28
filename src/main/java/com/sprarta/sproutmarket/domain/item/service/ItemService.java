@@ -259,7 +259,7 @@ public class ItemService {
         Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(area);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
 
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
 
@@ -290,7 +290,7 @@ public class ItemService {
         User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
         String myArea = currentUser.getAddress();
 
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
