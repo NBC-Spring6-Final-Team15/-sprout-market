@@ -44,7 +44,7 @@ public class Item extends Timestamped {
 
     // 파일
     @Column(nullable = false)
-    @OneToMany(mappedBy = "item_id", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE)
     private List<Image> images = new ArrayList<>();
 
 
