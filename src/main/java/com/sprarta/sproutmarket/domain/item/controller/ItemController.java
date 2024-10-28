@@ -17,6 +17,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/items")
@@ -162,4 +164,11 @@ public class ItemController {
                                                                               @AuthenticationPrincipal CustomUserDetails authUser) {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemService.findItemsByMyArea(authUser, requestDto)));
     }
+
+    // 우리 동네 인기 매물 조회
+    @GetMapping("/topItems")
+    public ResponseEntity<ApiResponse<List<ItemResponseDto>>> getTopItems(@AuthenticationPrincipal CustomUserDetails authUser){
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemService.getTopItems(authUser)));
+    }
+
 }
