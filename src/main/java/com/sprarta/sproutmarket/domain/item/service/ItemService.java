@@ -46,11 +46,10 @@ public class ItemService {
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
      * @param authUser 매물 수정을 요청한 사용자
-     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser, MultipartFile image){
+    public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // 유저 조회
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -71,15 +70,9 @@ public class ItemService {
 
         Item saveItem = itemRepository.save(item);
 
-        String imageUrl = imageService.upload(image, saveItem.getId(), authUser);
-
-        Image images = Image.builder().name(imageUrl).item(saveItem).build();
-        imageRepository.save(images);
-
-
         return new ItemResponse(
-            item.getTitle(),
-            item.getPrice(),
+            saveItem.getTitle(),
+            saveItem.getPrice(),
             user.getNickname()
         );
     }
@@ -113,7 +106,7 @@ public class ItemService {
     }
 
     /**
-     * 매물의 내용(제목, 설명, 가격, 이미지URL)을 수정하는 로직
+     * 매물의 내용(제목, 설명, 가격)을 수정하는 로직
      * @param itemId Item's ID
      * @param itemContentsUpdateRequest 매물 수정 정보를 포함한 요청 객체(제목, 내용, 가격, 이미지URL)
      * @param authUser 매물 내용 수정을 요청한 사용자
@@ -131,8 +124,7 @@ public class ItemService {
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
-            itemContentsUpdateRequest.getPrice(),
-            itemContentsUpdateRequest.getImageUrl()
+            itemContentsUpdateRequest.getPrice()
         );
 
 
@@ -168,7 +160,8 @@ public class ItemService {
 
         return new ItemResponse(
             item.getTitle(),
-            images.getName(),
+            item.getStatus(),
+            item.getImages(),
             user.getNickname()
         );
     }

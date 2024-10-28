@@ -15,7 +15,4 @@ public class ItemCreateRequest {
     private int price;
 
     private Long categoryId;
-
-    // 이미지
-    private String imageUrl;
 }
