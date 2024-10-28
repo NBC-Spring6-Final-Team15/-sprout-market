@@ -4,6 +4,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.6'
     id 'org.hidetake.swagger.generator' version '2.18.2'
     id 'com.epages.restdocs-api-spec' version '0.19.4'
+    id 'jacoco'
 }
 
 group = 'com.sprarta'
@@ -23,6 +24,32 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            // 줄 % 기준으로 커버리지 설정
+            limit {
+                counter = 'LINE' // 커버리지 기준을 줄(Line)로 설정
+                value = 'COVEREDRATIO' // 커버리지가 충족되어야 할 비율로 설정
+                minimum = 0.3 // 최소 기준 30% 설정
+            }
+        }
+    }
+}
+
+
+test {
+    finalizedBy jacocoTestReport  // 테스트 후 커버리지 리포트 생성
 }
 
 swaggerSources {
