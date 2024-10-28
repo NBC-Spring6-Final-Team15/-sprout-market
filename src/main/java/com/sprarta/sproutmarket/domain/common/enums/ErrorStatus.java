@@ -78,9 +78,11 @@ public enum ErrorStatus implements BaseCode {
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
 
-    NOT_FOUND_ADMINISTRATIVE_AREA(HttpStatus.NOT_FOUND,404,"해당 좌표로 행정구역을 찾을 수 없습니다.")
+    NOT_FOUND_ADMINISTRATIVE_AREA(HttpStatus.NOT_FOUND,404,"해당 좌표로 행정구역을 찾을 수 없습니다."),
 
-    ;
+    // 관심 카테고리 예외
+    ALREADY_INTERESTED_CATEGORY(HttpStatus.BAD_REQUEST, 400, "이미 관심 카테고리로 지정되었습니다."),
+    NOT_FOUND_INTERESTED_CATEGORY(HttpStatus.NOT_FOUND, 404, "해당 관심 카테고리를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer statusCode;
