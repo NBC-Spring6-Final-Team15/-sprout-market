@@ -331,4 +331,16 @@ public class ItemService {
             )
         );
     }
+
+    /**
+     * 주어진 id에 해당하는 Item을 찾고,
+     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
+     * @param id Item's ID
+     * @return Item 객체
+     * @throws ApiException 해당 id의 매물이 존재하지 않을 경우 발생
+     */
+    public Item findByIdOrElseThrow(Long id){
+        return itemRepository.findById(id)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+    }
 }
