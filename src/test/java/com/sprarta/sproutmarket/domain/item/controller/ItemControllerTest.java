@@ -471,51 +471,50 @@ class ItemControllerTest {
 
     }
 
-//    @Test
-//    @WithMockUser
-//    void 매물_등록_성공() throws Exception {
-//        // Given
-//        // 결과값 설정
-//        ItemResponse itemResponse = new ItemResponse(
-//            "가짜11",
-//            1000,
-//            "오만한천원"
-//        );
-//        given(itemService.createItem(any(ItemCreateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
-//
-//        // when, then
-//        mockMvc.perform(RestDocumentationRequestBuilders.post("/items")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                // 요청 본문
-//                .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1,\"imageUrl\":\"http://example.com/image.jpg\"}"))
-//            .andExpect(status().isOk())
-//            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
-//            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
-//            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
-//            .andDo(document("create-item",
-//                resource(ResourceSnippetParameters.builder()
-//                    .description("매물 생성 API")
-//                    .summary("로그인한 사용자가 매물을 등록합니다.")
-//                    .tag("Items")
-//                    .requestFields(
-//                        fieldWithPath("title").description("등록할 제목"),
-//                        fieldWithPath("description").description("등록할 설명"),
-//                        fieldWithPath("price").description("등록할 가격"),
-//                        fieldWithPath("categoryId").description("등록할 카테고리 아이디"),
-//                        fieldWithPath("imageUrl").description("매물의 이미지")
-//                    )
-//                    .responseFields(
-//                        fieldWithPath("message").description("응답 메시지"),
-//                        fieldWithPath("statusCode").description("응답 상태 코드"),
-//                        fieldWithPath("data.title").description("등록된 제목"),
-//                        fieldWithPath("data.price").description("등록된 가격"),
-//                        fieldWithPath("data.nickname").description("유저 닉네임")
-//                    )
-//                    .responseSchema(Schema.schema("매물-생성-성공-응답"))
-//                    .build())
-//            ));
-//
-//    }
+    @Test
+    @WithMockUser
+    void 매물_등록_성공() throws Exception {
+        // Given
+        // 결과값 설정
+        ItemResponse itemResponse = new ItemResponse(
+            "가짜11",
+            1000,
+            "오만한천원"
+        );
+        given(itemService.createItem(any(ItemCreateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
+
+        // when, then
+        mockMvc.perform(RestDocumentationRequestBuilders.post("/items")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1}")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
+            .andDo(document("create-item",
+                resource(ResourceSnippetParameters.builder()
+                    .description("매물 생성 API")
+                    .summary("로그인한 사용자가 매물을 등록합니다.")
+                    .tag("Items")
+                    .requestFields(
+                        fieldWithPath("title").description("등록할 제목"),
+                        fieldWithPath("description").description("등록할 설명"),
+                        fieldWithPath("price").description("등록할 가격"),
+                        fieldWithPath("categoryId").description("등록할 카테고리 아이디")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("등록된 제목"),
+                        fieldWithPath("data.price").description("등록된 가격"),
+                        fieldWithPath("data.nickname").description("유저 닉네임")
+                    )
+                    .responseSchema(Schema.schema("매물-생성-성공-응답"))
+                    .build())
+            ));
+
+    }
 
     @Test
     @WithMockUser
