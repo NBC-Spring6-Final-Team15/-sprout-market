@@ -168,14 +168,14 @@ class UserServiceTest {
         String newAddress = "서울특별시 종로구";
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(administrativeAreaService.findAdministrativeAreaByCoordinates(longitude, latitude)).thenReturn(newAddress);
+        when(administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude)).thenReturn(newAddress);
 
         // When
         userService.updateUserAddress(1L, longitude, latitude);
 
         // Then
         verify(userRepository, times(1)).findById(1L);
-        verify(administrativeAreaService, times(1)).findAdministrativeAreaByCoordinates(longitude, latitude);
+        verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(longitude, latitude);
         assertEquals(newAddress, user.getAddress());
         verify(userRepository, times(1)).save(user);
     }

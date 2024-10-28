@@ -36,6 +36,7 @@ public class ItemService {
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
 
+
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
@@ -85,12 +86,11 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -114,7 +114,7 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
@@ -123,7 +123,6 @@ public class ItemService {
             itemContentsUpdateRequest.getImageUrl()
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -147,17 +146,17 @@ public class ItemService {
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdAndSellerIdOrElseThrow(itemId, user.getId());
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
+            item.getPrice(),
             user.getNickname()
         );
     }
@@ -176,17 +175,17 @@ public class ItemService {
             throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
         }
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         item.solfDelete(
             Status.DELETED
         );
 
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
             item.getDescription(),
+            item.getPrice(),
             item.getStatus()
         );
     }
@@ -198,7 +197,7 @@ public class ItemService {
      */
     public ItemResponseDto getItem(Long itemId){
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = findByIdOrElseThrow(itemId);
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         return new ItemResponseDto(
             item.getId(),
@@ -232,14 +231,14 @@ public class ItemService {
         Page<Item> items = itemRepository.findBySeller(pageable, user);
 
         return items.map(item -> new ItemResponseDto(
-            item.getId(),
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            item.getSeller().getNickname(),
-            item.getItemSaleStatus(),
-            item.getCategory().getName(),
-            item.getStatus()
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
             )
         );
     }
@@ -247,22 +246,26 @@ public class ItemService {
 
     /**
      * 특정 카테고리에 모든 매물을 조회
-     * @param page 페이지 번호(1부터 시작)
-     * @param size 페이지당 카드 수
+     * @param requestDto 페이지 번호와 페이지당 매물 수를 포함하는 요청 객체
      * @param categoryId Category's ID
      * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 특정 카테고리의 매물 목록을 포함한 페이지 정보
      *      *          각 매물은 ItemResponseDto 형태로 변환되어 반환됨
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
-    public Page<ItemResponseDto> getCategoryItems(int page, int size, Long categoryId){
+    public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String area = user.getAddress();
         // 카테고리 존재 확인
         Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        // 반경 5km 행정동 이름 반환
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
 
-        Page<Item> items = itemRepository.findByCategory(pageable, findCategory);
+        Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
 
-        return items.map(item -> new ItemResponseDto(
+        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, findCategory.getId());
+
+        return result.map(item -> new ItemResponseDto(
                 item.getId(),
                 item.getTitle(),
                 item.getDescription(),
@@ -287,20 +290,20 @@ public class ItemService {
         User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
         String myArea = currentUser.getAddress();
 
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
         return result.map(item -> new ItemResponseDto(
-                        item.getId(),
-                        item.getTitle(),
-                        item.getDescription(),
-                        item.getPrice(),
-                        item.getSeller().getNickname(),
-                        item.getItemSaleStatus(),
-                        item.getCategory().getName(),
-                        item.getStatus()
-                )
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
+            )
         );
     }
 
@@ -314,18 +317,5 @@ public class ItemService {
     public Item findByIdOrElseThrow(Long id){
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-    }
-
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param itemId Item's ID
-     * @param sellerId User's ID
-     * @return Item 객체
-     * @throws ApiException 해당 id의 사용자 id와 입력받은 sellerId와 동일하지 않을 경우 발생
-     */
-    public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
-        return itemRepository.findByIdAndSellerId(itemId, sellerId)
-            .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
     }
 }

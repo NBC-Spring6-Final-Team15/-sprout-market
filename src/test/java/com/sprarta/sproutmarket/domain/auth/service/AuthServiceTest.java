@@ -78,7 +78,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
 
         // 모킹: 위도와 경도를 통해 행정구역(주소) 조회
-        when(administrativeAreaService.findAdministrativeAreaByCoordinates(anyDouble(), anyDouble()))
+        when(administrativeAreaService.getAdministrativeAreaByCoordinates(anyDouble(), anyDouble()))
                 .thenReturn("서울특별시 종로구");
 
         // 모킹: 유저 저장
