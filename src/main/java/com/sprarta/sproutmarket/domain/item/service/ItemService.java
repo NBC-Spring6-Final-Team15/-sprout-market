@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,7 +42,8 @@ public class ItemService {
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
     private final ImageService imageService;
-
+    private final SimpMessagingTemplate simpMessagingTemplate;
+    private final InterestedItemService interestedItemService;
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -121,12 +124,22 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
+        // 기존 가격 저장
+        int oldPrice = item.getPrice();
+
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
             itemContentsUpdateRequest.getPrice()
         );
 
+        // 가격이 변경되었는지 확인
+        boolean isPriceChanged = oldPrice != itemContentsUpdateRequest.getPrice();
+
+        // 가격이 변경되었으면 알림 발송
+        if (isPriceChanged) {
+            notifyUsersAboutPriceChange(item.getId(), itemContentsUpdateRequest.getPrice());
+        }
 
         return new ItemResponse(
             item.getTitle(),
@@ -380,5 +393,19 @@ public class ItemService {
     public Item findByIdOrElseThrow(Long id){
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+    }
+
+    /**
+     * 관심 상품으로 등록한 사용자들에게 가격 변경 알림을 보내는 메서드
+     */
+    private void notifyUsersAboutPriceChange(Long itemId, int newPrice) {
+        // 관심 상품 사용자 조회
+        List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
+
+        // 관심 사용자들에게 알림 전송
+        for (User user : interestedUsers) {
+            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
+                    "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+        }
     }
 }

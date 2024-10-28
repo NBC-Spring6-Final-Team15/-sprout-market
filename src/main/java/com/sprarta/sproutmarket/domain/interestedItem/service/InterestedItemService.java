@@ -11,6 +11,7 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class InterestedItemService {
 
     private final InterestedItemRepository interestedItemRepository;
@@ -31,15 +33,25 @@ public class InterestedItemService {
 
     @Transactional
     public void addInterestedItem(Long itemId, CustomUserDetails authUser) {
+        // 현재 인증된 사용자를 데이터베이스에서 가져옴
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
+        // 해당 ID의 상품을 데이터베이스에서 가져옴
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
 
-        // 관심 상품 추가
-        user.addInterestedItem(item);
-        userRepository.save(user);
+        // 관심 상품 생성
+        InterestedItem interestedItem = InterestedItem.builder()
+                .user(user)  // User 엔티티를 설정
+                .item(item)  // Item 엔티티를 설정
+                .build();
+
+        // User 엔티티의 관심 상품 리스트에 추가
+        user.addInterestedItem(interestedItem);
+
+        // 관심 상품을 저장
+        interestedItemRepository.save(interestedItem);
     }
 
     @Transactional
@@ -95,9 +107,13 @@ public class InterestedItemService {
         // 해당 아이템에 관심이 있는 InterestedItem 리스트를 조회하고
         List<InterestedItem> interestedItems = interestedItemRepository.findByItemId(itemId);
 
-        // 해당 InterestedItem 과 연결된 User 를 반환
-        return interestedItems.stream()
+        List<User> users = interestedItems.stream()
                 .map(InterestedItem::getUser)
                 .collect(Collectors.toList());
+
+        // 로그 추가: 관심 상품에 등록된 사용자가 있는지 확인
+        log.info("Found {} interested users for item {}", users.size(), itemId);
+
+        return users;
     }
 }
