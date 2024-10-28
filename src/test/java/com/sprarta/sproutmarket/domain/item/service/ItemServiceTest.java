@@ -148,7 +148,7 @@ public class ItemServiceTest {
         when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
 
         // When
-        ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
+        ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
 
         // Then
         assertEquals("가짜 매물1", itemResponse.getTitle());
