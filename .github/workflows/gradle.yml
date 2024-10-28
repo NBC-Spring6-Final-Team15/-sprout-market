@@ -9,9 +9,9 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "feat/ci-cd-ssj" ]
+    branches: [ "dev" ]
   pull_request:
-    branches: [ "feat/ci-cd-ssj" ]
+    branches: [ "dev" ]
 
 jobs:
   build:
