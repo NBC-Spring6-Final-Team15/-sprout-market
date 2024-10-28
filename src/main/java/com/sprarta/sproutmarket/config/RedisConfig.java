@@ -10,6 +10,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -26,6 +27,18 @@ public class RedisConfig {
         chatRedisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 값 데이터 JSON 형식으로 직렬화
 
         return chatRedisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<String, Long> viewCountRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
+
+        redisTemplate.setConnectionFactory(connectionFactory);
+
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Long.class)); // 단순 숫자용 직렬화
+
+        return redisTemplate;
     }
 
     // redis pub/sub 메세지를 처리하는 listener 설정

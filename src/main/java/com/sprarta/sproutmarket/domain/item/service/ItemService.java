@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.item.controller.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -19,22 +20,27 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
+    private final RedisTemplate<String, Long> viewCountRedisTemplate;
 
 
     /**
@@ -201,6 +207,8 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = findByIdOrElseThrow(itemId);
 
+        incrementViewCount(itemId);
+
         return new ItemResponseDto(
             item.getId(),
             item.getTitle(),
@@ -212,6 +220,7 @@ public class ItemService {
             item.getStatus()
         );
     }
+
 
 
     /**
@@ -288,7 +297,7 @@ public class ItemService {
         User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
         String myArea = currentUser.getAddress();
 
-        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
@@ -303,6 +312,47 @@ public class ItemService {
                         item.getStatus()
                 )
         );
+    }
+
+
+    public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
+        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String myArea = currentUser.getAddress();
+
+        List<String> areaList = admAreaService.findAdmNameListByAdmName(myArea);
+
+        // 근처 아이템 모두 조회
+        List<Item> items = itemRepository.findByUserArea(areaList);
+
+        // Redis에서 조회수를 가져와 정렬하기 위해, 아이템과 조회수를 Map에 저장
+        List<ItemWithViewCount> itemWithViewCounts = items.stream()
+                .map(item -> {
+                    // Redis에서 조회수 가져오기
+                    Long viewCount = viewCountRedisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
+                    Long finalViewCount = (viewCount != null) ? viewCount : 0L; // 조회수가 null일 경우 0으로 설정
+
+                    // 로그로 아이템별 조회수 출력
+                    log.info("Item ID: {}, Title: {}, View Count: {}", item.getId(), item.getTitle(), finalViewCount);
+
+                    return new ItemWithViewCount(item, finalViewCount);
+                })
+                .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
+                .limit(5) // 상위 3개 선택
+                .collect(Collectors.toList());
+
+        // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
+        return itemWithViewCounts.stream()
+                .map(itemWithViewCount -> new ItemResponseDto(
+                        itemWithViewCount.getItem().getId(),
+                        itemWithViewCount.getItem().getTitle(),
+                        itemWithViewCount.getItem().getDescription(),
+                        itemWithViewCount.getItem().getPrice(),
+                        itemWithViewCount.getItem().getSeller().getNickname(),
+                        itemWithViewCount.getItem().getItemSaleStatus(),
+                        itemWithViewCount.getItem().getCategory().getName(),
+                        itemWithViewCount.getItem().getStatus()
+                ))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -328,6 +378,16 @@ public class ItemService {
     public Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId){
         return itemRepository.findByIdAndSellerId(itemId, sellerId)
             .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
+    }
+
+    private void incrementViewCount(Long itemId) {
+        String redisKey = "ViewCount:ItemId:" + itemId;
+        viewCountRedisTemplate.opsForValue().increment(redisKey);
+    }
+
+    public Long getViewCount(Long itemId) {
+        String redisKey = "ViewCount:ItemId:" + itemId;
+        return viewCountRedisTemplate.opsForValue().get(redisKey);
     }
 
 }

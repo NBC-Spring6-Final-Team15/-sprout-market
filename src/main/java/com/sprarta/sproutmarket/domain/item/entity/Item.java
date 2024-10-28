@@ -42,12 +42,6 @@ public class Item extends Timestamped {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // 파일
-//    @Column(nullable = false)
-//    @OneToMany(mappedBy = "item_id")
-//    private List<Image> images = new ArrayList<>();
-
-
     // 삭제 상태
     @Enumerated(EnumType.STRING)
     private Status status;
