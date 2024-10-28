@@ -1,7 +1,9 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
+import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.interestedCategory.entity.InterestedCategory;
 import com.sprarta.sproutmarket.domain.interestedItem.entity.InterestedItem;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.report.entity.Report;
@@ -62,6 +64,9 @@ public class User extends Timestamped {
 
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     private List<InterestedItem> interestedItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<InterestedCategory> interestedCategories = new ArrayList<>();
 
     public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
         this.username = username;
@@ -126,5 +131,16 @@ public class User extends Timestamped {
     // 관심 상품 제거 메서드
     public void removeInterestedItem(Item item) {
         interestedItems.removeIf(interestedItem -> interestedItem.getItem().equals(item));
+    }
+
+    // 관심 카테고리 추가 메서드
+    public void addInterestedCategory(InterestedCategory interestedCategory) {
+        interestedCategories.add(interestedCategory);
+        interestedCategory.setUser(this);
+    }
+
+    // 관심 카테고리 제거 메서드
+    public void removeInterestedCategory(Category category) {
+        interestedCategories.removeIf(interestedCategory -> interestedCategory.getCategory().equals(category));
     }
 }
