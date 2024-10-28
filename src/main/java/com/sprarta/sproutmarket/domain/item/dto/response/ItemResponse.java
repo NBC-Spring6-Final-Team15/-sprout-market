@@ -57,16 +57,12 @@ public class ItemResponse {
         this.nickname = nickname;
     }
 
-    public ItemResponse(String title, String name, String nickname) {
+    public ItemResponse(String title, Status status, String url, String nickname) {
         this.title = title;
-        this.imageUrl = name;
+        this.status = status;
+        this.imageUrl = url;
         this.nickname = nickname;
     }
 
-    public ItemResponse(String title, Status status, List<Image> images, String nickname) {
-        this.title = title;
-        this.status = status;
-        this.images = images;
-        this.nickname = nickname;
-    }
+
 }
