@@ -1,6 +1,5 @@
-package com.sprarta.sproutmarket.domain.item.controller;
+package com.sprarta.sproutmarket.domain.item.entity;
 
-import com.sprarta.sproutmarket.domain.item.entity.Item;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
