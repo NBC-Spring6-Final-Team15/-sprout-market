@@ -6,6 +6,8 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -26,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -35,8 +38,10 @@ import java.util.List;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
+    private final ImageService imageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
 
@@ -44,11 +49,12 @@ public class ItemService {
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
      * @param authUser 매물 수정을 요청한 사용자
+     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser, MultipartFile image){
+        // 유저 조회
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
@@ -66,7 +72,13 @@ public class ItemService {
             .status(Status.ACTIVE)
             .build();
 
-        itemRepository.save(item);
+        Item saveItem = itemRepository.save(item);
+
+        String imageUrl = imageService.upload(image, saveItem.getId(), authUser);
+
+        Image images = Image.builder().name(imageUrl).item(saveItem).build();
+        imageRepository.save(images);
+
 
         return new ItemResponse(
             item.getTitle(),
@@ -119,8 +131,6 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
-        int oldPrice = item.getPrice(); // 기존 가격 저장
-
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
@@ -128,13 +138,6 @@ public class ItemService {
             itemContentsUpdateRequest.getImageUrl()
         );
 
-        // 가격이 변경된 경우에만 알림 전송
-        if (oldPrice != itemContentsUpdateRequest.getPrice()) {
-            notifyUsersAboutPriceChange(itemId, itemContentsUpdateRequest.getPrice());
-        }
-
-        // 아이템 저장
-        itemRepository.save(item);
 
         return new ItemResponse(
             item.getTitle(),
@@ -144,8 +147,15 @@ public class ItemService {
         );
     }
 
+    /**
+     * 생성되어있는 매물의 이미지를 추가하는 로직
+     * @param itemId Item's ID
+     * @param authUser 매물 내용 수정을 요청한 사용자
+     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
+     * @return ItemResponse - 수정된 매물의 제목, 이미지 이름, 수정한 사용자의 닉네임을 포함한 응답 객체
+     */
     @Transactional
-    public ItemResponse updateImage(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
+    public ItemResponse addImage(Long itemId, CustomUserDetails authUser, MultipartFile image){
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -153,18 +163,44 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
 
-        item.changeContents(
-            itemContentsUpdateRequest.getTitle(),
-            itemContentsUpdateRequest.getDescription(),
-            itemContentsUpdateRequest.getPrice(),
-            itemContentsUpdateRequest.getImageUrl()
-        );
+        String imageUrl = imageService.upload(image, item.getId(), authUser);
 
+        Image images = Image.builder().name(imageUrl).item(item).build();
+
+        imageRepository.save(images);
 
         return new ItemResponse(
             item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
+            images.getName(),
+            user.getNickname()
+        );
+    }
+
+    /**
+     * 저장되어있는 매물의 이미지를 삭제하는 로직
+     * @param itemId  수정할 Item's ID
+     * @param authUser  매물의 이미지를 삭제 요청한 사용자
+     * @param imageId 삭제할 이미지 id
+     * @return ItemResponse - 이미지가 삭제된 매물의 제목, 상태, 저장되어있는 이미지 리스트, 수정한 사용자의 닉네임을 포함한 응답 객체
+     */
+    @Transactional
+    public ItemResponse deleteImage(Long itemId, CustomUserDetails authUser, Long imageId){
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+
+        Image image = imageRepository.findById(imageId)
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_IMAGE));
+
+        imageRepository.deleteById(image.getId());
+
+        return new ItemResponse(
+            item.getTitle(),
+            item.getStatus(),
+            item.getImages(),
             user.getNickname()
         );
     }

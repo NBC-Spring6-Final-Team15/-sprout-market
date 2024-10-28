@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.item.service.ImageService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class S3ImageService {
+public class S3ImageService implements ImageService {
 
     private final AmazonS3 amazonS3;
 
@@ -80,11 +81,9 @@ public class S3ImageService {
         // UUID로 파일명 재설정
         String s3FileName = createFileName(image);
         String extention = s3FileName.substring(s3FileName.lastIndexOf(".")); //확장자 명
-
         InputStream is = image.getInputStream();
         // image -> byte[]로 변환
         byte[] bytes = IOUtils.toByteArray(is);
-
         // 파일 경로 생성
         String filePath = String.format("user-uploads/%d/%d/%s", authUser.getId(), itemId, s3FileName);
 
