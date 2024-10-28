@@ -35,19 +35,19 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Query("SELECT i FROM Item i " +
         "JOIN FETCH i.category " +
         "JOIN FETCH i.seller " +
-        "WHERE i.seller = :seller")
+        "WHERE i.seller = :seller AND i.stutas = 'ACTIVE' ")
     Page<Item> findBySeller(Pageable pageable, @Param("seller") User seller);
 
     @Query("SELECT i FROM Item i " +
         "JOIN FETCH i.seller " +
         "JOIN FETCH i.category " +
-        "WHERE i.category = :category")
+        "WHERE i.category = :category AND i.stutas = 'ACTIVE' ")
     Page<Item> findByCategory(Pageable pageable, @Param("category") Category findCategory);
 
-    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList")
+    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.stutas = 'ACTIVE' ")
     Page<Item> findByAreaListAndUserArea(Pageable pageable, @Param("areaList") List<String> areaList);
 
-    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.category.id = :categoryId")
+    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.category.id = :categoryId AND i.stutas = 'ACTIVE'")
     Page<Item> findItemByAreaAndCategory(Pageable pageable, @Param("areaList") List<String> areaList, @Param("categoryId") Long categoryId);
 
 }

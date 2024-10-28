@@ -50,19 +50,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ReviewController.class)
 @Import(SecurityConfig.class)
 @AutoConfigureRestDocs
-@ExtendWith(RestDocumentationExtension.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ReviewControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @MockBean
-    private ReviewService reviewService;
+    ReviewService reviewService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @MockBean
     JwtUtil jwtUtil;
@@ -72,8 +71,15 @@ class ReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        User user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
-        CustomUserDetails mockAuthUser = new CustomUserDetails(user);
+
+        CustomUserDetails mockAuthUser = new CustomUserDetails(
+                new User(1L, "username",
+                        "email@example.com",
+                        "encodedOldPassword",
+                        "nickname",
+                        "010-1234-5678",
+                        "address", UserRole.USER)
+        );
 
         // 인증 유저 시큐리티 컨텍스트 홀더에 저장
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -93,14 +99,19 @@ class ReviewControllerTest {
         // when, then
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/{tradeId}", tradeId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                        .content(objectMapper.writeValueAsString(reviewRequestDto))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(print())
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "create-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("새로운 리뷰를 생성합니다.")
                                 .pathParameters(
-                                parameterWithName("tradeId").description("거래 ID")
+                                        parameterWithName("tradeId").description("거래 ID")
+                                )
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
                                 )
                                 .summary("리뷰 생성")
                                 .tag("Review")
@@ -125,7 +136,6 @@ class ReviewControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.comment").value(reviewRequestDto.getComment()))
                 .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
-
     }
 
     @Test
@@ -137,7 +147,7 @@ class ReviewControllerTest {
 
         // when, then
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/reviews/{reviewId}", 1L)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(print())
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "get-review",
@@ -145,6 +155,10 @@ class ReviewControllerTest {
                                 .description("특정 리뷰의 정보를 조회합니다.")
                                 .pathParameters(
                                         parameterWithName("reviewId").description("조회할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
                                 )
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
@@ -168,9 +182,9 @@ class ReviewControllerTest {
                                 .build()
                         )
                 ));
-    result.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.comment").value(reviewResponseDto.getComment()))
-            .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.comment").value(reviewResponseDto.getComment()))
+                .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
     }
 
     @Test
@@ -187,15 +201,18 @@ class ReviewControllerTest {
 
         // when, then
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/reviews/users/{userId}", 1L)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(print())
-                .andExpect(status().isOk())
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "get-reviews",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 사용자의 리뷰 정보를 조회합니다.")
                                 .pathParameters(
                                         parameterWithName("userId").description("조회할 사용자의 ID")
+                                )
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
                                 )
                                 .summary("리뷰 전체 조회")
                                 .tag("Review")
@@ -218,11 +235,7 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
     }
 
-
-
-
     @Test
-    @WithMockUser
     void 리뷰_수정_성공() throws Exception {
         // given
         Long tradeId = 1L;
@@ -235,15 +248,19 @@ class ReviewControllerTest {
         // when, then
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/reviews/{reviewId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(reviewRequestDto)))
+                        .content(objectMapper.writeValueAsString(reviewRequestDto))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(print())
-                .andExpect(status().isOk())
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "update-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 리뷰의 정보를 수정합니다.")
                                 .pathParameters(
                                         parameterWithName("reviewId").description("수정할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
                                 )
                                 .summary("리뷰 수정")
                                 .tag("Review")
@@ -270,10 +287,7 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
     }
 
-
-
     @Test
-    @WithMockUser
     void 리뷰_삭제_성공() throws Exception {
         // given
 
@@ -281,15 +295,18 @@ class ReviewControllerTest {
 
         // when, then
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/reviews/{reviewId}", 1L)
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(print())
-                .andExpect(status().isOk())
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "delete-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 리뷰를 삭제합니다.")
                                 .pathParameters(
                                         parameterWithName("reviewId").description("삭제할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
                                 )
                                 .summary("리뷰 삭제")
                                 .tag("Review")
@@ -307,7 +324,6 @@ class ReviewControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200));
     }
-
 
 
 }

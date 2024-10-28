@@ -106,7 +106,7 @@ class ReportControllerTest {
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 매물에 대한 신고를 생성합니다.")
                                 .summary("매물 신고 생성")
-                                .tag("report")
+                                .tag("Report")
                                 .pathParameters(
                                         parameterWithName("itemId")
                                                 .description("신고할 매물 ID")
@@ -158,7 +158,7 @@ class ReportControllerTest {
                         resource(ResourceSnippetParameters.builder()
                                 .description("신고 ID로 신고를 단건조회합니다.")
                                 .summary("신고 단건 조회")
-                                .tag("report")
+                                .tag("Report")
                                 .requestHeaders(
                                         headerWithName("Authorization")
                                                 .description("Bearer (JWT 토큰)")
@@ -209,7 +209,7 @@ class ReportControllerTest {
                                 ResourceSnippetParameters.builder()
                                         .description("특정 매물에 대한 신고 다건 조회")
                                         .summary("특정 Item 신고 다건 조회")
-                                        .tag("report")
+                                        .tag("Report")
                                         .requestHeaders(
                                                 headerWithName("Authorization")
                                                         .description("Bearer (JWT 토큰)")
@@ -258,7 +258,7 @@ class ReportControllerTest {
                         resource(ResourceSnippetParameters.builder()
                                 .description("신고 ID와 수정할 신고사유를 받아서 신고를 수정합니다.")
                                 .summary("매물 신고 수리")
-                                .tag("report")
+                                .tag("Report")
                                 .pathParameters(
                                         parameterWithName("reportId")
                                                 .description("수정할 신고 ID")
@@ -313,7 +313,7 @@ class ReportControllerTest {
                         resource(ResourceSnippetParameters.builder()
                                 .description("신고 ID를 받아서 해당 신고를 삭제합니다.")
                                 .summary("신고 삭제")
-                                .tag("report")
+                                .tag("Report")
                                 .pathParameters(
                                         parameterWithName("reportId")
                                                 .description("수정할 신고 ID")
