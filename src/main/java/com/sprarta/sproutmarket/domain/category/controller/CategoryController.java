@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.category.controller;
 
+import com.sprarta.sproutmarket.domain.category.dto.CategoryAdminResponseDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryResponseDto;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
@@ -32,7 +33,7 @@ public class CategoryController {
     }
 
     /**
-     * 카테고리 전체 조회
+     * 활성화된 카테고리 전체 조회
      * @return CategoryResponseDto 를 담은 리스트
      */
     @GetMapping("/categories")
@@ -61,5 +62,25 @@ public class CategoryController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long categoryId) {
         categoryService.delete(categoryId);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    /**
+     * 삭제된 카테고리 복원
+     * @param categoryId 복원하고자 하는 카테고리 ID
+     * @return data: null인 응답 반환
+     */
+    @PatchMapping("/admin/categories/deleted/{categoryId}")
+    public ResponseEntity<ApiResponse<Void>> activate(@PathVariable(required = true) Long categoryId) {
+        categoryService.activate(categoryId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    /**
+     * 삭제된 카테고리를 포함해서 전부 조회(어드민 전용)
+     * @return : 삭제 상태까지 포함한 응답 Dto 리스트
+     */
+    @GetMapping("/admin/categories")
+    public ResponseEntity<ApiResponse<List<CategoryAdminResponseDto>>> getCategories() {
+        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.getDeletedCategories()));
     }
 }
