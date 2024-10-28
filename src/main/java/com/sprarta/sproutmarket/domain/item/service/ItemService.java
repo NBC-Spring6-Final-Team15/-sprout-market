@@ -160,7 +160,8 @@ public class ItemService {
 
         return new ItemResponse(
             item.getTitle(),
-            images.getName(),
+            item.getStatus(),
+            item.getImages(),
             user.getNickname()
         );
     }
