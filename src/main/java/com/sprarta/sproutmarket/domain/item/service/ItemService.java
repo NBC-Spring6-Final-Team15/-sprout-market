@@ -62,7 +62,6 @@ public class ItemService {
         // 카테고리 찾기
         Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
-
         Item item = Item.builder()
             .title(itemCreateRequest.getTitle())
             .description(itemCreateRequest.getDescription())
