@@ -62,37 +62,31 @@ public class ItemService {
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser, MultipartFile image){
+    public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // 유저 조회
         User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 카테고리 찾기
         Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
 
         Item item = Item.builder()
-            .title(itemCreateRequest.getTitle())
-            .description(itemCreateRequest.getDescription())
-            .price(itemCreateRequest.getPrice())
-            .itemSaleStatus(ItemSaleStatus.WAITING)
-            .category(findCategory)
-            .seller(user)
-            .status(Status.ACTIVE)
-            .build();
+                .title(itemCreateRequest.getTitle())
+                .description(itemCreateRequest.getDescription())
+                .price(itemCreateRequest.getPrice())
+                .itemSaleStatus(ItemSaleStatus.WAITING)
+                .category(findCategory)
+                .seller(user)
+                .status(Status.ACTIVE)
+                .build();
 
         Item saveItem = itemRepository.save(item);
 
-        String imageUrl = imageService.upload(image, saveItem.getId(), authUser);
-
-        Image images = Image.builder().name(imageUrl).item(saveItem).build();
-        imageRepository.save(images);
-
-
         return new ItemResponse(
-            item.getTitle(),
-            item.getPrice(),
-            user.getNickname()
+                saveItem.getTitle(),
+                saveItem.getPrice(),
+                user.getNickname()
         );
     }
 
@@ -143,8 +137,7 @@ public class ItemService {
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
-            itemContentsUpdateRequest.getPrice(),
-            itemContentsUpdateRequest.getImageUrl()
+            itemContentsUpdateRequest.getPrice()
         );
 
 
