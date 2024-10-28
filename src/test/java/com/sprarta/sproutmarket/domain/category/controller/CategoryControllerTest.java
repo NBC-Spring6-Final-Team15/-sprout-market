@@ -5,9 +5,11 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.epages.restdocs.apispec.SimpleType;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
+import com.sprarta.sproutmarket.domain.category.dto.CategoryAdminResponseDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryResponseDto;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -100,7 +102,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    void 카테고리_전체_조회_성공 () throws Exception {
+    void 활성화된_카테고리_조회_성공 () throws Exception {
         CategoryResponseDto response1 = new CategoryResponseDto(1L,"가구");
         CategoryResponseDto response2 = new CategoryResponseDto(2L, "문구");
         List<CategoryResponseDto> responseDtoList = List.of(response1, response2);
@@ -108,8 +110,8 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
         when(categoryService.getActiveCategories()).thenReturn(responseDtoList);
 
         ResourceSnippetParameters params = ResourceSnippetParameters.builder()
-                .description("전체 카테고리를 조회할 수 있습니다.")
-                .summary("전체 카테고리 조회")
+                .description("활성화된 카테고리를 조회할 수 있습니다.")
+                .summary("활성화 상태 카테고리 조회")
                 .tag("Category")
                 .requestHeaders(
                         headerWithName("Authorization")
@@ -127,23 +129,18 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                         fieldWithPath("data[].categoryName").type(JsonFieldType.STRING)
                                 .description("카테고리 이름")
                 )
-                .requestSchema(Schema.schema("카테고리-생성-성공-요청"))
-                .responseSchema(Schema.schema("카테고리-생성-성공-응답"))
+                .requestSchema(Schema.schema("카테고리-활성-조회-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-활성-조회-성공-응답"))
                 .build();
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/categories")
                 .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
-                        "category-get-all",
+                        "category-get-active",
                         resource(params)
-                ))
-                .andDo(print());
+                ));
 
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].categoryId").value(1L))
-                .andExpect(jsonPath("$.data[0].categoryName").value("가구"))
-                .andExpect(jsonPath("$.data[1].categoryId").value(2L))
-                .andExpect(jsonPath("$.data[1].categoryName").value("문구"));
+        result.andExpect(status().isOk());
     }
 
     @Test
@@ -233,6 +230,91 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                         .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "delete-category",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isOk());
+    }
+
+    @Test
+    void 카테고리_복원_성공() throws Exception {
+        doNothing().when(categoryService).activate(anyLong());
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("어드민 권한을 가진 사람이 삭제된 카테고리를 복원할 수 있습니다.")
+                .summary("카테고리 복원")
+                .tag("Admin")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .pathParameters(
+                        parameterWithName("categoryId")
+                                .type(SimpleType.NUMBER)
+                                .description("복원할 카테고리 ID")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.NULL)
+                                .description("성공 시 data : NULL")
+                )
+                .requestSchema(Schema.schema("카테고리-복원-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-복원-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.patch("/admin/categories/deleted/{categoryId}",3L)
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "recover-category",
+                        resource(params)
+                ))
+                .andDo(print());
+
+        result.andExpect(status().isOk());
+    }
+
+    @Test
+    void 카테고리_삭제_상태_포함_전체_조회() throws Exception {
+        CategoryAdminResponseDto response1 = new CategoryAdminResponseDto(1L,"가구", Status.ACTIVE);
+        CategoryAdminResponseDto response2 = new CategoryAdminResponseDto(2L, "문구",Status.DELETED);
+        List<CategoryAdminResponseDto> responseDtoList = List.of(response1, response2);
+
+        when(categoryService.getAllCategories()).thenReturn(responseDtoList);
+
+        ResourceSnippetParameters params = ResourceSnippetParameters.builder()
+                .description("삭제 상태 포함 전체 카테고리를 조회할 수 있습니다.")
+                .summary("전체 카테고리 조회")
+                .tag("Admin")
+                .requestHeaders(
+                        headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                )
+                .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("성공 상태코드 : 200"),
+                        fieldWithPath("data[]").type(JsonFieldType.ARRAY)
+                                .description("응답 본문"),
+                        fieldWithPath("data[].categoryId").type(JsonFieldType.NUMBER)
+                                .description("카테고리 ID"),
+                        fieldWithPath("data[].categoryName").type(JsonFieldType.STRING)
+                                .description("카테고리 이름"),
+                        fieldWithPath("data[].status").type(JsonFieldType.STRING)
+                                .description("카테고리 상태")
+                )
+                .requestSchema(Schema.schema("카테고리-전체-조회-성공-요청"))
+                .responseSchema(Schema.schema("카테고리-전체-조회-성공-응답"))
+                .build();
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/admin/categories")
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "category-get-all",
                         resource(params)
                 ))
                 .andDo(print());

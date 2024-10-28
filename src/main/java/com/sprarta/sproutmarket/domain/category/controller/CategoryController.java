@@ -81,6 +81,6 @@ public class CategoryController {
      */
     @GetMapping("/admin/categories")
     public ResponseEntity<ApiResponse<List<CategoryAdminResponseDto>>> getCategories() {
-        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.getDeletedCategories()));
+        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.getAllCategories()));
     }
 }

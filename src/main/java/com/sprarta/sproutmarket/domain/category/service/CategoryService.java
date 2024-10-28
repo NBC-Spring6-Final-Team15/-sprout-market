@@ -83,7 +83,7 @@ public class CategoryService {
 
     //삭제된 카테고리를 포함해서 조회(어드민 전용)
     @Transactional(readOnly = true)
-    public List<CategoryAdminResponseDto> getDeletedCategories() {
+    public List<CategoryAdminResponseDto> getAllCategories() {
         return categoryRepository
                 .findAll()
                 .stream().map(CategoryAdminResponseDto::new).toList();
