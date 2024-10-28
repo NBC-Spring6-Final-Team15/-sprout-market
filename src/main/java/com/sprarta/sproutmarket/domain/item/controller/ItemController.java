@@ -31,7 +31,7 @@ public class ItemController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<ItemResponse>> addItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
-        ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
+        ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 

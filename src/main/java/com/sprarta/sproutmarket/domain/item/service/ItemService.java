@@ -49,7 +49,7 @@ public class ItemService {
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
-    public ItemResponse createItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
+    public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         // 유저 조회
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));

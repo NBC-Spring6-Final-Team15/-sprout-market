@@ -55,7 +55,7 @@ public class Item extends Timestamped {
 
     // 빌더의 사용이유: 필드 개수가 많고, 더 추가될 예정이라
     @Builder
-    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, User seller,  Category category, Status status){
+    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, User seller,  Category category, Status status, List<Image> images){
         this.title = title;
         this.description = description;
         this.price = price;
@@ -63,6 +63,7 @@ public class Item extends Timestamped {
         this.seller = seller;
         this.category = category;
         this.status = status;
+        this.images = images;
     }
 
     public void changeSaleStatus(ItemSaleStatus itemSaleStatus) {
