@@ -132,6 +132,31 @@ public class ItemService {
         );
     }
 
+    @Transactional
+    public ItemResponse updateImage(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
+        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+
+        item.changeContents(
+            itemContentsUpdateRequest.getTitle(),
+            itemContentsUpdateRequest.getDescription(),
+            itemContentsUpdateRequest.getPrice(),
+            itemContentsUpdateRequest.getImageUrl()
+        );
+
+
+        return new ItemResponse(
+            item.getTitle(),
+            item.getDescription(),
+            item.getPrice(),
+            user.getNickname()
+        );
+    }
+
 
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
