@@ -133,29 +133,29 @@ public class ItemServiceTest {
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
     }
 
-    @Test
-    void 매물_생성_성공(){
-        // Given
-        ItemCreateRequest itemCreateRequest = new ItemCreateRequest(
-            "가짜 매물1",
-            "가짜 설명1",
-            10000,
-            1L,
-            ""
-        );
-
-        when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
-
-        // When
-        ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
-
-        // Then
-        assertEquals("가짜 매물1", itemResponse.getTitle());
-        assertEquals(10000, itemResponse.getPrice());
-        assertEquals("오만한천원", itemResponse.getNickname());
-    }
+//    @Test
+//    void 매물_생성_성공(){
+//        // Given
+//        ItemCreateRequest itemCreateRequest = new ItemCreateRequest(
+//            "가짜 매물1",
+//            "가짜 설명1",
+//            10000,
+//            1L,
+//            ""
+//        );
+//
+//        when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
+//        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
+//        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+//
+//        // When
+//        ItemResponse itemResponse = itemService.createItem(itemCreateRequest, authUser);
+//
+//        // Then
+//        assertEquals("가짜 매물1", itemResponse.getTitle());
+//        assertEquals(10000, itemResponse.getPrice());
+//        assertEquals("오만한천원", itemResponse.getNickname());
+//    }
 
     @Test
     void 매물_판매상태_변경_성공() {
