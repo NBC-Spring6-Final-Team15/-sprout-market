@@ -46,7 +46,7 @@ public class ItemService {
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
     private final ImageService imageService;
-    private final RedisTemplate<String, Item> viewCountRedisTemplate;
+    private final RedisTemplate<String, Long> viewCountRedisTemplate;
 
 
     /**
@@ -276,6 +276,8 @@ public class ItemService {
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdOrElseThrow(itemId);
 
+        incrementViewCount(itemId);
+
         return new ItemResponseDto(
             item.getId(),
             item.getTitle(),
@@ -406,7 +408,7 @@ public class ItemService {
                     return new ItemWithViewCount(item, finalViewCount);
                 })
                 .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
-                .limit(5) // 상위 3개 선택
+                .limit(5) // 상위 5개 선택
                 .collect(Collectors.toList());
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
@@ -436,4 +438,11 @@ public class ItemService {
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
     }
+
+    private void incrementViewCount(Long itemId) {
+        String redisKey = "ViewCount:ItemId:" + itemId;
+        viewCountRedisTemplate.opsForValue().increment(redisKey);
+    }
+
+
 }
