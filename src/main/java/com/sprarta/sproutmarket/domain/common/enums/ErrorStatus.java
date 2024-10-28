@@ -32,7 +32,7 @@ public enum ErrorStatus implements BaseCode {
     IO_EXCEPTION_ON_IMAGE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 삭제 중 오류가 발생했습니다."),
 
     // user 예외처리
-    NOT_FOUND_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
+    BAD_REQUEST_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
     NOT_FOUND_AUTH_USER(HttpStatus.NOT_FOUND, 404, "가입되지 않은 유저입니다."),
     BAD_REQUEST_USER(HttpStatus.BAD_REQUEST, 404, "비활성화된 계정입니다. 관리자에 문의하세요."),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
