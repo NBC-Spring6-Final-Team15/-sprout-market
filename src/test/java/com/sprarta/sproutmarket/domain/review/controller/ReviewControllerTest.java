@@ -120,8 +120,8 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 201"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
@@ -133,7 +133,7 @@ class ReviewControllerTest {
                                 .build()
                         )
                 ));
-        result.andExpect(status().isOk())
+        result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.comment").value(reviewRequestDto.getComment()))
                 .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
     }
@@ -163,8 +163,8 @@ class ReviewControllerTest {
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
@@ -211,8 +211,8 @@ class ReviewControllerTest {
                                 .summary("리뷰 전체 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data[]").description("리뷰 목록"),
                                         fieldWithPath("data[].id").description("리뷰 ID"),
                                         fieldWithPath("data[].tradeId").description("관련 거래 ID"),
@@ -263,8 +263,8 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
@@ -305,8 +305,8 @@ class ReviewControllerTest {
                                 .summary("리뷰 삭제")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data").description("리뷰 삭제에 대한 데이터 (null)")
                                 ))
                                 .responseHeaders(

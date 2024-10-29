@@ -10,6 +10,7 @@ import com.sprarta.sproutmarket.domain.trade.service.TradeService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class TradeController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         TradeResponseDto responseDto = tradeService.reserveTrade(itemId, dto, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,responseDto));
     }
 
 
