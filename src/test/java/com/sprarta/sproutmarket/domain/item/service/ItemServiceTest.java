@@ -39,6 +39,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -70,6 +72,11 @@ public class ItemServiceTest {
     private InterestedItemService interestedItemService;
     @Mock
     private InterestedCategoryService interestedCategoryService;
+    @Mock
+    private RedisTemplate<String, Long> viewCountRedisTemplate; // RedisTemplate Mock
+
+    @Mock
+    private ValueOperations<String, Long> valueOperations;
     @InjectMocks
     private ItemService itemService;
     private User mockUser;
@@ -166,6 +173,31 @@ public class ItemServiceTest {
         // itemRepository.findById() 호출 시 mockItem1과 mockItem2를 반환하도록 설정
         when(itemRepository.findById(mockItem1.getId())).thenReturn(Optional.of(mockItem1));
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
+
+        when(viewCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
+    }
+
+    @Test
+    void 매물_단건_상세_조회_성공() {
+        Long itemId = 1L;
+        // Given
+        when(itemRepository.findByIdOrElseThrow(itemId)).thenReturn(mockItem1);
+
+        // When
+        ItemResponseDto result = itemService.getItem(itemId);
+
+        // Then
+        assertEquals(mockItem1.getId(), result.getId());
+        assertEquals(mockItem1.getTitle(), result.getTitle());
+        assertEquals(mockItem1.getDescription(), result.getDescription());
+        assertEquals(mockItem1.getPrice(), result.getPrice());
+        assertEquals(mockItem1.getSeller().getNickname(), result.getNickname());
+        assertEquals(mockItem1.getItemSaleStatus(), result.getItemSaleStatus());
+        assertEquals(mockItem1.getCategory().getName(), result.getCategoryName());
+        assertEquals(mockItem1.getStatus(), result.getStatus());
+
+        // Increment view count 검증
+        verify(viewCountRedisTemplate.opsForValue(), times(1)).increment("ViewCount:ItemId:" + itemId);
     }
 
     @Test
@@ -386,21 +418,7 @@ public class ItemServiceTest {
     }
 
 
-//    @Test
-//    void 매물_단건_상세_조회_성공() {
-//        // Given
-//        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
-//
-//        // When
-//        ItemResponseDto result = itemService.getItem(mockItem1.getId());
-//
-//        // Then
-//        assertEquals(mockItem1.getId(), result.getId());
-//        assertEquals(mockItem1.getTitle(), result.getTitle());
-//        assertEquals(mockItem1.getPrice(), result.getPrice());
-//        assertEquals(mockItem1.getSeller().getNickname(), result.getNickname());
-//        assertEquals(mockItem1.getCategory().getName(), result.getCategoryName());
-//    }
+
 
     @Test
     void 자신매물_전체_조회_성공() {

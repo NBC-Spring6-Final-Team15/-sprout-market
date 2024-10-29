@@ -776,7 +776,7 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1}")
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
             .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
             .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
@@ -916,7 +916,7 @@ class ItemControllerTest {
         given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
         // When, Then
-        mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/report", mockItem.getId())
+        mockMvc.perform(RestDocumentationRequestBuilders.delete("/admin/items/{itemId}", mockItem.getId())
                 .contentType(MediaType.APPLICATION_JSON)
             )
             .andExpect(status().isOk())
