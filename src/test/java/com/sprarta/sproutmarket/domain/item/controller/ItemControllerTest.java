@@ -935,9 +935,8 @@ class ItemControllerTest {
                                         fieldWithPath("data[].categoryName").description("아이템 카테고리 이름"),
                                         fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("인기매물-조회-성공-요청"))
+                                .responseSchema(Schema.schema("인기매물-조회-성공-응답"))
                                 .build()
                         )
                 ));

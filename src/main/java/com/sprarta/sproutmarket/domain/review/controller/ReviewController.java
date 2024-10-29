@@ -69,7 +69,8 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
             ) {
         reviewService.deleteReview(reviewId, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.createSuccess("No Content",204,null));
     }
 
 
