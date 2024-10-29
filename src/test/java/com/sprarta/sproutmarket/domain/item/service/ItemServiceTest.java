@@ -18,6 +18,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
@@ -182,7 +183,7 @@ public class ItemServiceTest {
         User mockUser = mock(User.class);
         List<String> areaList = List.of("지역1", "지역2");
         Category mockCategory = mock(Category.class);
-        Page<Item> mockPage = mock(Page.class);
+        Page<ItemSearchResponse> mockPage = mock(Page.class);
         Item mockItem = mock(Item.class);
 
         when(authUser.getId()).thenReturn(1L);
@@ -196,7 +197,7 @@ public class ItemServiceTest {
         when(mockPage.map(any())).thenReturn(Page.empty()); // 결과로 빈 페이지를 리턴하는 mock 설정
 
         // When
-        Page<ItemResponseDto> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
+        Page<ItemSearchResponse> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
 
         // Then
         assertNotNull(result); // 결과가 null이 아님을 검증

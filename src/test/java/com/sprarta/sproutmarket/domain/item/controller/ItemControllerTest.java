@@ -15,6 +15,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
@@ -57,6 +58,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,23 +164,22 @@ class ItemControllerTest {
             "1",1L,true
         );
         //페이지 직접 만들어주기
-        List<ItemResponseDto> dtoList = new ArrayList<>();
-        for(int i = 1; i <= 5; i++) {
-            ItemResponseDto dto = new ItemResponseDto(
-                (long) i, //
+        List<ItemSearchResponse> responseList = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            ItemSearchResponse response = new ItemSearchResponse(
+                (long) i,
                 "제목" + i,
-                "내용" + i,
                 15000,
-                "닉네임" + i,
-                ItemSaleStatus.WAITING,
-                mockCategory.getName(),
-                Status.ACTIVE
+                "주소" + i,
+                "url" + i,
+                LocalDateTime.now() // 생성 날짜
             );
-            dtoList.add(dto);
+            responseList.add(response);
         }
 
+
         Pageable pageable = PageRequest.of(0 , 10);
-        Page<ItemResponseDto> pageResult = new PageImpl<>(dtoList,pageable,dtoList.size());
+        Page<ItemSearchResponse> pageResult = new PageImpl<>(responseList, pageable, responseList.size());
         given(itemService.searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class)))
             .willReturn(pageResult);
 
@@ -223,18 +224,14 @@ class ItemControllerTest {
                             .description("아이템 ID"),
                         fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
                             .description("아이템 제목"),
-                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING)
-                            .description("아이템 설명"),
                         fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
                             .description("아이템 가격"),
-                        fieldWithPath("data.content[].nickname").type(JsonFieldType.STRING)
-                            .description("판매자 닉네임"),
-                        fieldWithPath("data.content[].itemSaleStatus").type(JsonFieldType.STRING)
-                            .description("아이템 판매 상태"),
-                        fieldWithPath("data.content[].categoryName").type(JsonFieldType.STRING)
-                            .description("아이템 카테고리 이름"),
-                        fieldWithPath("data.content[].status").type(JsonFieldType.STRING)
-                            .description("아이템 상태 (예: ACTIVE, INACTIVE)"),
+                        fieldWithPath("data.content[].address").type(JsonFieldType.STRING)
+                            .description("판매자 행정동"),
+                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING)
+                            .description("이미지"),
+                        fieldWithPath("data.content[].createAt").type(JsonFieldType.STRING)
+                            .description("생성일"),
                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
                             .description("페이지 관련 정보"),
                         fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
@@ -287,7 +284,7 @@ class ItemControllerTest {
             ));
         verify(itemService,times(1)).searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class));
         result.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.totalElements").value(dtoList.size()));
+            .andExpect(jsonPath("$.data.totalElements").value(responseList.size()));
     }
 
     @Test
