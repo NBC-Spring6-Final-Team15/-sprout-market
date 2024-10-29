@@ -178,7 +178,7 @@ public class ItemService {
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
-            item.getImages(),
+            images.getName(),
             user.getNickname()
         );
     }
@@ -207,7 +207,7 @@ public class ItemService {
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
-            item.getImages(),
+            item.getPrice(),
             user.getNickname()
         );
     }
