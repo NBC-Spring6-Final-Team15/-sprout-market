@@ -117,8 +117,8 @@ public class TradeControllerTest {
                                         fieldWithPath("buyerId").description("구매자 ID")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 201"),
                                         fieldWithPath("data.id").description("거래 ID"),
                                         fieldWithPath("data.itemId").description("아이템 ID"),
                                         fieldWithPath("data.sellerName").description("판매자 이름"),
@@ -131,7 +131,7 @@ public class TradeControllerTest {
                                 .build()
                         )
                 ));
-                result.andExpect(status().isOk())
+                result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").value(tradeResponseDto.getId()))
                 .andExpect(jsonPath("$.data.itemId").value(tradeResponseDto.getItemId()));
     }
@@ -169,8 +169,8 @@ public class TradeControllerTest {
                                         fieldWithPath("buyerId").description("구매자 ID")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("거래 ID"),
                                         fieldWithPath("data.itemId").description("아이템 ID"),
                                         fieldWithPath("data.sellerName").description("판매자 이름"),
