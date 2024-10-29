@@ -14,11 +14,13 @@ import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemServ
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
+import com.sprarta.sproutmarket.domain.item.repository.ItemRepositoryCustom;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -52,6 +54,8 @@ public class ItemServiceTest {
     private UserRepository userRepository;
     @Mock
     private ImageRepository imageRepository;
+    @Mock
+    private ItemRepositoryCustom itemRepositoryCustom;
     @Mock
     private CategoryService categoryService;
     @Mock
@@ -161,6 +165,46 @@ public class ItemServiceTest {
         when(itemRepository.findById(mockItem1.getId())).thenReturn(Optional.of(mockItem1));
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
     }
+
+    @Test
+    void 매물_검색_성공() {
+        // Given
+        int page = 1;
+        int size = 10;
+        ItemSearchRequest itemSearchRequest = new ItemSearchRequest(
+            "타이틀",
+            1L,
+            true
+        );
+
+        CustomUserDetails authUser = mock(CustomUserDetails.class);
+        User mockUser = mock(User.class);
+        List<String> areaList = List.of("지역1", "지역2");
+        Category mockCategory = mock(Category.class);
+        Page<Item> mockPage = mock(Page.class);
+        Item mockItem = mock(Item.class);
+
+        when(authUser.getId()).thenReturn(1L);
+        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
+        when(mockUser.getAddress()).thenReturn("서울");
+        when(admAreaService.getAdmNameListByAdmName("서울")).thenReturn(areaList);
+        when(categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory);
+        when(itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size)))
+            .thenReturn(mockPage);
+
+        when(mockPage.map(any())).thenReturn(Page.empty()); // 결과로 빈 페이지를 리턴하는 mock 설정
+
+        // When
+        Page<ItemResponseDto> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
+
+        // Then
+        assertNotNull(result); // 결과가 null이 아님을 검증
+        verify(userRepository, times(1)).findById(authUser.getId());
+        verify(admAreaService, times(1)).getAdmNameListByAdmName("서울");
+        verify(categoryService, times(1)).findByIdOrElseThrow(itemSearchRequest.getCategoryId());
+        verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size));
+    }
+
 
     @Test
     void 매물_이미지_삭제_성공() {
