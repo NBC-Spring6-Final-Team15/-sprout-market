@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemCreateRequest {
-    private String title;
-    private String description;
-    private int price;
+public class ItemSearchRequest {
+    private String searchKeyword;
     private Long categoryId;
+    private boolean saleStatus = false;
 }
