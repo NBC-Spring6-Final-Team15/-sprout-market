@@ -24,12 +24,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -39,9 +41,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
+import static org.springframework.restdocs.headers.HeaderDocumentation.headerWithName;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.partWithName;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
@@ -206,7 +211,7 @@ public class UserControllerTest {
         UserDeleteRequest deleteRequest = new UserDeleteRequest("password");
 
         // when, then
-        mockMvc.perform(RestDocumentationRequestBuilders.delete("/users")
+        mockMvc.perform(delete("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"password\":\"password\"}"))
                 .andExpect(status().isOk())
@@ -238,7 +243,7 @@ public class UserControllerTest {
                 .when(userService).deleteUser(any(CustomUserDetails.class), any(UserDeleteRequest.class));
 
         // when, then
-        mockMvc.perform(RestDocumentationRequestBuilders.delete("/users")
+        mockMvc.perform(delete("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"password\":\"wrongPassword\"}"))
                 .andExpect(status().isBadRequest()) // 400 Bad Request 기대
@@ -284,6 +289,85 @@ public class UserControllerTest {
                                 ))
                                 .requestSchema(Schema.schema("주소-변경-성공-요청"))
                                 .responseSchema(Schema.schema("주소-변경-성공-응답"))
+                                .build())
+                ));
+    }
+
+    @Test
+    @WithMockUser
+    void 프로필_이미지_업로드_성공() throws Exception {
+        // given
+        MockMultipartFile mockImage = new MockMultipartFile(
+                "image",  // 필드 이름
+                "profileImage.jpg",  // 파일 이름
+                MediaType.IMAGE_JPEG_VALUE,  // 콘텐츠 타입
+                "image content".getBytes()  // 파일의 바이트 배열
+        );
+        String expectedImageUrl = "https://s3.bucket/profile/profileImage.jpg";
+
+        when(userService.updateProfileImage(any(CustomUserDetails.class), any(MultipartFile.class)))
+                .thenReturn(expectedImageUrl);
+
+        // when & then
+        mockMvc.perform(multipart("/users/profile-image")
+                        .file(mockImage)
+                        .with(request -> {
+                            request.setMethod("PUT");
+                            return request;
+                        })
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .header("Authorization", "Bearer (JWT 토큰)")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Ok"))
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.data").value(expectedImageUrl))
+                .andDo(document("upload-profile-image",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 프로필 이미지 업로드 API")
+                                .summary("사용자의 프로필 이미지를 업로드합니다.")
+                                .tag("User")
+                                .requestHeaders(
+                                        headerWithName("Authorization").description("Bearer (JWT 토큰)")
+                                )
+                                .responseFields(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("업로드된 이미지 URL")
+                                )
+                                .build())
+                ));
+
+        verify(userService, times(1)).updateProfileImage(any(CustomUserDetails.class), any(MultipartFile.class));
+    }
+
+    @Test
+    @WithMockUser
+    void 프로필_이미지_삭제_성공() throws Exception {
+        // given
+        doNothing().when(userService).deleteProfileImage(any(CustomUserDetails.class));
+
+        // when & then
+        mockMvc.perform(delete("/users/profile-image")
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Ok"))  // 기대 메시지를 "Ok"로 변경
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.data").value("프로필 이미지 삭제 성공"))
+                .andDo(document("delete-profile-image",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("사용자 프로필 이미지 삭제 API")
+                                .summary("사용자의 프로필 이미지를 삭제합니다.")
+                                .tag("User")
+                                .requestHeaders(
+                                        headerWithName("Authorization").description("Bearer (JWT 토큰)")
+                                )
+                                .responseFields(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data").description("삭제 성공 메시지")
+                                )
+                                .responseSchema(Schema.schema("프로필-이미지-삭제-성공-응답"))
                                 .build())
                 ));
     }

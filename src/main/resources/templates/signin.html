@@ -93,6 +93,8 @@
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <script>
+    let stompClient = null; // 전역 변수로 설정하여 중복 연결 방지
+
     function parseJwt(token) {
         try {
             const base64Url = token.split('.')[1];
@@ -166,22 +168,30 @@
 
     // WebSocket 연결 함수
     function connectWebSocket(userId) {
-        const socket = new SockJS('http://localhost:8080/ws');  // WebSocket 엔드포인트
-        const stompClient = Stomp.over(socket);
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect(() => console.log("Disconnected existing WebSocket"));
+        }
 
-        stompClient.connect({}, function (frame) {
+        const socket = new SockJS('http://localhost:8080/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function(frame) {
             console.log('Connected: ' + frame);
 
-            // 해당 사용자(userId)에 대한 구독 경로
-            stompClient.subscribe('/sub/user/' + userId + '/notifications', function (message) {
-                const messageContainer = document.getElementById('messages');
-                if (messageContainer) {
-                    messageContainer.innerHTML += '<p>' + message.body + '</p>';
-                } else {
-                    console.error('Message container not found!');
-                }
+            const subscriptionPath = '/sub/user/' + userId + '/notifications';
+            stompClient.subscribe(subscriptionPath, function(message) {
+                displayMessage(message.body);
             });
         });
+    }
+
+    function displayMessage(message) {
+        const messageContainer = document.getElementById('messages');
+        if (messageContainer) {
+            messageContainer.innerHTML += '<p>' + message + '</p>';
+        } else {
+            console.error('Message container not found!');
+        }
     }
 </script>
 </body>

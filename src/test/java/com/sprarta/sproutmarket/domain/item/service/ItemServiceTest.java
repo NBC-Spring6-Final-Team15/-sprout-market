@@ -10,6 +10,7 @@ import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -263,12 +264,12 @@ public class ItemServiceTest {
             "가짜 매물1",
             "가짜 설명1",
             10000,
-            1L
+                mockCategory1.getId()
         );
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
-        when(categoryService.findByIdOrElseThrow(1L)).thenReturn(mockCategory1);
+        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
 
         // When
         ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);

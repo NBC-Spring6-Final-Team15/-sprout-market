@@ -97,7 +97,7 @@ class ReviewControllerTest {
                 .thenReturn(reviewResponseDto);
 
         // when, then
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/{tradeId}", tradeId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/trades/{tradeId}", tradeId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reviewRequestDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
@@ -163,18 +163,12 @@ class ReviewControllerTest {
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message")
-                                                .description("응답 메시지"),
-                                        fieldWithPath("statusCode")
-                                                .description("HTTP 상태 코드"),
-                                        fieldWithPath("data.id")
-                                                .description("리뷰 ID"),
-                                        fieldWithPath("data.tradeId")
-                                                .description("관련 거래 ID"),
-                                        fieldWithPath("data.comment")
-                                                .description("리뷰 내용"),
-                                        fieldWithPath("data.reviewRating")
-                                                .description("리뷰 평점")
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("data.id").description("리뷰 ID"),
+                                        fieldWithPath("data.tradeId").description("관련 거래 ID"),
+                                        fieldWithPath("data.comment").description("리뷰 내용"),
+                                        fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
                                 .responseHeaders(
                                         headerWithName("Content-Type").description("응답의 Content-Type")
