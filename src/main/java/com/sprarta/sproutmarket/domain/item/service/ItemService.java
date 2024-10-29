@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -51,6 +52,7 @@ public class ItemService {
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
+    private final InterestedCategoryService interestedCategoryService;
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -67,7 +69,6 @@ public class ItemService {
         // 카테고리 찾기
         Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
-
         Item item = Item.builder()
             .title(itemCreateRequest.getTitle())
             .description(itemCreateRequest.getDescription())
@@ -79,6 +80,9 @@ public class ItemService {
             .build();
 
         Item saveItem = itemRepository.save(item);
+
+        // 카테고리에 관심 있는 사용자들에게 알림 전송
+        notifyUsersAboutNewItem(item.getCategory().getId(), item.getTitle());
 
         return new ItemResponse(
             saveItem.getTitle(),
@@ -461,6 +465,17 @@ public class ItemService {
         for (User user : interestedUsers) {
             simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
                     "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+        }
+    }
+
+    /**
+     * 관심 카테고리에 새로운 물품이 등록되었을 때 사용자에게 알림을 보내는 메서드
+     */
+    private void notifyUsersAboutNewItem(Long categoryId, String itemTitle) {
+        List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
+        for (User user : interestedUsers) {
+            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
+                    "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
         }
     }
 }
