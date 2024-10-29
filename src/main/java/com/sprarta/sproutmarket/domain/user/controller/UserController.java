@@ -54,11 +54,11 @@ public class UserController {
     }
 
     @PutMapping("/profile-image")
-    public ResponseEntity<ApiResponse<Void>> updateProfileImage(
+    public ResponseEntity<ApiResponse<String>> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestPart(value = "image", required = true) MultipartFile image) {
-        userService.updateProfileImage(authUser, image);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        String profileImageUrl = userService.updateProfileImage(authUser, image);
+        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
     }
 
     @DeleteMapping("/profile-image")
