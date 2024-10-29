@@ -58,6 +58,15 @@ public class ItemService {
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
     private final InterestedCategoryService interestedCategoryService;
 
+    /**
+     * 중고 매물에 대해서 검색하는 로직
+     * @param page 페이지당 카드 수
+     * @param size 현재 인증된 사용자 정보
+     * @param itemSearchRequest 매물 검색 조건을 포함한 요청 객체(키워드, 카테고리id, 판매상태)
+     * @param authUser 매물 수정을 요청한 사용자
+     * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 검색 조건에 맞는 매물 목록을 포함한 페이지 정보
+     * 각 매물은 ItemResponseDto 형태로 변환되어 반환됨
+     */
     public Page<ItemResponseDto> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
         // 유저 조회
         User user = userRepository.findById(authUser.getId())

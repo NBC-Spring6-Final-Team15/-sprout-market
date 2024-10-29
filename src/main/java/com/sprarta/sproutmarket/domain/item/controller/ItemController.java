@@ -24,6 +24,15 @@ import java.util.List;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
+
+    /**
+     * 중고 매물에 대해서 검색하는 로직
+     * @param page 페이지당 카드 수
+     * @param size 현재 인증된 사용자 정보
+     * @param itemSearchRequest 매물 검색 조건을 포함한 요청 객체(키워드, 카테고리id, 판매상태)
+     * @param authUser 매물 수정을 요청한 사용자
+     * @return ApiResponse - 메세지, 상태 코드, 조건에 해당하는 매물의 상세 정보를 포함한 응답 객체
+     */
    @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(name = "page", defaultValue = "1") int page,
                                                                                @RequestParam(name = "size", defaultValue = "10") int size,
