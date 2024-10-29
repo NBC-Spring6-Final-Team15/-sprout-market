@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
@@ -60,6 +61,8 @@ public class ItemServiceTest {
     private SimpMessagingTemplate simpMessagingTemplate;
     @Mock
     private InterestedItemService interestedItemService;
+    @Mock
+    private InterestedCategoryService interestedCategoryService;
     @InjectMocks
     private ItemService itemService;
     private User mockUser;
@@ -220,7 +223,7 @@ public class ItemServiceTest {
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryService.findByIdOrElseThrow(1L)).thenReturn(mockCategory1);
 
         // When
         ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
