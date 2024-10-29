@@ -61,7 +61,8 @@ public class CategoryController {
     @DeleteMapping("/admin/categories/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long categoryId) {
         categoryService.delete(categoryId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.createSuccess("No Content",204,null));
     }
 
     /**
@@ -72,7 +73,8 @@ public class CategoryController {
     @PatchMapping("/admin/categories/deleted/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable(required = true) Long categoryId) {
         categoryService.activate(categoryId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.createSuccess("No Content",204,null));
     }
 
     /**

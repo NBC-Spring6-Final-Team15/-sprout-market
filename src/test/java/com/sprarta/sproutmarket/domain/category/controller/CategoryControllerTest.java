@@ -216,9 +216,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 )
                 .responseFields(
                         fieldWithPath("message").type(JsonFieldType.STRING)
-                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                                .description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
                         fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                .description("성공 상태코드 : 200"),
+                                .description("성공 상태코드 : 204"),
                         fieldWithPath("data").type(JsonFieldType.NULL)
                                 .description("성공 시 data : NULL")
                 )
@@ -234,7 +234,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 ))
                 .andDo(print());
 
-        result.andExpect(status().isOk());
+        result.andExpect(status().isNoContent());
     }
 
     @Test
@@ -256,9 +256,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 )
                 .responseFields(
                         fieldWithPath("message").type(JsonFieldType.STRING)
-                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
+                                .description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
                         fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                .description("성공 상태코드 : 200"),
+                                .description("성공 상태코드 : 204"),
                         fieldWithPath("data").type(JsonFieldType.NULL)
                                 .description("성공 시 data : NULL")
                 )
@@ -274,7 +274,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 ))
                 .andDo(print());
 
-        result.andExpect(status().isOk());
+        result.andExpect(status().isNoContent());
     }
 
     @Test
