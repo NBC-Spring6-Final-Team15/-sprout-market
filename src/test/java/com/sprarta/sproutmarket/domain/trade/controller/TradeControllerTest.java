@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.trade.controller;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
@@ -125,9 +126,8 @@ public class TradeControllerTest {
                                         fieldWithPath("data.buyerName").description("구매자 이름"),
                                         fieldWithPath("data.tradeStatus").description("거래 상태")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("거래-예약-성공-요청"))
+                                .responseSchema(Schema.schema("거래-예약-성공-응답"))
                                 .build()
                         )
                 ));
@@ -177,9 +177,8 @@ public class TradeControllerTest {
                                         fieldWithPath("data.buyerName").description("구매자 이름"),
                                         fieldWithPath("data.tradeStatus").description("거래 상태")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("거래-완료-성공-요청"))
+                                .responseSchema(Schema.schema("거래-완료-성공-응답"))
                                 .build()
                         )
                 ));
