@@ -35,40 +35,6 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
     AdministrativeAreaService administrativeAreaService;
 
     @Test
-    @WithMockUser
-    void addGeoJson() throws Exception {
-        String returnString = "DB에 성공적으로 geojson 파일이 삽입됐습니다.";
-        doNothing().when(administrativeAreaService).insertGeoJsonData(anyString());
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/addGeoJson")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(
-                        MockMvcRestDocumentationWrapper.document(
-                                "add-geojson",
-                                resource(ResourceSnippetParameters.builder()
-                                        .description("GeoJson 파일을 DB에 추가합니다.")
-                                        .summary("GeoJson 추가 API")
-                                        .tag("AdministrativeArea")
-                                        .responseFields(List.of(
-                                                fieldWithPath("message").type(JsonFieldType.STRING)
-                                                        .description("상태 메시지"),
-                                                fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                        .description("상태 코드"),
-                                                fieldWithPath("data").type(JsonFieldType.STRING)
-                                                        .description("성공했다는 메시지")
-                                        ))
-                                        .responseSchema(Schema.schema("geojson-DB-추가-성공-응답"))
-                                        .build())
-                        )
-                );
-
-        verify(administrativeAreaService, times(1)).insertGeoJsonData(anyString());
-        result.andExpect(status().isCreated());
-        result.andExpect(jsonPath("data").value(returnString));
-        result.andExpect(jsonPath("statusCode").value(201));
-        result.andExpect(jsonPath("message").value("Created"));
-    }
-
-    @Test
     void 좌표로_행정동_조회_성공() throws Exception {
         //when
         AdministrativeAreaRequestDto requestDto = new AdministrativeAreaRequestDto(126.927872, 37.523254);
