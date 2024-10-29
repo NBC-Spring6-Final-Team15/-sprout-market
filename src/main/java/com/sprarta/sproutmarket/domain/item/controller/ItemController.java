@@ -4,6 +4,7 @@ import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
@@ -23,9 +24,16 @@ import java.util.List;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
+   @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(name = "page", defaultValue = "1") int page,
+                                                                               @RequestParam(name = "size", defaultValue = "10") int size,
+                                                                               @RequestBody ItemSearchRequest itemSearchRequest,
+                                                                               @AuthenticationPrincipal CustomUserDetails authUser){
+        Page<ItemResponseDto> itemResponseDto = itemService.searchItems(page, size, itemSearchRequest, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
+    }
 
-
-    /**
+            /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
      * @param authUser 매물 등록을 요청한 사용자

@@ -8,17 +8,20 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
+import com.sprarta.sproutmarket.domain.item.repository.ItemRepositoryCustom;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -44,6 +47,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
+    private final ItemRepositoryCustom itemRepositoryCustom;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
     private final CategoryService categoryService;
@@ -53,6 +57,42 @@ public class ItemService {
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
     private final InterestedCategoryService interestedCategoryService;
+
+    public Page<ItemResponseDto> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
+        // 유저 조회
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        String area = user.getAddress();
+        // 반경 5km 행정동 이름 반환
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
+
+        Category category = null;
+        if(itemSearchRequest.getCategoryId() != null){
+            category = categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId());
+        }
+
+        ItemSaleStatus itemSaleStatus = null;
+        if(itemSearchRequest.isSaleStatus()){
+            itemSaleStatus = ItemSaleStatus.WAITING;
+        }
+
+        Pageable pageable = PageRequest.of(page-1, size);
+
+        Page<Item> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
+
+        return result.map(item -> new ItemResponseDto(
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
+            )
+        );
+    }
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -437,17 +477,6 @@ public class ItemService {
     }
 
 
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param id Item's ID
-     * @return Item 객체
-     * @throws ApiException 해당 id의 매물이 존재하지 않을 경우 발생
-     */
-    public Item findByIdOrElseThrow(Long id){
-        return itemRepository.findById(id)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
-    }
 
     private void incrementViewCount(Long itemId) {
         String redisKey = "ViewCount:ItemId:" + itemId;
