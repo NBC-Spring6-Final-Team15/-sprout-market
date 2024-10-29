@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,5 +48,19 @@ public class UserController {
     ) {
         userService.updateUserAddress(authUser.getId(), request.getLongitude(), request.getLatitude());
         return ResponseEntity.ok(ApiResponse.onSuccess("주소가 성공적으로 업데이트되었습니다."));
+    }
+
+    @PutMapping("/profile-image")
+    public ResponseEntity<ApiResponse<String>> updateProfileImage(
+            @AuthenticationPrincipal CustomUserDetails authUser,
+            @RequestPart(value = "image", required = true) MultipartFile image) {
+        String profileImageUrl = userService.updateProfileImage(authUser, image);
+        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
+    }
+
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<ApiResponse<String>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
+        userService.deleteProfileImage(authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess("프로필 이미지 삭제 성공"));
     }
 }

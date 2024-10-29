@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdministrativeAreaService administrativeAreaService;
+    private final S3ImageService s3ImageService;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -74,6 +77,35 @@ public class UserService {
         user.changeAddress(administrativeArea);
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public String updateProfileImage(CustomUserDetails authUser, MultipartFile image) {
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 프로필 이미지 S3 업로드
+        String profileImageUrl = s3ImageService.upload(image, user.getId(), authUser);
+
+        // 유저 엔티티에 프로필 이미지 URL 업데이트
+        user.updateProfileImage(profileImageUrl);
+
+        userRepository.save(user);
+        return profileImageUrl;
+    }
+
+    @Transactional
+    public void deleteProfileImage(CustomUserDetails authUser) {
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        String currentProfileImageUrl = user.getProfileImageUrl();
+        if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
+            s3ImageService.deleteImageFromS3(currentProfileImageUrl);
+        }
+
+        userRepository.save(user);
+        user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
     }
 }
 

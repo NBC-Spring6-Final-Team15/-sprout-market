@@ -3,6 +3,8 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -15,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -33,11 +37,15 @@ class UserServiceTest {
     @Mock
     private AdministrativeAreaService administrativeAreaService;
 
+    @Mock
+    private S3ImageService s3ImageService;
+
     @InjectMocks
     private UserService userService;
 
     private User user;
     private CustomUserDetails authUser;
+    private MockMultipartFile mockImage;
 
     @BeforeEach
     void setUp() {
@@ -46,6 +54,7 @@ class UserServiceTest {
         // Mock user data
         user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
         authUser = new CustomUserDetails(user);
+        mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
     }
 
     @Test
@@ -192,5 +201,38 @@ class UserServiceTest {
         ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
         verify(userRepository, times(0)).save(any(User.class));
+    }
+
+    @Test
+    void 프로필_이미지_업로드_성공() {
+        // Given
+        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
+        when(s3ImageService.upload(mockImage, user.getId(), authUser)).thenReturn("https://s3.bucket/profile/test.jpg");
+
+        // When
+        String resultUrl = userService.updateProfileImage(authUser, mockImage);
+
+        // Then
+        assertEquals("https://s3.bucket/profile/test.jpg", resultUrl);
+        assertEquals("https://s3.bucket/profile/test.jpg", user.getProfileImageUrl());
+        verify(userRepository, times(1)).findById(authUser.getId());
+        verify(s3ImageService, times(1)).upload(mockImage, user.getId(), authUser);
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void 프로필_이미지_삭제_성공() {
+        // Given
+        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
+        String profileImageUrl = "https://s3.bucket/profile/profileImage.jpg";
+        user.updateProfileImage(profileImageUrl);  // 초기 상태로 프로필 이미지 설정
+
+        // When
+        userService.deleteProfileImage(authUser);
+
+        // Then
+        verify(s3ImageService, times(1)).deleteImageFromS3(profileImageUrl); // S3에서 이미지 삭제 확인
+        assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
+        verify(userRepository, times(1)).findById(authUser.getId());
     }
 }
