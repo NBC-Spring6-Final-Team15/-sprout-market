@@ -19,7 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity(prePostEnabled = true) // 최신 방식의 메서드 수준 권한 제어
+@EnableMethodSecurity // 최신 방식의 메서드 수준 권한 제어
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 

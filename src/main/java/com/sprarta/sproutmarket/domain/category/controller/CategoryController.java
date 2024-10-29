@@ -71,7 +71,7 @@ public class CategoryController {
      * @return data: null인 응답 반환
      */
     @PatchMapping("/admin/categories/deleted/{categoryId}")
-    public ResponseEntity<ApiResponse<Void>> activate(@PathVariable(required = true) Long categoryId) {
+    public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long categoryId) {
         categoryService.activate(categoryId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(ApiResponse.createSuccess("No Content",204,null));
