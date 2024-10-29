@@ -7,6 +7,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -34,12 +35,12 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 조건에 해당하는 매물의 상세 정보를 포함한 응답 객체
      */
     @PostMapping("/search")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> searchItems(@RequestParam(name = "page", defaultValue = "1") int page,
-                                                                               @RequestParam(name = "size", defaultValue = "10") int size,
-                                                                               @RequestBody ItemSearchRequest itemSearchRequest,
-                                                                               @AuthenticationPrincipal CustomUserDetails authUser){
-        Page<ItemResponseDto> itemResponseDto = itemService.searchItems(page, size, itemSearchRequest, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
+    public ResponseEntity<ApiResponse<Page<ItemSearchResponse>>> searchItems(@RequestParam(name = "page", defaultValue = "1") int page,
+                                                                             @RequestParam(name = "size", defaultValue = "10") int size,
+                                                                             @RequestBody ItemSearchRequest itemSearchRequest,
+                                                                             @AuthenticationPrincipal CustomUserDetails authUser){
+        Page<ItemSearchResponse> itemResponse = itemService.searchItems(page, size, itemSearchRequest, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
             /**

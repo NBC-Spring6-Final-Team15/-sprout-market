@@ -17,6 +17,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
@@ -37,6 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,7 +69,7 @@ public class ItemService {
      * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 검색 조건에 맞는 매물 목록을 포함한 페이지 정보
      * 각 매물은 ItemResponseDto 형태로 변환되어 반환됨
      */
-    public Page<ItemResponseDto> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
+    public Page<ItemSearchResponse> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
         // 유저 조회
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -88,17 +90,15 @@ public class ItemService {
 
         Pageable pageable = PageRequest.of(page-1, size);
 
-        Page<Item> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
+        Page<ItemSearchResponse> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
 
-        return result.map(item -> new ItemResponseDto(
+        return result.map(item -> new ItemSearchResponse(
                 item.getId(),
                 item.getTitle(),
-                item.getDescription(),
                 item.getPrice(),
-                item.getSeller().getNickname(),
-                item.getItemSaleStatus(),
-                item.getCategory().getName(),
-                item.getStatus()
+                item.getAddress(),
+                item.getImageUrl(),
+                item.getCreateAt()
             )
         );
     }
