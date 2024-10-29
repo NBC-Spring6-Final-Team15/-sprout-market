@@ -1,7 +1,5 @@
 package com.sprarta.sproutmarket.domain.item.dto.request;
 
-import jakarta.persistence.Column;
-import jakarta.ws.rs.DefaultValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

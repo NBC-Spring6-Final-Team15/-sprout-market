@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ItemContentsUpdateRequest {
         private String title;
-
         private String description;
-
         private int price;
 }

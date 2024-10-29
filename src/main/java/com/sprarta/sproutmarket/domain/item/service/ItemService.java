@@ -38,7 +38,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -150,7 +149,6 @@ public class ItemService {
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
 
-
         return new ItemResponse(
             item.getTitle(),
             item.getPrice(),
@@ -260,7 +258,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
      * @param itemId Item's ID
@@ -279,7 +276,6 @@ public class ItemService {
         item.solfDelete(
             Status.DELETED
         );
-
 
         return new ItemResponse(
             item.getTitle(),
@@ -308,7 +304,6 @@ public class ItemService {
         item.solfDelete(
             Status.DELETED
         );
-
 
         return new ItemResponse(
             item.getTitle(),
@@ -341,7 +336,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 현재 인증된 사용자의 모든 매물을 조회하는 로직
      * @param page 페이지 번호(1부터 시작)
@@ -372,7 +366,6 @@ public class ItemService {
             )
         );
     }
-
 
     /**
      * 특정 카테고리에 모든 매물을 조회
@@ -476,8 +469,6 @@ public class ItemService {
                 ))
                 .collect(Collectors.toList());
     }
-
-
 
     private void incrementViewCount(Long itemId) {
         String redisKey = "ViewCount:ItemId:" + itemId;

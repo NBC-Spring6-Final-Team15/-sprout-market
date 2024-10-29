@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
 @RestController
@@ -43,7 +42,7 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
-            /**
+    /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
      * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
      * @param authUser 매물 등록을 요청한 사용자
@@ -186,5 +185,4 @@ public class ItemController {
     public ResponseEntity<ApiResponse<List<ItemResponseDto>>> getTopItems(@AuthenticationPrincipal CustomUserDetails authUser){
         return ResponseEntity.ok(ApiResponse.onSuccess(itemService.getTopItems(authUser)));
     }
-
 }
