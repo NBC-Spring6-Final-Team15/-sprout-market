@@ -1,10 +1,12 @@
 package com.sprarta.sproutmarket.domain.tradeChat.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class TradeChatDto {
 
     private Long roomId;

@@ -27,17 +27,17 @@ public class TradeChatController {
     private final TradeChatService tradeChatService;
     private final TradeChatRepository tradeChatRepository;
 
-    @MessageMapping("/chat/message/{roomId}")
+    @MessageMapping("/chat/{roomId}")
     public void message(TradeChatDto tradeChatDto,
-                        @DestinationVariable("roomId") Long roomId,
-                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                        @DestinationVariable("roomId") Long roomId) {
 
         ChatRoom chatRoom = tradeChatService.findChatRoom(roomId);
-        tradeChatService.chatRoomMatch(chatRoom, userDetails.getId());
+        tradeChatDto.setRoomId(roomId); // roomId 설정
+
         tradeChatService.saveChat(tradeChatDto);
 
-        messagingTemplate.convertAndSend("/sub/" + tradeChatDto.getRoomId(), tradeChatDto);
-
+        messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
+        System.out.println("확인 용도");
     }
 
     @GetMapping("/chatRoom/{roomId}/chat")

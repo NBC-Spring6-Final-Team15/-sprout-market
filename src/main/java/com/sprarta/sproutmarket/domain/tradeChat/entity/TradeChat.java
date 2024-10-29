@@ -27,9 +27,9 @@ public class TradeChat extends Timestamped {
 //    @Column(nullable = false)
 //    private ChatReadStatus chatReadStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false, name = "chatroom_id")
-    private ChatRoom chatRoom;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(nullable = false, name = "chatroom_id")
+//    private ChatRoom chatRoom;
 
     @Builder
     public TradeChat(String sender,
@@ -37,8 +37,8 @@ public class TradeChat extends Timestamped {
                      Long roomId) {
         this.sender = sender;
         this.content = content;
-//        this.chatReadStatus = chatReadStatus;
         this.roomId = roomId;
+//        this.chatReadStatus = chatReadStatus;
     }
 
 }

@@ -121,11 +121,32 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            if (!base64Url) {
+                throw new Error('Invalid token');
+            }
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            const parsedPayload = JSON.parse(jsonPayload);
+            console.log('Parsed JWT payload:', parsedPayload);  // 페이로드 출력
+
+            return parsedPayload;
+        } catch (error) {
+            console.error('Error parsing JWT:', error.message);
+            throw new Error('Failed to parse token');
+        }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const chatRoomId = urlParams.get('roomId'); // 'roomId' 파라미터를 가져옴
     document.getElementById('chatRoomId').textContent = chatRoomId
 
-    const token = localStorage.getItem('token');
+    // const token = localStorage.getItem('token');
 
     function signin() {
         const email = document.getElementById('email').value;
@@ -141,14 +162,23 @@
             .then(response => response.json())
             .then(data => {
                 const token = data.bearerToken;
-                localStorage.setItem('token', token.startsWith('Bearer ') ? token.slice(7) : token);
-                alert('Logged in successfully');
-                connectWebSocket();
+                const pureToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+
+                localStorage.setItem('token', pureToken);
+                // alert('Logged in successfully');
+
+                // JWT 토큰에서 userId 추출 (sub 사용)
+                const decodedToken = parseJwt(pureToken);
+                const userId = decodedToken.sub;  // 'sub'을 userId로 사용
+                localStorage.setItem('sub', userId);
+                console.log('Decoded userId (sub):', userId);
+
+                connectWebSocket(userId);
             })
             .catch(error => alert('Sign In failed'));
     }
 
-    function connectWebSocket() {
+    function connectWebSocket(userId) {
         const socket = new SockJS('http://localhost:8080/ws');
         const stompClient = Stomp.over(socket);
         const token = localStorage.getItem('token');
@@ -163,7 +193,17 @@
         document.getElementById('sendMessageForm').addEventListener('submit', function (event) {
             event.preventDefault();
             const messageContent = document.getElementById('message').value;
-            stompClient.send(`/pub/chat/${chatRoomId}`, {}, JSON.stringify({ content: messageContent }));
+
+            // 메시지 DTO 생성
+            const messageDto = {
+                sender: userId,  // 사용자 ID 추가
+                content: messageContent,
+                roomId: chatRoomId
+            };
+
+            console.log('dto 확인 용도', messageDto);
+
+            stompClient.send(`/pub/chat/${chatRoomId}`, {}, JSON.stringify(messageDto));
             document.getElementById('message').value = '';
         });
 
