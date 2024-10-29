@@ -91,15 +91,7 @@ public class ItemService {
 
         Page<ItemSearchResponse> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
 
-        return result.map(item -> new ItemSearchResponse(
-                item.getId(),
-                item.getTitle(),
-                item.getPrice(),
-                item.getAddress(),
-                item.getImageUrl(),
-                item.getCreateAt()
-            )
-        );
+        return result;
     }
 
     /**
@@ -232,6 +224,7 @@ public class ItemService {
 
         return new ItemResponse(
             item.getTitle(),
+            item.getPrice(),
             item.getStatus(),
             images.getName(),
             user.getNickname()

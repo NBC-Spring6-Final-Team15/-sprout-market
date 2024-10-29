@@ -65,4 +65,11 @@ public class ItemResponse {
     }
 
 
+    public ItemResponse(String title, int price, Status status, String url, String nickname) {
+        this.title = title;
+        this.price = price;
+        this.status = status;
+        this.imageUrl = url;
+        this.nickname = nickname;
+    }
 }

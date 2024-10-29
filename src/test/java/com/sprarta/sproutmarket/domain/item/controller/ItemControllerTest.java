@@ -111,6 +111,7 @@ class ItemControllerTest {
     private Item mockItem;
     private Category mockCategory;
     private Image image;
+    private User mockUser;
     private MockMultipartFile mockImage;
 
     @BeforeEach // 테스트 전 수행
@@ -119,7 +120,7 @@ class ItemControllerTest {
         mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
 
         // 클래스 인스턴스 생성
-        User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
         image = Image.builder()
@@ -364,9 +365,10 @@ class ItemControllerTest {
         );
         ItemResponse mockItemResponse = new ItemResponse(
             mockItem.getTitle(),
+            mockItem.getPrice(),
             Status.ACTIVE,
             mockImage.getName(),
-            mockAuthUser.getUsername()
+            mockUser.getNickname()
         );
         when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
 
@@ -379,6 +381,44 @@ class ItemControllerTest {
                 })
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer (JWT 토큰)")
+            )
+            .andDo(
+                MockMvcRestDocumentationWrapper.document(
+                    "add-image",
+                    resource(ResourceSnippetParameters.builder()
+                        .description("매물에 이미지를 추가합니다.")
+                        .pathParameters(
+                            parameterWithName("itemId").description("매물 ID")
+                        )
+                        .summary("매물에 이미지 추가")
+                        .tag("Items")
+                        .requestHeaders(
+                            headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                        )
+                        .requestSchema(Schema.schema("이미지-추가-성공-요청"))
+                        .responseFields(
+                            fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 메시지"),
+                            fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("200 상태 코드"),
+                            fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                .description("반환된 정보"),
+                            fieldWithPath("data.title").type(JsonFieldType.STRING)
+                                .description("제목"),
+                            fieldWithPath("data.price").type(JsonFieldType.NUMBER)
+                                .description("가격"),
+                            fieldWithPath("data.status").type(JsonFieldType.STRING)
+                                .description("활성상태"),
+                            fieldWithPath("data.imageUrl").type(JsonFieldType.STRING)
+                                .description("추가된 이미지"),
+                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
+                                .description("이미지를 추가한 유저 닉네임")
+                        )
+                        .responseSchema(Schema.schema("이미지-추가-성공-응답"))
+                        .build()
+                    )
+                )
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
