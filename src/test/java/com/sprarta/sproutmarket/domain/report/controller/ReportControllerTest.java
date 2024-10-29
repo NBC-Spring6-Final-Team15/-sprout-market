@@ -295,16 +295,16 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .summary("신고 삭제")
                                 .tag("Report")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
-                                        fieldWithPath("statusCode").description("성공 상태코드 : 204"),
+                                        fieldWithPath("message").description("성공 시 응답 : 200"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data").description("성공 시 data : NULL")
                                 ))
                                 .responseSchema(Schema.schema("신고-삭제-성공-응답"))
                                 .build()
                         )
                 ));
-        result.andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.statusCode").value(204));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200));
     }
 
 }
