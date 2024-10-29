@@ -1,0 +1,79 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Gradle 의존성 캐싱
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4.1.2
+        with:
+          path:
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-  
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build --no-daemon -parallel
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker Image and Save as Tar
+        run: |
+          pwd
+          ls -lh
+          docker build -t sprout-market:latest .
+          docker save -o sprout-market.tar sprout-market:latest
+
+      - name: Verify Tar File Exists
+        run: |
+          pwd
+          ls -lh 
+
+      - name: Upload Files to EC2 using SFTP
+        env:
+          PEM_KEY: ${{ secrets.FTP_PRIVATE_KEY }}
+        run: |
+          echo "${PEM_KEY}" > private_key.pem
+          chmod 600 private_key.pem
+          sftp -i private_key.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.FTP_USERNAME }}@${{ secrets.FTP_SERVER_IP }} << EOF
+            put sprout-market.tar /home/${{ secrets.FTP_USERNAME }}/
+            put build/resources/main/static/docs/open-api-3.0.1.json /home/${{ secrets.FTP_USERNAME }}/json/
+            bye
+          EOF
+
+      - name: Connect SSH and Deploy
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.FTP_SERVER_IP }}
+          username: ${{ secrets.FTP_USERNAME }}
+          key: ${{ secrets.FTP_PRIVATE_KEY }}
+          script: |
+            docker compose down || true
+            docker rmi sprout-market:latest || true
+            docker load -i sprout-market.tar
+            docker compose up -d

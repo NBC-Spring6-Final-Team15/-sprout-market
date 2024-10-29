@@ -7,10 +7,12 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.geojson.LngLatAlt;
 import org.locationtech.jts.geom.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdministrativeAreaService {
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final AdministrativeAreaRepository administrativeAreaRepository;
@@ -35,6 +38,7 @@ public class AdministrativeAreaService {
     @Transactional
     public void insertGeoJsonData(String filePath) throws IOException {
         // GeoJSON 파일 읽기 및 역직렬화
+        log.info(filePath);
         File file = new File(filePath);
         FeatureCollection featureCollection = objectMapper.readValue(file, FeatureCollection.class);
 
