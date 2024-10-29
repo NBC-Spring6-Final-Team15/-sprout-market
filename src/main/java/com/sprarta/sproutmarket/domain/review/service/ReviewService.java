@@ -35,17 +35,18 @@ public class ReviewService {
         Trade trade = tradeRepository.findById(tradeId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_TRADE));
 
-        User user = User.fromAuthUser(customUserDetails);
+        User buyer = User.fromAuthUser(customUserDetails);
+        if (!buyer.getId().equals(trade.getBuyer().getId())) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_CREATE);
+        }
 
-        User sellerUser = trade.getItem().getSeller();
-        rateChange(sellerUser, dto);
-
-        userRepository.save(sellerUser);
+        User seller = trade.getSeller();
+        rateChange(seller, dto);
 
         Review review = new Review(
                 dto.getComment(),
                 dto.getReviewRating(),
-                user,
+                seller,
                 trade
         );
         reviewRepository.save(review);
@@ -56,7 +57,6 @@ public class ReviewService {
                 review.getComment(),
                 review.getReviewRating()
         );
-
     }
 
     public ReviewResponseDto getReview(Long reviewId) {
@@ -76,8 +76,7 @@ public class ReviewService {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        List<Review> reviews = reviewRepository.findByUserId(user.getId());
-
+        List<Review> reviews = reviewRepository.findBySellerId(user.getId());
         List<ReviewResponseDto> responseDtos = new ArrayList<>();
 
         for (Review review : reviews) {
@@ -90,7 +89,6 @@ public class ReviewService {
             responseDtos.add(responseDto);
         }
         return responseDtos;
-
     }
 
     @Transactional
@@ -99,7 +97,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_REVIEW));
 
-        if (!review.getUser().getId().equals(customUserDetails.getId())) {
+        if (!review.getTrade().getBuyer().getId().equals(customUserDetails.getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_UPDATE);
         }
 
@@ -114,7 +112,6 @@ public class ReviewService {
                 review.getComment(),
                 review.getReviewRating()
         );
-
     }
 
     @Transactional
@@ -123,7 +120,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_REVIEW));
 
-        if (!review.getUser().getId().equals(customUserDetails.getId())) {
+        if (!review.getTrade().getBuyer().getId().equals(customUserDetails.getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_DELETE);
         }
 
@@ -138,5 +135,4 @@ public class ReviewService {
             user.minusRate();
         }
     }
-
 }

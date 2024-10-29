@@ -52,7 +52,7 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private UserRole userRole;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "seller", fetch = FetchType.LAZY)
     private List<Review> reviews;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
