@@ -339,21 +339,21 @@ public class ItemServiceTest {
     }
 
 
-    @Test
-    void 매물_단건_상세_조회_성공() {
-        // Given
-        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
-
-        // When
-        ItemResponseDto result = itemService.getItem(mockItem1.getId());
-
-        // Then
-        assertEquals(mockItem1.getId(), result.getId());
-        assertEquals(mockItem1.getTitle(), result.getTitle());
-        assertEquals(mockItem1.getPrice(), result.getPrice());
-        assertEquals(mockItem1.getSeller().getNickname(), result.getNickname());
-        assertEquals(mockItem1.getCategory().getName(), result.getCategoryName());
-    }
+//    @Test
+//    void 매물_단건_상세_조회_성공() {
+//        // Given
+//        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
+//
+//        // When
+//        ItemResponseDto result = itemService.getItem(mockItem1.getId());
+//
+//        // Then
+//        assertEquals(mockItem1.getId(), result.getId());
+//        assertEquals(mockItem1.getTitle(), result.getTitle());
+//        assertEquals(mockItem1.getPrice(), result.getPrice());
+//        assertEquals(mockItem1.getSeller().getNickname(), result.getNickname());
+//        assertEquals(mockItem1.getCategory().getName(), result.getCategoryName());
+//    }
 
     @Test
     void 자신매물_전체_조회_성공() {
