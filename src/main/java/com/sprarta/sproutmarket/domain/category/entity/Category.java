@@ -38,6 +38,10 @@ public class Category {
         this.status = Status.DELETED;
     }
 
+    public void activate() {
+        this.status = Status.ACTIVE;
+    }
+
     public Category(String name) {
         this.name = name;
     }
