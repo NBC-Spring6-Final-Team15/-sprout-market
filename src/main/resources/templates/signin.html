@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 300px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+
+        /* 메시지 표시를 위한 스타일 */
+        #messages {
+            margin-top: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Sign In</h2>
+    <form id="signinForm">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Sign In</button>
+    </form>
+
+    <!-- 여기서 메시지가 표시됨 -->
+    <div id="messages"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script>
+    let stompClient = null; // 전역 변수로 설정하여 중복 연결 방지
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            if (!base64Url) {
+                throw new Error('Invalid token');
+            }
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            const parsedPayload = JSON.parse(jsonPayload);
+            console.log('Parsed JWT payload:', parsedPayload);  // 페이로드 출력
+
+            return parsedPayload;
+        } catch (error) {
+            console.error('Error parsing JWT:', error.message);
+            throw new Error('Failed to parse token');
+        }
+    }
+
+    // JWT 토큰에서 userId 추출
+    document.getElementById('signinForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const data = {
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+        };
+
+        fetch('/auth/signin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Received bearerToken:', data.bearerToken);
+
+                const token = data.bearerToken;
+                if (!token) {
+                    alert('Token is not available');
+                    return;
+                }
+
+                // 'Bearer' 접두어가 있는지 확인 후 제거
+                const pureToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+
+                console.log('JWT Token:', pureToken);
+                localStorage.setItem('token', pureToken);
+
+                // JWT 토큰에서 userId 추출 (sub 사용)
+                const decodedToken = parseJwt(pureToken);
+                const userId = decodedToken.sub;  // 'sub'을 userId로 사용
+                console.log('Decoded userId (sub):', userId);
+
+                if (!userId) {
+                    alert('User ID not found in token');
+                    return;
+                }
+
+                connectWebSocket(userId);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Sign In failed');
+            });
+    });
+
+    // WebSocket 연결 함수
+    function connectWebSocket(userId) {
+        if (stompClient && stompClient.connected) {
+            stompClient.disconnect(() => console.log("Disconnected existing WebSocket"));
+        }
+
+        const socket = new SockJS('http://localhost:8080/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
+
+            const subscriptionPath = '/sub/user/' + userId + '/notifications';
+            stompClient.subscribe(subscriptionPath, function(message) {
+                displayMessage(message.body);
+            });
+        });
+    }
+
+    function displayMessage(message) {
+        const messageContainer = document.getElementById('messages');
+        if (messageContainer) {
+            messageContainer.innerHTML += '<p>' + message + '</p>';
+        } else {
+            console.error('Message container not found!');
+        }
+    }
+</script>
+</body>
+</html>
