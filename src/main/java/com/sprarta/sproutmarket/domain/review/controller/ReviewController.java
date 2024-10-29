@@ -22,7 +22,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     // 생성
-    @PostMapping("/reviews/{tradeId}")
+    @PostMapping("/reviews/trades/{tradeId}")
     public ResponseEntity<ApiResponse<ReviewResponseDto>> createReview(
             @PathVariable Long tradeId,
             @RequestBody @Valid ReviewRequestDto dto,

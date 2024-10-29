@@ -97,7 +97,7 @@ class ReviewControllerTest {
                 .thenReturn(reviewResponseDto);
 
         // when, then
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/{tradeId}", tradeId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/trades/{tradeId}", tradeId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reviewRequestDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
