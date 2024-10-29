@@ -72,9 +72,8 @@ public class ItemService {
         User user = userRepository.findById(authUser.getId())
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        String area = user.getAddress();
         // 반경 5km 행정동 이름 반환
-        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
 
         Category category = null;
         if(itemSearchRequest.getCategoryId() != null){
