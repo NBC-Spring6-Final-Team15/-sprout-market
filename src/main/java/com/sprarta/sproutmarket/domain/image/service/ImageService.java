@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.item.service;
+package com.sprarta.sproutmarket.domain.image.service;
 
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import org.springframework.web.multipart.MultipartFile;
