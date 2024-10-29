@@ -68,6 +68,9 @@ public class User extends Timestamped {
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     private List<InterestedCategory> interestedCategories = new ArrayList<>();
 
+    @Column(nullable = true)
+    private String profileImageUrl;
+
     public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
         this.username = username;
         this.email = email;
@@ -142,5 +145,10 @@ public class User extends Timestamped {
     // 관심 카테고리 제거 메서드
     public void removeInterestedCategory(Category category) {
         interestedCategories.removeIf(interestedCategory -> interestedCategory.getCategory().equals(category));
+    }
+
+    // 프로필 이미지 업데이트 메서드
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }
