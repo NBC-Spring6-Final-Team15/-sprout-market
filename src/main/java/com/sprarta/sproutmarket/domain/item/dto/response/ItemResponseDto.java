@@ -22,4 +22,5 @@ public class ItemResponseDto {
     private ItemSaleStatus itemSaleStatus;
     private String categoryName;
     private Status status;
+
 }

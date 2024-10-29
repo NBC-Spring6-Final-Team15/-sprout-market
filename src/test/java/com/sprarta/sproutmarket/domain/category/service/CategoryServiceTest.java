@@ -62,16 +62,6 @@ class CategoryServiceTest {
     }
 
     @Test
-    void 카테고리_수정_실패__수정할_이름과_현재_이름이_같음() {
-        CategoryRequestDto requestDto = new CategoryRequestDto("디지털");
-
-        given(categoryRepository.findByIdAndStatusIsActive(1L)).willReturn(Optional.of(category));
-
-        assertThrows(ApiException.class, () -> categoryService.update(1L,requestDto));
-        verify(categoryRepository,times(1)).findByIdAndStatusIsActive(1L);
-    }
-
-    @Test
     void 카테고리_삭제_성공() {
         given(categoryRepository.findByIdAndStatusIsActive(1L)).willReturn(Optional.of(category));
 

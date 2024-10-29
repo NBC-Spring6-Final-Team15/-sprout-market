@@ -28,18 +28,18 @@ public class Review extends Timestamped {
     private ReviewRating reviewRating;
 
     @ManyToOne
-    @JoinColumn(name = "member_id")
-    private User user;
+    @JoinColumn(name = "seller_id")
+    private User seller;
 
     @OneToOne
     @JoinColumn(name = "trade_id")
     private Trade trade;
 
 
-    public Review(String comment, ReviewRating reviewRating, User user,Trade trade) {
+    public Review(String comment, ReviewRating reviewRating, User seller, Trade trade) {
         this.comment = comment;
         this.reviewRating = reviewRating;
-        this.user = user;
+        this.seller = seller;
         this.trade = trade;
     }
 

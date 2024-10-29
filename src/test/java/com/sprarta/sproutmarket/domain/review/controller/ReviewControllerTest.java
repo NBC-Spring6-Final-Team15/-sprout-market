@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.review.controller;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
@@ -97,7 +98,7 @@ class ReviewControllerTest {
                 .thenReturn(reviewResponseDto);
 
         // when, then
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/{tradeId}", tradeId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/trades/{tradeId}", tradeId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reviewRequestDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
@@ -120,20 +121,19 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 201"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
                                         fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("리뷰-생성-성공-요청"))
+                                .responseSchema(Schema.schema("리뷰-생성-성공-응답"))
                                 .build()
                         )
                 ));
-        result.andExpect(status().isOk())
+        result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.comment").value(reviewRequestDto.getComment()))
                 .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
     }
@@ -163,22 +163,14 @@ class ReviewControllerTest {
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message")
-                                                .description("응답 메시지"),
-                                        fieldWithPath("statusCode")
-                                                .description("HTTP 상태 코드"),
-                                        fieldWithPath("data.id")
-                                                .description("리뷰 ID"),
-                                        fieldWithPath("data.tradeId")
-                                                .description("관련 거래 ID"),
-                                        fieldWithPath("data.comment")
-                                                .description("리뷰 내용"),
-                                        fieldWithPath("data.reviewRating")
-                                                .description("리뷰 평점")
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
+                                        fieldWithPath("data.id").description("리뷰 ID"),
+                                        fieldWithPath("data.tradeId").description("관련 거래 ID"),
+                                        fieldWithPath("data.comment").description("리뷰 내용"),
+                                        fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-조회-성공-응답"))
                                 .build()
                         )
                 ));
@@ -217,17 +209,15 @@ class ReviewControllerTest {
                                 .summary("리뷰 전체 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data[]").description("리뷰 목록"),
                                         fieldWithPath("data[].id").description("리뷰 ID"),
                                         fieldWithPath("data[].tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data[].comment").description("리뷰 내용"),
                                         fieldWithPath("data[].reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-전체조회-성공-응답"))
                                 .build()
                         )
                 ));
@@ -269,16 +259,15 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
                                         fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("리뷰-수정-성공-요청"))
+                                .responseSchema(Schema.schema("리뷰-수정-성공-응답"))
                                 .build()
                         )
                 ));
@@ -311,18 +300,16 @@ class ReviewControllerTest {
                                 .summary("리뷰 삭제")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
-                                        fieldWithPath("data").description("리뷰 삭제에 대한 데이터 (null)")
+                                        fieldWithPath("message").description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태코드 : 204"),
+                                        fieldWithPath("data").description("성공 시 data : NULL")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-삭제-성공-응답"))
                                 .build()
                         )
                 ));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200));
+        result.andExpect(status().isNoContent())
+                .andExpect(jsonPath("$.statusCode").value(204));
     }
 
 

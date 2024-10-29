@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.review.service.ReviewService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,14 +23,14 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     // 생성
-    @PostMapping("/reviews/{tradeId}")
+    @PostMapping("/reviews/trades/{tradeId}")
     public ResponseEntity<ApiResponse<ReviewResponseDto>> createReview(
             @PathVariable Long tradeId,
             @RequestBody @Valid ReviewRequestDto dto,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
             ) {
         ReviewResponseDto responseDto = reviewService.createReview(tradeId, dto, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,responseDto));
     }
 
     // 단건 조회
@@ -68,7 +69,8 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
             ) {
         reviewService.deleteReview(reviewId, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.createSuccess("No Content",204,null));
     }
 
 

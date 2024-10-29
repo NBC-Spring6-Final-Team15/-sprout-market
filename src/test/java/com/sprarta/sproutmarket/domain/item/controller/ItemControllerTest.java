@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -25,6 +26,7 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,6 +66,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -104,17 +107,23 @@ class ItemControllerTest {
 
     private Item mockItem;
     private Category mockCategory;
+    private Image image;
     private MockMultipartFile mockImage;
 
     @BeforeEach // 테스트 전 수행
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
+        mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
 
         // 클래스 인스턴스 생성
         User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
+        image = Image.builder()
+            .id(1L)
+            .item(mockItem)
+            .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
+            .build();
 
         // 객체 생성
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -145,37 +154,107 @@ class ItemControllerTest {
         doNothing().when(userService).deleteUser(any(CustomUserDetails.class), any(UserDeleteRequest.class));
     }
 
-//    @Test
-//    @WithMockUser
-//    void 매물_이미지_추가_성공 () throws Exception {
-//        // given
-//        Long itemId = 1L;
-//        ItemResponse mockItemResponse = new ItemResponse(
-//            mockItem.getTitle(),
-//            Status.ACTIVE,
-//            mockItem.getImages(),
-//            mockAuthUser.getUsername()
-//        );
-//        when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
-//
-//        // when & then
-//        mockMvc.perform(multipart("/items/{itemId}/image", itemId)
-//                .file(mockImage)
-//                .with(request -> {
-//                    request.setMethod("PUT");
-//                    return request;
-//                })
-//                .contentType(MediaType.MULTIPART_FORM_DATA)
-//                .header("Authorization", "Bearer (JWT 토큰)")
-//            )
-//            .andExpect(status().isOk())
-//            .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
-//            .andExpect(jsonPath("$.data.status").value(mockItemResponse.getStatus().toString()))  // 응답 검증
-//            .andExpect(jsonPath("$.data.images").value(mockItemResponse.getImages()))  // 응답 검증
-//            .andExpect(jsonPath("$.data.nickname").value(mockItemResponse.getNickname()));
-//
-//        verify(itemService, times(1)).addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class));
-//    }
+    @Test
+    @WithMockUser
+    void 매물_이미지_삭제_성공 () throws Exception {
+        Long itemId = 1L;
+        Long imageId = 1L;
+        ItemResponse itemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            Status.ACTIVE,
+            mockItem.getPrice(),
+            mockAuthUser.getUsername()
+        );
+
+
+        when(itemService.deleteImage(eq(itemId), any(CustomUserDetails.class), eq(imageId))).thenReturn(itemResponse);
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/image", itemId)
+                .param("imageId", String.valueOf(imageId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer (JWT 토큰)"))
+            .andDo(
+                MockMvcRestDocumentationWrapper.document(
+                    "delete-image",
+                    resource(ResourceSnippetParameters.builder()
+                        .description("매물의 이미지를 삭제합니다.")
+                        .pathParameters(
+                            parameterWithName("itemId").description("매물 ID")
+                        )
+                        .summary("매물의 이미지 삭제")
+                        .tag("Items")
+                        .requestHeaders(
+                            headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                        )
+                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
+                        .responseFields(
+                            fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 메시지"),
+                            fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("200 상태 코드"),
+                            fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                .description("반환된 정보"),
+                            fieldWithPath("data.title").type(JsonFieldType.STRING)
+                                .description("수정된 제목"),
+                            fieldWithPath("data.status").type(JsonFieldType.STRING)
+                                .description("수정된 내용"),
+                            fieldWithPath("data.price").type(JsonFieldType.NUMBER)
+                                .description("수정된 내용"),
+                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
+                                .description("수정한 유저 닉네임")
+                        )
+                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
+                        .build()
+                    )
+                )
+            );
+
+        verify(itemService, times(1)).deleteImage(any(Long.class),any(CustomUserDetails.class),any(Long.class));
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))
+            .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()));
+    }
+
+
+    @Test
+    @WithMockUser
+    void 매물_이미지_추가_성공 () throws Exception {
+        // given
+        Long itemId = 1L;
+        MockMultipartFile mockImage = new MockMultipartFile(
+            "image",  // 필드 이름
+            "mockImage.jpg",  // 파일 이름
+            MediaType.IMAGE_JPEG_VALUE,  // 콘텐츠 타입
+            "image content".getBytes()  // 파일의 바이트 배열
+        );
+        ItemResponse mockItemResponse = new ItemResponse(
+            mockItem.getTitle(),
+            Status.ACTIVE,
+            mockImage.getName(),
+            mockAuthUser.getUsername()
+        );
+        when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
+
+        // when & then
+        mockMvc.perform(multipart("/items/{itemId}/image", itemId)
+                .file(mockImage)
+                .with(request -> {
+                    request.setMethod("PUT");
+                    return request;
+                })
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .header("Authorization", "Bearer (JWT 토큰)")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.status").value(mockItemResponse.getStatus().toString()))  // 응답 검증
+            .andExpect(jsonPath("$.data.imageUrl").value(mockItemResponse.getImageUrl()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(mockItemResponse.getNickname()));
+
+        verify(itemService, times(1)).addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class));
+    }
 
     @Test
     @WithMockUser
@@ -817,4 +896,54 @@ class ItemControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements").value(2));
     }
+
+    @Test
+    void 주변_인기_매물_조회_성공() throws Exception {
+        // given
+        ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
+        ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
+        List<ItemResponseDto> dtoList = new ArrayList<>();
+        dtoList.add(itemResponseDto);
+        dtoList.add(itemResponseDto2);
+
+        when(itemService.getTopItems(any(CustomUserDetails.class))).thenReturn(dtoList);
+
+        // when, then
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/items/topItems")
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(print())
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "get-topItems",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("동네 인기 매물을 조회합니다.")
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .summary("인기 매물 조회")
+                                .tag("Items")
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("data[]").description("인기 아이템 목록"),
+                                        fieldWithPath("data[].id").description("아이템 ID"),
+                                        fieldWithPath("data[].title").description("아이템 제목"),
+                                        fieldWithPath("data[].description").description("아이템 설명"),
+                                        fieldWithPath("data[].price").description("아이템 가격"),
+                                        fieldWithPath("data[].nickname").description("판매자 닉네임"),
+                                        fieldWithPath("data[].itemSaleStatus").description("아이템 판매 상태"),
+                                        fieldWithPath("data[].categoryName").description("아이템 카테고리 이름"),
+                                        fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)")
+                                ))
+                                .requestSchema(Schema.schema("인기매물-조회-성공-요청"))
+                                .responseSchema(Schema.schema("인기매물-조회-성공-응답"))
+                                .build()
+                        )
+                ));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
+
+    }
+
+
 }

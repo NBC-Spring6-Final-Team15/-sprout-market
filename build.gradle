@@ -109,7 +109,6 @@ dependencies {
     implementation 'org.hibernate:hibernate-spatial:6.6.1.Final'
     implementation 'de.grundid.opendatalab:geojson-jackson:1.14'
 
-
     // redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     //embedded-redis
@@ -128,6 +127,9 @@ dependencies {
 
     // S3
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+    // 헬스체크, 캐시 확인용
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 tasks.named('test') {

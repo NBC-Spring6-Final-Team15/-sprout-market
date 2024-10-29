@@ -55,8 +55,9 @@ public enum ErrorStatus implements BaseCode {
 
     // review 예외
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, 404, "해당 리뷰를 찾을 수 없습니다."),
-    FORBIDDEN_REVIEW_UPDATE(HttpStatus.FORBIDDEN,403,"수정할 수 있는 권한이 없습니다."),
-    FORBIDDEN_REVIEW_DELETE(HttpStatus.FORBIDDEN,403,"삭제할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_CREATE(HttpStatus.FORBIDDEN,403,"리뷰를 생성할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_UPDATE(HttpStatus.FORBIDDEN,403,"리뷰를 수정할 수 있는 권한이 없습니다."),
+    FORBIDDEN_REVIEW_DELETE(HttpStatus.FORBIDDEN,403,"리뷰를 삭제할 수 있는 권한이 없습니다."),
 
     // report 예외,
     NOT_FOUND_REPORT(HttpStatus.NOT_FOUND, 404, "해당 신고를 찾을 수 없습니다."),
@@ -80,9 +81,11 @@ public enum ErrorStatus implements BaseCode {
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
 
-    NOT_FOUND_ADMINISTRATIVE_AREA(HttpStatus.NOT_FOUND,404,"해당 좌표로 행정구역을 찾을 수 없습니다.")
+    NOT_FOUND_ADMINISTRATIVE_AREA(HttpStatus.NOT_FOUND,404,"해당 좌표로 행정구역을 찾을 수 없습니다."),
 
-    ;
+    // 관심 카테고리 예외
+    ALREADY_INTERESTED_CATEGORY(HttpStatus.BAD_REQUEST, 400, "이미 관심 카테고리로 지정되었습니다."),
+    NOT_FOUND_INTERESTED_CATEGORY(HttpStatus.NOT_FOUND, 404, "해당 관심 카테고리를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer statusCode;

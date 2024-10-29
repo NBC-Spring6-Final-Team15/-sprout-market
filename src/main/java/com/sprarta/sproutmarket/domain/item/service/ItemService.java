@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -16,25 +17,31 @@ import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
+import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -44,6 +51,8 @@ public class ItemService {
     private final ImageService imageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
+    private final RedisTemplate<String, Long> viewCountRedisTemplate;
+    private final InterestedCategoryService interestedCategoryService;
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -60,7 +69,6 @@ public class ItemService {
         // 카테고리 찾기
         Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
-
         Item item = Item.builder()
             .title(itemCreateRequest.getTitle())
             .description(itemCreateRequest.getDescription())
@@ -72,6 +80,9 @@ public class ItemService {
             .build();
 
         Item saveItem = itemRepository.save(item);
+
+        // 카테고리에 관심 있는 사용자들에게 알림 전송
+        notifyUsersAboutNewItem(item.getCategory().getId(), item.getTitle());
 
         return new ItemResponse(
             saveItem.getTitle(),
@@ -174,7 +185,7 @@ public class ItemService {
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
-            item.getImages(),
+            images.getName(),
             user.getNickname()
         );
     }
@@ -203,7 +214,7 @@ public class ItemService {
         return new ItemResponse(
             item.getTitle(),
             item.getStatus(),
-            item.getImages(),
+            item.getPrice(),
             user.getNickname()
         );
     }
@@ -274,6 +285,8 @@ public class ItemService {
     public ItemResponseDto getItem(Long itemId){
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdOrElseThrow(itemId);
+
+        incrementViewCount(itemId);
 
         return new ItemResponseDto(
             item.getId(),
@@ -383,6 +396,47 @@ public class ItemService {
         );
     }
 
+    public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
+        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String myArea = currentUser.getAddress();
+
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
+
+        // 근처 아이템 모두 조회
+        List<Item> items = itemRepository.findByUserArea(areaList);
+
+        // Redis에서 조회수를 가져와 정렬하기 위해, 아이템과 조회수를 Map에 저장
+        List<ItemWithViewCount> itemWithViewCounts = items.stream()
+                .map(item -> {
+                    // Redis에서 조회수 가져오기
+                    Long viewCount = viewCountRedisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
+                    Long finalViewCount = (viewCount != null) ? viewCount : 0L; // 조회수가 null일 경우 0으로 설정
+
+                    // 로그로 아이템별 조회수 출력
+                    log.info("Item ID: {}, Title: {}, View Count: {}", item.getId(), item.getTitle(), finalViewCount);
+
+                    return new ItemWithViewCount(item, finalViewCount);
+                })
+                .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
+                .limit(5) // 상위 3개 선택
+                .collect(Collectors.toList());
+
+        // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
+        return itemWithViewCounts.stream()
+                .map(itemWithViewCount -> new ItemResponseDto(
+                        itemWithViewCount.getItem().getId(),
+                        itemWithViewCount.getItem().getTitle(),
+                        itemWithViewCount.getItem().getDescription(),
+                        itemWithViewCount.getItem().getPrice(),
+                        itemWithViewCount.getItem().getSeller().getNickname(),
+                        itemWithViewCount.getItem().getItemSaleStatus(),
+                        itemWithViewCount.getItem().getCategory().getName(),
+                        itemWithViewCount.getItem().getStatus()
+                ))
+                .collect(Collectors.toList());
+    }
+
+
     /**
      * 주어진 id에 해당하는 Item을 찾고,
      * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
@@ -393,6 +447,11 @@ public class ItemService {
     public Item findByIdOrElseThrow(Long id){
         return itemRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
+    }
+
+    private void incrementViewCount(Long itemId) {
+        String redisKey = "ViewCount:ItemId:" + itemId;
+        viewCountRedisTemplate.opsForValue().increment(redisKey);
     }
 
     /**
@@ -406,6 +465,17 @@ public class ItemService {
         for (User user : interestedUsers) {
             simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
                     "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+        }
+    }
+
+    /**
+     * 관심 카테고리에 새로운 물품이 등록되었을 때 사용자에게 알림을 보내는 메서드
+     */
+    private void notifyUsersAboutNewItem(Long categoryId, String itemTitle) {
+        List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
+        for (User user : interestedUsers) {
+            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
+                    "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
         }
     }
 }
