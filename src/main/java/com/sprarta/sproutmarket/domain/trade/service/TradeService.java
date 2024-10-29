@@ -16,6 +16,7 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate simpMessagingTemplate;;
 
     // 예약
     @Transactional
@@ -55,6 +57,10 @@ public class TradeService {
         }
         Trade trade = new Trade(seller, buyer, item, TradeStatus.RESERVED);
         tradeRepository.save(trade);
+
+        // 예약 성공 알림 전송
+        simpMessagingTemplate.convertAndSend("/sub/user/" + buyer.getId() + "/notifications",
+                item.getTitle() + " 예약이 완료되었습니다.");
 
         return new TradeResponseDto(
                 trade.getId(),
@@ -85,6 +91,12 @@ public class TradeService {
                 new ApiException(ErrorStatus.NOT_FOUND_TRADE));
 
         trade.updateTradeStatus(TradeStatus.COMPLETED);
+
+        // 거래 완료 알림 전송 (구매자와 판매자 모두에게)
+        simpMessagingTemplate.convertAndSend("/sub/user/" + buyer.getId() + "/notifications",
+                item.getTitle() + "의 거래가 완료되었습니다.");
+        simpMessagingTemplate.convertAndSend("/sub/user/" + seller.getId() + "/notifications",
+                item.getTitle() + "의 거래가 완료되었습니다.");
 
         return new TradeResponseDto(
                 trade.getId(),
