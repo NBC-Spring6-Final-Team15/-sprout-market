@@ -230,7 +230,7 @@ class ItemControllerTest {
                         fieldWithPath("data.content[].address").type(JsonFieldType.STRING)
                             .description("판매자 행정동"),
                         fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING)
-                            .description("이미지"),
+                            .description("이미지 Url"),
                         fieldWithPath("data.content[].createAt").type(JsonFieldType.STRING)
                             .description("생성일"),
                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
@@ -278,8 +278,8 @@ class ItemControllerTest {
                         fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
                             .description("현재 페이지가 비어 있는지 여부")
                     )
-                    .requestSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-요청"))
-                    .responseSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-응답"))
+                    .requestSchema(Schema.schema("동네-특정-조건-매물-검색-성공-요청"))
+                    .responseSchema(Schema.schema("동네-특정-조건-매물-검색-성공-응답"))
                     .build()
                 )
             ));
@@ -309,7 +309,7 @@ class ItemControllerTest {
                 .header("Authorization", "Bearer (JWT 토큰)"))
             .andDo(
                 MockMvcRestDocumentationWrapper.document(
-                    "delete-image",
+                    "remove-image",
                     resource(ResourceSnippetParameters.builder()
                         .description("매물의 이미지를 삭제합니다.")
                         .pathParameters(
@@ -321,7 +321,7 @@ class ItemControllerTest {
                             headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
                         )
-                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
+                        .requestSchema(Schema.schema("이미지-삭제-성공-요청"))
                         .responseFields(
                             fieldWithPath("message").type(JsonFieldType.STRING)
                                 .description("성공 시 메시지"),
@@ -330,15 +330,15 @@ class ItemControllerTest {
                             fieldWithPath("data").type(JsonFieldType.OBJECT)
                                 .description("반환된 정보"),
                             fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                .description("수정된 제목"),
+                                .description("이미지가 삭제된 매물의 제목"),
                             fieldWithPath("data.status").type(JsonFieldType.STRING)
-                                .description("수정된 내용"),
+                                .description("이미지가 삭제된 매물의 내용"),
                             fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                .description("수정된 내용"),
+                                .description("이미지가 삭제된 매물의 가격"),
                             fieldWithPath("data.nickname").type(JsonFieldType.STRING)
                                 .description("수정한 유저 닉네임")
                         )
-                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
+                        .responseSchema(Schema.schema("이미지-삭제-성공-응답"))
                         .build()
                     )
                 )
@@ -569,8 +569,8 @@ class ItemControllerTest {
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/contents", itemId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"만년필\",\"description\":\"한번도안썼습니다\",\"price\":3000,\"imageUrl\":\"이미지 주소\"}")
-            .header("Authorization", "Bearer (JWT 토큰)"))
+                .content("{\"title\":\"만년필\",\"description\":\"한번도안썼습니다\",\"price\":3000}")
+                .header("Authorization", "Bearer (JWT 토큰)"))
             .andDo(
                 MockMvcRestDocumentationWrapper.document(
                     "update-Contents",
@@ -587,15 +587,13 @@ class ItemControllerTest {
                             fieldWithPath("description").type(JsonFieldType.STRING)
                                 .description("수정할 내용"),
                             fieldWithPath("price").type(JsonFieldType.NUMBER)
-                                .description("수정할 가격"),
-                            fieldWithPath("imageUrl").type(JsonFieldType.STRING)
-                                .description("변경할 이미지")
+                                .description("수정할 가격")
                         )
                         .requestHeaders(
                             headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
                         )
-                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
+                        .requestSchema(Schema.schema("매물-내용-수정-성공-요청"))
                         .responseFields(
                             fieldWithPath("message").type(JsonFieldType.STRING)
                                 .description("성공 시 메시지"),
@@ -612,7 +610,7 @@ class ItemControllerTest {
                             fieldWithPath("data.nickname").type(JsonFieldType.STRING)
                                 .description("수정한 유저 닉네임")
                         )
-                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
+                        .responseSchema(Schema.schema("매물-내용-수정-성공-응답"))
                         .build()
                     )
                 )
@@ -648,7 +646,7 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer (JWT 토큰)")
             )
-            .andDo(document("get-my-all-items",
+            .andDo(document("get-detail-items",
                 resource(ResourceSnippetParameters.builder()
                     .description("매물 단건 상세 조회 API")
                     .summary("로그인한 사용자가 특정 매물의 상세 조회를 합니다.")
@@ -665,10 +663,10 @@ class ItemControllerTest {
                         fieldWithPath("data.title").type(JsonFieldType.STRING).description("제목"),
                         fieldWithPath("data.description").type(JsonFieldType.STRING).description("설명"),
                         fieldWithPath("data.price").type(JsonFieldType.NUMBER).description("가격"),
-                        fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                        fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("판매자 닉네임"),
                         fieldWithPath("data.itemSaleStatus").type(JsonFieldType.STRING).description("판매 상태"),
                         fieldWithPath("data.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
-                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("활성 상태")
+                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("매물 활성 상태")
                     )
                     .responseSchema(Schema.schema("매물-상세조회-성공-응답"))
                     .build())
@@ -782,7 +780,7 @@ class ItemControllerTest {
             .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
             .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
             .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
-            .andDo(document("create-item",
+            .andDo(document("add-item",
                 resource(ResourceSnippetParameters.builder()
                     .description("매물 생성 API")
                     .summary("로그인한 사용자가 매물을 등록합니다.")
@@ -798,8 +796,9 @@ class ItemControllerTest {
                         fieldWithPath("statusCode").description("응답 상태 코드"),
                         fieldWithPath("data.title").description("등록된 제목"),
                         fieldWithPath("data.price").description("등록된 가격"),
-                        fieldWithPath("data.nickname").description("유저 닉네임")
+                        fieldWithPath("data.nickname").description("등록한 유저 닉네임")
                     )
+                    .requestSchema(Schema.schema("매물-생성-성공-요청"))
                     .responseSchema(Schema.schema("매물-생성-성공-응답"))
                     .build())
             ));
@@ -853,6 +852,7 @@ class ItemControllerTest {
                         fieldWithPath("data.itemSaleStatus").description("수정된 판매상태"),
                         fieldWithPath("data.nickname").description("수정을 한 유저 닉네임")
                     )
+                    .requestSchema(Schema.schema("매물-상태수정-성공-요청"))
                     .responseSchema(Schema.schema("매물-상태수정-성공-응답"))
                     .build())
             ));
