@@ -26,6 +26,7 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,6 +66,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -894,4 +896,55 @@ class ItemControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalElements").value(2));
     }
+
+    @Test
+    void 주변_인기_매물_조회_성공() throws Exception {
+        // given
+        ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
+        ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
+        List<ItemResponseDto> dtoList = new ArrayList<>();
+        dtoList.add(itemResponseDto);
+        dtoList.add(itemResponseDto2);
+
+        when(itemService.getTopItems(any(CustomUserDetails.class))).thenReturn(dtoList);
+
+        // when, then
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/items/topItems")
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(print())
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "get-topItems",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("동네 인기 매물을 조회합니다.")
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .summary("인기 매물 조회")
+                                .tag("Items")
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("data[]").description("인기 아이템 목록"),
+                                        fieldWithPath("data[].id").description("아이템 ID"),
+                                        fieldWithPath("data[].title").description("아이템 제목"),
+                                        fieldWithPath("data[].description").description("아이템 설명"),
+                                        fieldWithPath("data[].price").description("아이템 가격"),
+                                        fieldWithPath("data[].nickname").description("판매자 닉네임"),
+                                        fieldWithPath("data[].itemSaleStatus").description("아이템 판매 상태"),
+                                        fieldWithPath("data[].categoryName").description("아이템 카테고리 이름"),
+                                        fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)")
+                                ))
+                                .responseHeaders(
+                                        headerWithName("Content-Type").description("응답의 Content-Type")
+                                )
+                                .build()
+                        )
+                ));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
+
+    }
+
+
 }
