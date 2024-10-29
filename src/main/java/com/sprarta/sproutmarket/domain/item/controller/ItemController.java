@@ -33,8 +33,8 @@ public class ItemController {
      * @param authUser 매물 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 조건에 해당하는 매물의 상세 정보를 포함한 응답 객체
      */
-   @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> getCategoryItems(@RequestParam(name = "page", defaultValue = "1") int page,
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<Page<ItemResponseDto>>> searchItems(@RequestParam(name = "page", defaultValue = "1") int page,
                                                                                @RequestParam(name = "size", defaultValue = "10") int size,
                                                                                @RequestBody ItemSearchRequest itemSearchRequest,
                                                                                @AuthenticationPrincipal CustomUserDetails authUser){
