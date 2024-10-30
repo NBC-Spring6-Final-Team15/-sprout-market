@@ -13,7 +13,6 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -100,11 +99,11 @@ public class ItemController {
      * @param imageId 삭제할 이미지의 ID
      * @return ApiResponse - 특정 이미지가 삭제된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
      */
-    @DeleteMapping("/items/{itemId}/image")
-    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
-        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-    }
+//    @DeleteMapping("/items/{itemId}/image")
+//    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
+//        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
+//        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+//    }
 
     /**
      * 자신이 등록한 매물을 (논리적)삭제하는 로직

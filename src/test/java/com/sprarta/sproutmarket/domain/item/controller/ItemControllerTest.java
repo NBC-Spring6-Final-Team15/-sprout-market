@@ -128,15 +128,15 @@ class ItemControllerTest {
         mockCategory = new Category("청소");
 
         // Mock Item 생성
-        mockItem = Item.builder()
-            .title("가짜 아이템")
-            .description("가짜 설명")
-            .price(10000)
-            .itemSaleStatus(ItemSaleStatus.WAITING)
-            .seller(mockUser)
-            .category(mockCategory)
-            .status(Status.ACTIVE)
-            .build();
+        mockItem =  new Item(
+            "가짜 아이템",
+            "가짜 설명",
+            10000,
+            mockUser,
+            ItemSaleStatus.WAITING,
+            mockCategory,
+            Status.ACTIVE
+        );
 
         ReflectionTestUtils.setField(mockItem, "id", 1L);
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
@@ -152,9 +152,12 @@ class ItemControllerTest {
     @Test
     @WithMockUser
     void 매물_검색_성공 () throws Exception {
-        ItemSearchRequest requestDto = new ItemSearchRequest(
-            "1",1L,true
-        );
+        ItemSearchRequest requestDto = ItemSearchRequest.builder()
+            .searchKeyword("1")
+            .categoryId(1L)
+            .saleStatus(true)
+            .build();
+
         //페이지 직접 만들어주기
         List<ItemSearchResponse> responseList = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
@@ -168,7 +171,6 @@ class ItemControllerTest {
             );
             responseList.add(response);
         }
-
 
         Pageable pageable = PageRequest.of(0 , 10);
         Page<ItemSearchResponse> pageResult = new PageImpl<>(responseList, pageable, responseList.size());
@@ -279,68 +281,67 @@ class ItemControllerTest {
             .andExpect(jsonPath("$.data.totalElements").value(responseList.size()));
     }
 
-    @Test
-    @WithMockUser
-    void 매물_이미지_삭제_성공 () throws Exception {
-        Long itemId = 1L;
-        Long imageId = 1L;
-        ItemResponse itemResponse = new ItemResponse(
-            mockItem.getTitle(),
-            Status.ACTIVE,
-            mockItem.getPrice(),
-            mockAuthUser.getUsername()
-        );
-
-
-        when(itemService.deleteImage(eq(itemId), any(CustomUserDetails.class), eq(imageId))).thenReturn(itemResponse);
-
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/image", itemId)
-                .param("imageId", String.valueOf(imageId))
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer (JWT 토큰)"))
-            .andDo(
-                MockMvcRestDocumentationWrapper.document(
-                    "remove-image",
-                    resource(ResourceSnippetParameters.builder()
-                        .description("매물의 이미지를 삭제합니다.")
-                        .pathParameters(
-                            parameterWithName("itemId").description("매물 ID")
-                        )
-                        .summary("매물의 이미지 삭제")
-                        .tag("Items")
-                        .requestHeaders(
-                            headerWithName("Authorization")
-                                .description("Bearer (JWT 토큰)")
-                        )
-                        .requestSchema(Schema.schema("이미지-삭제-성공-요청"))
-                        .responseFields(
-                            fieldWithPath("message").type(JsonFieldType.STRING)
-                                .description("성공 시 메시지"),
-                            fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                .description("200 상태 코드"),
-                            fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                .description("반환된 정보"),
-                            fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                .description("이미지가 삭제된 매물의 제목"),
-                            fieldWithPath("data.status").type(JsonFieldType.STRING)
-                                .description("이미지가 삭제된 매물의 내용"),
-                            fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                .description("이미지가 삭제된 매물의 가격"),
-                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                .description("수정한 유저 닉네임")
-                        )
-                        .responseSchema(Schema.schema("이미지-삭제-성공-응답"))
-                        .build()
-                    )
-                )
-            );
-
-        verify(itemService, times(1)).deleteImage(any(Long.class),any(CustomUserDetails.class),any(Long.class));
-        result.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))
-            .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
-            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()));
-    }
+//    @Test
+//    @WithMockUser
+//    void 매물_이미지_삭제_성공 () throws Exception {
+//        Long itemId = 1L;
+//        Long imageId = 1L;
+//        ItemResponse itemResponse = ItemResponse.builder()
+//            .title(mockItem.getTitle())
+//            .status(Status.ACTIVE)
+//            .price(mockItem.getPrice())
+//            .nickname(mockAuthUser.getUsername())
+//            .build();
+//
+//        when(itemService.deleteImage(eq(itemId), any(CustomUserDetails.class), eq(imageId))).thenReturn(itemResponse);
+//
+//        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/image", itemId)
+//                .param("imageId", String.valueOf(imageId))
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .header("Authorization", "Bearer (JWT 토큰)"))
+//            .andDo(
+//                MockMvcRestDocumentationWrapper.document(
+//                    "remove-image",
+//                    resource(ResourceSnippetParameters.builder()
+//                        .description("매물의 이미지를 삭제합니다.")
+//                        .pathParameters(
+//                            parameterWithName("itemId").description("매물 ID")
+//                        )
+//                        .summary("매물의 이미지 삭제")
+//                        .tag("Items")
+//                        .requestHeaders(
+//                            headerWithName("Authorization")
+//                                .description("Bearer (JWT 토큰)")
+//                        )
+//                        .requestSchema(Schema.schema("이미지-삭제-성공-요청"))
+//                        .responseFields(
+//                            fieldWithPath("message").type(JsonFieldType.STRING)
+//                                .description("성공 시 메시지"),
+//                            fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+//                                .description("200 상태 코드"),
+//                            fieldWithPath("data").type(JsonFieldType.OBJECT)
+//                                .description("반환된 정보"),
+//                            fieldWithPath("data.title").type(JsonFieldType.STRING)
+//                                .description("이미지가 삭제된 매물의 제목"),
+//                            fieldWithPath("data.status").type(JsonFieldType.STRING)
+//                                .description("이미지가 삭제된 매물의 내용"),
+//                            fieldWithPath("data.price").type(JsonFieldType.NUMBER)
+//                                .description("이미지가 삭제된 매물의 가격"),
+//                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
+//                                .description("수정한 유저 닉네임")
+//                        )
+//                        .responseSchema(Schema.schema("이미지-삭제-성공-응답"))
+//                        .build()
+//                    )
+//                )
+//            );
+//
+//        verify(itemService, times(1)).deleteImage(any(Long.class),any(CustomUserDetails.class),any(Long.class));
+//        result.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))
+//            .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
+//            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()));
+//    }
 
 
     @Test
@@ -354,13 +355,14 @@ class ItemControllerTest {
             MediaType.IMAGE_JPEG_VALUE,  // 콘텐츠 타입
             "image content".getBytes()  // 파일의 바이트 배열
         );
-        ItemResponse mockItemResponse = new ItemResponse(
-            mockItem.getTitle(),
-            mockItem.getPrice(),
-            Status.ACTIVE,
-            mockImage.getName(),
-            mockUser.getNickname()
-        );
+        ItemResponse mockItemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .status(Status.ACTIVE)
+            .price(mockItem.getPrice())
+            .imageUrl(mockImage.getName())
+            .nickname(mockAuthUser.getUsername())
+            .build();
+
         when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
 
         // when & then
@@ -424,7 +426,10 @@ class ItemControllerTest {
     @WithMockUser
     void 내_주변_특정카테고리_매물_조회_성공() throws Exception {
         Long categoryId = 1L;
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1,10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();
         //페이지 직접 만들어주기
         List<ItemResponseDto> dtoList = new ArrayList<>();
         for(int i = 1; i <= 5; i++) {
@@ -548,12 +553,12 @@ class ItemControllerTest {
     @Test
     @WithMockUser
     void 매물_수정_성공_혜민() throws Exception {
-        ItemResponse itemResponse = new ItemResponse(
-            "만년필",
-            "한번도안썼습니다",
-            3000,
-            "김커피"
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title("만년필")
+            .description("한번도안썼습니다")
+            .price(3000)
+            .nickname("김커피")
+            .build();
         Long itemId = 1L;
 
         given(itemService.updateContents(any(Long.class), any(ItemContentsUpdateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
@@ -670,7 +675,10 @@ class ItemControllerTest {
     void 나의_모든_매물_조회_성공() throws Exception {
         // Given
         //페이지 직접 만들어주기
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1,10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();;
         List<ItemResponseDto> dtoList = new ArrayList<>();
         for(int i = 1; i <= 2; i++) {
             ItemResponseDto dto = new ItemResponseDto(
@@ -755,11 +763,11 @@ class ItemControllerTest {
     void 매물_등록_성공() throws Exception {
         // Given
         // 결과값 설정
-        ItemResponse itemResponse = new ItemResponse(
-            "가짜11",
-            1000,
-            "오만한천원"
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title("가짜11")
+            .price(1000)
+            .nickname("오만한천원")
+            .build();
         given(itemService.addItem(any(ItemCreateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
 
         // when, then
@@ -767,7 +775,7 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1}")
             )
-            .andExpect(status().isCreated())
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
             .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
             .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
@@ -802,12 +810,12 @@ class ItemControllerTest {
         String SsaleStatus = ItemSaleStatus.SOLD.toString();
 
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-            mockItem.getTitle(),
-            mockItem.getPrice(),
-            mockItem.getItemSaleStatus(),
-            mockItem.getSeller().getNickname()
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .itemSaleStatus(mockItem.getItemSaleStatus())
+            .price(mockItem.getPrice())
+            .nickname(mockItem.getSeller().getNickname())
+            .build();
 
         given(itemService.updateSaleStatus(mockItem.getId(), SsaleStatus, mockAuthUser)).willReturn(itemResponse);
 
@@ -855,12 +863,12 @@ class ItemControllerTest {
     @WithMockUser
     void 매물_삭제_성공() throws Exception {
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-            mockItem.getTitle(),
-            Status.DELETED,
-            mockItem.getPrice(),
-            mockItem.getSeller().getNickname()
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .status(Status.DELETED)
+            .price(mockItem.getPrice())
+            .nickname(mockItem.getSeller().getNickname())
+            .build();
 
         given(itemService.softDeleteItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
@@ -897,12 +905,12 @@ class ItemControllerTest {
     @WithMockUser
     void 관리자_신고매물_삭제_성공 () throws Exception {
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-            mockItem.getTitle(),
-            mockItem.getDescription(),
-            mockItem.getPrice(),
-            Status.DELETED
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .description(mockItem.getDescription())
+            .price(mockItem.getPrice())
+            .status(Status.DELETED)
+            .build();
 
         given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
@@ -939,7 +947,10 @@ class ItemControllerTest {
     @Test
     @WithMockUser
     void 내_주변_매물_조회_성공() throws Exception {
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1,10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();;
         //페이지 직접 만들어주기
         List<ItemResponseDto> dtoList = new ArrayList<>();
         for(int i = 1; i <= 2; i++) {
