@@ -5,7 +5,6 @@ import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,13 +29,10 @@ public class ChatRoom extends Timestamped {
     @JoinColumn(name = "item_id")
     private Item item;
 
-    @Builder
     public ChatRoom(User buyer, User seller, Item item) {
         this.buyer = buyer;
         this.seller = seller;
         this.item = item;
     }
-
-
 
 }

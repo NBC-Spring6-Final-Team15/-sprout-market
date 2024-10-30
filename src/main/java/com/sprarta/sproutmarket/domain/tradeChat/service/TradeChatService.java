@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TradeChatService {
@@ -21,28 +24,28 @@ public class TradeChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final TradeChatRepository tradeChatRepository;
 
-    public ChatRoom findChatRoom(Long chatRoomId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
-                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));
-        return chatRoom;
-    }
-
-    public void chatRoomMatch(ChatRoom chatRoom, Long userId) {
-        if (!ObjectUtils.nullSafeEquals(chatRoom.getBuyer().getId(), userId)
-                && !ObjectUtils.nullSafeEquals(chatRoom.getSeller().getId(), userId)) {
-            throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
-        }
-    }
-
     public void saveChat(TradeChatDto tradeChatDto) {
-        TradeChat tradeChat = new TradeChat(
+        tradeChatRepository.save(new TradeChat(
                 tradeChatDto.getSender(),
                 tradeChatDto.getContent(),
-                tradeChatDto.getRoomId());
-        tradeChatRepository.save(tradeChat);
+                tradeChatDto.getRoomId()));
     }
 
+    public List<TradeChatDto> getChats(Long chatroomId) {
+        chatRoomRepository.findByIdOrElseThrow(chatroomId);
 
+        List<TradeChatDto> tradeChatDtoList = new ArrayList<>();
 
+        for (TradeChat tradeChat : tradeChatRepository.findAllByroomId(chatroomId)) {
+            TradeChatDto tradeChatDto = new TradeChatDto(
+                    tradeChat.getRoomId(),
+                    tradeChat.getSender(),
+                    tradeChat.getContent()
+            );
+            tradeChatDtoList.add(tradeChatDto);
+        }
+
+        return tradeChatDtoList;
+    }
 
 }

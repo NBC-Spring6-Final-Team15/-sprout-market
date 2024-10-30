@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.tradeChat.repository;
 
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -15,6 +17,10 @@ import java.util.Optional;
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
     Optional<ChatRoom> findByItemAndBuyer(Item item, User buyer);
+
+    default ChatRoom findByIdOrElseThrow(Long chatroomId) {
+        return findById(chatroomId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));
+    }
 
     // 구매자 , 판매자로 연결된 채팅방 목록 조회
     @Query("SELECT c FROM ChatRoom c WHERE c.buyer.id = :userId OR c.seller.id = :userId")

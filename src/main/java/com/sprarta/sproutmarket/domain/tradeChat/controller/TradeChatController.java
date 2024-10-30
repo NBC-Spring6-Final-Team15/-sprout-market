@@ -19,39 +19,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Controller
 public class TradeChatController {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final TradeChatService tradeChatService;
-    private final TradeChatRepository tradeChatRepository;
 
     @MessageMapping("/chat/{roomId}")
     public void message(TradeChatDto tradeChatDto,
                         @DestinationVariable("roomId") Long roomId) {
-
-        ChatRoom chatRoom = tradeChatService.findChatRoom(roomId);
-        tradeChatDto.setRoomId(roomId); // roomId 설정
+        messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
 
         tradeChatService.saveChat(tradeChatDto);
-
-        messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
-        System.out.println("확인 용도");
     }
 
-    @GetMapping("/chatRoom/{roomId}/chat")
-    public ResponseEntity<TradeChatDto> getChat(@PathVariable("roomId") Long roomId){
-
-        TradeChat tradeChat = tradeChatRepository.findById(roomId)
-                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));;
-        TradeChatDto tradeChatDto = new TradeChatDto(
-                tradeChat.getRoomId(),
-                tradeChat.getSender(),
-                tradeChat.getContent()
-        );
-
-        return ResponseEntity.ok(tradeChatDto);
+    @GetMapping("/chatRoom/{roomId}/chats")
+    public ResponseEntity<List<TradeChatDto>> getChats(@PathVariable("roomId") Long roomId){
+        return ResponseEntity.ok(tradeChatService.getChats(roomId));
     }
 
 }
