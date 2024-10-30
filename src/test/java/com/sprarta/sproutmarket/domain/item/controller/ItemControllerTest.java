@@ -12,8 +12,10 @@ import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
@@ -56,6 +58,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,35 +82,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ItemControllerTest {
     @MockBean
     private ItemService itemService;
-
     @MockBean
     private CustomUserDetailService customUserDetailService;
-
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private JwtUtil jwtUtil;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockBean
     private CustomUserDetails mockAuthUser;
-
     @MockBean
     private ItemRepository itemRepository;
-
     @MockBean
     private UserService userService;
-
     @InjectMocks
     private ItemController itemController;
-
 
     private Item mockItem;
     private Category mockCategory;
     private Image image;
+    private User mockUser;
     private MockMultipartFile mockImage;
 
     @BeforeEach // 테스트 전 수행
@@ -116,7 +111,7 @@ class ItemControllerTest {
         mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
 
         // 클래스 인스턴스 생성
-        User mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
         image = Image.builder()
@@ -156,6 +151,136 @@ class ItemControllerTest {
 
     @Test
     @WithMockUser
+    void 매물_검색_성공 () throws Exception {
+        ItemSearchRequest requestDto = new ItemSearchRequest(
+            "1",1L,true
+        );
+        //페이지 직접 만들어주기
+        List<ItemSearchResponse> responseList = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            ItemSearchResponse response = new ItemSearchResponse(
+                (long) i,
+                "제목" + i,
+                15000,
+                "주소" + i,
+                "url" + i,
+                LocalDateTime.now() // 생성 날짜
+            );
+            responseList.add(response);
+        }
+
+
+        Pageable pageable = PageRequest.of(0 , 10);
+        Page<ItemSearchResponse> pageResult = new PageImpl<>(responseList, pageable, responseList.size());
+        given(itemService.searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class)))
+            .willReturn(pageResult);
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("page", String.valueOf(1))
+                .param("size", String.valueOf(10))
+                .content(objectMapper.writeValueAsString(requestDto))
+                .header("Authorization", "Bearer (JWT 토큰)"))
+            .andDo(MockMvcRestDocumentationWrapper.document(
+                "search-items-by-my-areas",
+                resource(ResourceSnippetParameters.builder()
+                    .description("우리 동네의 검색 조건에 속하는 매물을 조회합니다.")
+                    .summary("조건에 해당하는 우리 동네 매물 조회")
+                    .tag("Items")
+                    .requestHeaders(
+                        headerWithName("Authorization")
+                            .description("Bearer (JWT 토큰)")
+                    )
+                    .queryParameters(
+                        parameterWithName("page").description("페이지 넘버, 기본값 1, 최소값 1"),
+                        parameterWithName("size").description("페이지 크기, 기본값 10, 최소값 1")
+                    )
+                    .requestFields(
+                        fieldWithPath("searchKeyword").type(JsonFieldType.STRING)
+                            .description("검색 명"),
+                        fieldWithPath("categoryId").type(JsonFieldType.NUMBER)
+                            .description("검색할 카테고리 아이디"),
+                        fieldWithPath("saleStatus").type(JsonFieldType.BOOLEAN)
+                            .description("판매중")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                            .description("성공 상태 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                            .description("성공 시 응답 코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                            .description("응답 본문"),
+                        fieldWithPath("data.content").type(JsonFieldType.ARRAY)
+                            .description("아이템 리스트"),
+                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER)
+                            .description("아이템 ID"),
+                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
+                            .description("아이템 제목"),
+                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
+                            .description("아이템 가격"),
+                        fieldWithPath("data.content[].address").type(JsonFieldType.STRING)
+                            .description("판매자 행정동"),
+                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING)
+                            .description("이미지 Url"),
+                        fieldWithPath("data.content[].createAt").type(JsonFieldType.STRING)
+                            .description("생성일"),
+                        fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
+                            .description("페이지 관련 정보"),
+                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호 (0부터 시작)"),
+                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.pageable.sort").type(JsonFieldType.OBJECT)
+                            .description("정렬 정보"),
+                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되었는지 여부"),
+                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되지 않았는지 여부"),
+                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지의 시작점 오프셋"),
+                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징 여부"),
+                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징되지 않은 여부"),
+                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN)
+                            .description("마지막 페이지인지 여부"),
+                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER)
+                            .description("전체 페이지 수"),
+                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER)
+                            .description("전체 아이템 수"),
+                        fieldWithPath("data.size").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.number").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호"),
+                        fieldWithPath("data.sort").type(JsonFieldType.OBJECT)
+                            .description("현재 페이지의 정렬 정보"),
+                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지의 정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되었는지 여부"),
+                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되지 않았는지 여부"),
+                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN)
+                            .description("첫 번째 페이지인지 여부"),
+                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지에 있는 아이템 수"),
+                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 비어 있는지 여부")
+                    )
+                    .requestSchema(Schema.schema("동네-특정-조건-매물-검색-성공-요청"))
+                    .responseSchema(Schema.schema("동네-특정-조건-매물-검색-성공-응답"))
+                    .build()
+                )
+            ));
+        verify(itemService,times(1)).searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class));
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(responseList.size()));
+    }
+
+    @Test
+    @WithMockUser
     void 매물_이미지_삭제_성공 () throws Exception {
         Long itemId = 1L;
         Long imageId = 1L;
@@ -175,7 +300,7 @@ class ItemControllerTest {
                 .header("Authorization", "Bearer (JWT 토큰)"))
             .andDo(
                 MockMvcRestDocumentationWrapper.document(
-                    "delete-image",
+                    "remove-image",
                     resource(ResourceSnippetParameters.builder()
                         .description("매물의 이미지를 삭제합니다.")
                         .pathParameters(
@@ -187,7 +312,7 @@ class ItemControllerTest {
                             headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
                         )
-                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
+                        .requestSchema(Schema.schema("이미지-삭제-성공-요청"))
                         .responseFields(
                             fieldWithPath("message").type(JsonFieldType.STRING)
                                 .description("성공 시 메시지"),
@@ -196,15 +321,15 @@ class ItemControllerTest {
                             fieldWithPath("data").type(JsonFieldType.OBJECT)
                                 .description("반환된 정보"),
                             fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                .description("수정된 제목"),
+                                .description("이미지가 삭제된 매물의 제목"),
                             fieldWithPath("data.status").type(JsonFieldType.STRING)
-                                .description("수정된 내용"),
+                                .description("이미지가 삭제된 매물의 내용"),
                             fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                .description("수정된 내용"),
+                                .description("이미지가 삭제된 매물의 가격"),
                             fieldWithPath("data.nickname").type(JsonFieldType.STRING)
                                 .description("수정한 유저 닉네임")
                         )
-                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
+                        .responseSchema(Schema.schema("이미지-삭제-성공-응답"))
                         .build()
                     )
                 )
@@ -231,9 +356,10 @@ class ItemControllerTest {
         );
         ItemResponse mockItemResponse = new ItemResponse(
             mockItem.getTitle(),
+            mockItem.getPrice(),
             Status.ACTIVE,
             mockImage.getName(),
-            mockAuthUser.getUsername()
+            mockUser.getNickname()
         );
         when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
 
@@ -246,6 +372,44 @@ class ItemControllerTest {
                 })
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer (JWT 토큰)")
+            )
+            .andDo(
+                MockMvcRestDocumentationWrapper.document(
+                    "add-image",
+                    resource(ResourceSnippetParameters.builder()
+                        .description("매물에 이미지를 추가합니다.")
+                        .pathParameters(
+                            parameterWithName("itemId").description("매물 ID")
+                        )
+                        .summary("매물에 이미지 추가")
+                        .tag("Items")
+                        .requestHeaders(
+                            headerWithName("Authorization")
+                                .description("Bearer (JWT 토큰)")
+                        )
+                        .requestSchema(Schema.schema("이미지-추가-성공-요청"))
+                        .responseFields(
+                            fieldWithPath("message").type(JsonFieldType.STRING)
+                                .description("성공 시 메시지"),
+                            fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                .description("200 상태 코드"),
+                            fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                .description("반환된 정보"),
+                            fieldWithPath("data.title").type(JsonFieldType.STRING)
+                                .description("제목"),
+                            fieldWithPath("data.price").type(JsonFieldType.NUMBER)
+                                .description("가격"),
+                            fieldWithPath("data.status").type(JsonFieldType.STRING)
+                                .description("활성상태"),
+                            fieldWithPath("data.imageUrl").type(JsonFieldType.STRING)
+                                .description("추가된 이미지"),
+                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
+                                .description("이미지를 추가한 유저 닉네임")
+                        )
+                        .responseSchema(Schema.schema("이미지-추가-성공-응답"))
+                        .build()
+                    )
+                )
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
@@ -396,8 +560,8 @@ class ItemControllerTest {
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/contents", itemId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"만년필\",\"description\":\"한번도안썼습니다\",\"price\":3000,\"imageUrl\":\"이미지 주소\"}")
-            .header("Authorization", "Bearer (JWT 토큰)"))
+                .content("{\"title\":\"만년필\",\"description\":\"한번도안썼습니다\",\"price\":3000}")
+                .header("Authorization", "Bearer (JWT 토큰)"))
             .andDo(
                 MockMvcRestDocumentationWrapper.document(
                     "update-Contents",
@@ -414,15 +578,13 @@ class ItemControllerTest {
                             fieldWithPath("description").type(JsonFieldType.STRING)
                                 .description("수정할 내용"),
                             fieldWithPath("price").type(JsonFieldType.NUMBER)
-                                .description("수정할 가격"),
-                            fieldWithPath("imageUrl").type(JsonFieldType.STRING)
-                                .description("변경할 이미지")
+                                .description("수정할 가격")
                         )
                         .requestHeaders(
                             headerWithName("Authorization")
                                 .description("Bearer (JWT 토큰)")
                         )
-                        .requestSchema(Schema.schema("매물-수정-성공-요청"))
+                        .requestSchema(Schema.schema("매물-내용-수정-성공-요청"))
                         .responseFields(
                             fieldWithPath("message").type(JsonFieldType.STRING)
                                 .description("성공 시 메시지"),
@@ -439,7 +601,7 @@ class ItemControllerTest {
                             fieldWithPath("data.nickname").type(JsonFieldType.STRING)
                                 .description("수정한 유저 닉네임")
                         )
-                        .responseSchema(Schema.schema("매물-수정-성공-응답"))
+                        .responseSchema(Schema.schema("매물-내용-수정-성공-응답"))
                         .build()
                     )
                 )
@@ -475,7 +637,7 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer (JWT 토큰)")
             )
-            .andDo(document("get-my-all-items",
+            .andDo(document("get-detail-items",
                 resource(ResourceSnippetParameters.builder()
                     .description("매물 단건 상세 조회 API")
                     .summary("로그인한 사용자가 특정 매물의 상세 조회를 합니다.")
@@ -492,10 +654,10 @@ class ItemControllerTest {
                         fieldWithPath("data.title").type(JsonFieldType.STRING).description("제목"),
                         fieldWithPath("data.description").type(JsonFieldType.STRING).description("설명"),
                         fieldWithPath("data.price").type(JsonFieldType.NUMBER).description("가격"),
-                        fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("닉네임"),
+                        fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("판매자 닉네임"),
                         fieldWithPath("data.itemSaleStatus").type(JsonFieldType.STRING).description("판매 상태"),
                         fieldWithPath("data.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
-                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("활성 상태")
+                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("매물 활성 상태")
                     )
                     .responseSchema(Schema.schema("매물-상세조회-성공-응답"))
                     .build())
@@ -605,11 +767,11 @@ class ItemControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1}")
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
             .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
             .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
-            .andDo(document("create-item",
+            .andDo(document("add-item",
                 resource(ResourceSnippetParameters.builder()
                     .description("매물 생성 API")
                     .summary("로그인한 사용자가 매물을 등록합니다.")
@@ -625,8 +787,9 @@ class ItemControllerTest {
                         fieldWithPath("statusCode").description("응답 상태 코드"),
                         fieldWithPath("data.title").description("등록된 제목"),
                         fieldWithPath("data.price").description("등록된 가격"),
-                        fieldWithPath("data.nickname").description("유저 닉네임")
+                        fieldWithPath("data.nickname").description("등록한 유저 닉네임")
                     )
+                    .requestSchema(Schema.schema("매물-생성-성공-요청"))
                     .responseSchema(Schema.schema("매물-생성-성공-응답"))
                     .build())
             ));
@@ -680,6 +843,7 @@ class ItemControllerTest {
                         fieldWithPath("data.itemSaleStatus").description("수정된 판매상태"),
                         fieldWithPath("data.nickname").description("수정을 한 유저 닉네임")
                     )
+                    .requestSchema(Schema.schema("매물-상태수정-성공-요청"))
                     .responseSchema(Schema.schema("매물-상태수정-성공-응답"))
                     .build())
             ));
@@ -743,7 +907,7 @@ class ItemControllerTest {
         given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
         // When, Then
-        mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/report", mockItem.getId())
+        mockMvc.perform(RestDocumentationRequestBuilders.delete("/admin/items/{itemId}", mockItem.getId())
                 .contentType(MediaType.APPLICATION_JSON)
             )
             .andExpect(status().isOk())
@@ -935,9 +1099,8 @@ class ItemControllerTest {
                                         fieldWithPath("data[].categoryName").description("아이템 카테고리 이름"),
                                         fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("인기매물-조회-성공-요청"))
+                                .responseSchema(Schema.schema("인기매물-조회-성공-응답"))
                                 .build()
                         )
                 ));

@@ -4,10 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 @Getter
@@ -64,5 +62,11 @@ public class ItemResponse {
         this.nickname = nickname;
     }
 
-
+    public ItemResponse(String title, int price, Status status, String url, String nickname) {
+        this.title = title;
+        this.price = price;
+        this.status = status;
+        this.imageUrl = url;
+        this.nickname = nickname;
+    }
 }

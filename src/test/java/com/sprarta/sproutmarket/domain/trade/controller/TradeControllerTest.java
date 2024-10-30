@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.trade.controller;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.config.SecurityConfig;
@@ -117,21 +118,20 @@ public class TradeControllerTest {
                                         fieldWithPath("buyerId").description("구매자 ID")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 201"),
                                         fieldWithPath("data.id").description("거래 ID"),
                                         fieldWithPath("data.itemId").description("아이템 ID"),
                                         fieldWithPath("data.sellerName").description("판매자 이름"),
                                         fieldWithPath("data.buyerName").description("구매자 이름"),
                                         fieldWithPath("data.tradeStatus").description("거래 상태")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("거래-예약-성공-요청"))
+                                .responseSchema(Schema.schema("거래-예약-성공-응답"))
                                 .build()
                         )
                 ));
-                result.andExpect(status().isOk())
+                result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").value(tradeResponseDto.getId()))
                 .andExpect(jsonPath("$.data.itemId").value(tradeResponseDto.getItemId()));
     }
@@ -169,17 +169,16 @@ public class TradeControllerTest {
                                         fieldWithPath("buyerId").description("구매자 ID")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("거래 ID"),
                                         fieldWithPath("data.itemId").description("아이템 ID"),
                                         fieldWithPath("data.sellerName").description("판매자 이름"),
                                         fieldWithPath("data.buyerName").description("구매자 이름"),
                                         fieldWithPath("data.tradeStatus").description("거래 상태")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("거래-완료-성공-요청"))
+                                .responseSchema(Schema.schema("거래-완료-성공-응답"))
                                 .build()
                         )
                 ));

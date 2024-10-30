@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,9 +94,9 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                                 )
                                 .responseFields(
                                         fieldWithPath("message")
-                                                .description("성공 메시지 : Ok"),
+                                                .description("성공 시 응답 : Created , 예외 시 예외 메시지"),
                                         fieldWithPath("statusCode")
-                                                .description("성공 상태 코드 : 200"),
+                                                .description("성공 상태 코드 : 201"),
                                         fieldWithPath("data")
                                                 .description("본문 응답"),
                                         fieldWithPath("data.id")
@@ -113,8 +114,8 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                         )));
 
         //then
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200))
+        result.andExpect(status().isCreated())
+                .andExpect(jsonPath("$.statusCode").value(201))
                 .andExpect(jsonPath("$.data.reportingReason").value(reportingReason));
     }
 
@@ -271,24 +272,21 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    @WithMockUser
     void 신고_삭제_성공() throws Exception {
-        //given
-        Long reportId = 1L;
-        doNothing().when(reportService).deleteReport(anyLong(),any(CustomUserDetails.class));
+        // given
 
-        //when
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/reports/{reportId}", reportId)
-                        .contentType(MediaType.APPLICATION_JSON)
+        doNothing().when(reportService).deleteReport(anyLong(), any(CustomUserDetails.class));
+
+        // when, then
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/reports/{reportId}", 1L)
                         .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(MockMvcRestDocumentationWrapper.document("update-report",
+                .andDo(print())
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "delete-report",
                         resource(ResourceSnippetParameters.builder()
-                                .description("신고 ID를 받아서 해당 신고를 삭제합니다.")
-                                .summary("신고 삭제")
-                                .tag("Report")
+                                .description("특정 신고를 삭제합니다.")
                                 .pathParameters(
-                                        parameterWithName("reportId")
-                                                .description("수정할 신고 ID")
+                                        parameterWithName("reportId").description("삭제할 신고 ID")
                                 )
                                 .requestHeaders(
                                         headerWithName("Authorization")
@@ -300,12 +298,14 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("statusCode")
                                                 .description("성공 상태 코드 : 200")
                                 )
+                                .summary("신고 삭제")
+                                .tag("Report")
                                 .responseSchema(Schema.schema("신고-삭제-성공-응답"))
                                 .build()
-                        )));
-
-        //then
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200));
+                        )
+                ));
+        result.andExpect(status().isNoContent())
+                .andExpect(jsonPath("$.statusCode").value(204));
     }
+
 }
