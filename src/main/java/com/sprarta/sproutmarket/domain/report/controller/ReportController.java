@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.report.service.ReportService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class ReportController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         ReportResponseDto responseDto = reportService.createReport(itemId, dto, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,responseDto));
     }
 
     // 신고 단건 조회
@@ -67,7 +68,8 @@ public class ReportController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         reportService.deleteReport(reportId, customUserDetails);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResponse.createSuccess("No Content",204,null));
     }
 
 
