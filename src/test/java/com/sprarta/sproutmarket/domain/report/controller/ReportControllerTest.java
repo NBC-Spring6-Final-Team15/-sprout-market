@@ -304,8 +304,8 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .build()
                         )
                 ));
-        result.andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.statusCode").value(204));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200));
     }
 
 }
