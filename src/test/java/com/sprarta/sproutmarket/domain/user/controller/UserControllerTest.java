@@ -135,8 +135,7 @@ public class UserControllerTest {
                                 .tag("User")
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("에러 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("유저-조회-실패-응답"))
                                 .build())
@@ -180,7 +179,6 @@ public class UserControllerTest {
     @WithMockUser
     void changePasswordFail_IncorrectOldPassword() throws Exception {
         // given
-        UserChangePasswordRequest passwordRequest = new UserChangePasswordRequest("wrongOldPassword", "NewPass1!");
         doThrow(new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD))
                 .when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
 
@@ -196,8 +194,7 @@ public class UserControllerTest {
                                 .tag("User")
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("에러 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("비밀번호-변경-실패-응답"))
                                 .build())
@@ -208,7 +205,6 @@ public class UserControllerTest {
     @WithMockUser
     void deleteUserSuccess() throws Exception {
         // given
-        UserDeleteRequest deleteRequest = new UserDeleteRequest("password");
 
         // when, then
         mockMvc.perform(delete("/users")
@@ -254,8 +250,7 @@ public class UserControllerTest {
                                 .tag("User")
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("에러 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터, 실패 시 null 반환").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("유저-삭제-실패-응답"))
                                 .build())

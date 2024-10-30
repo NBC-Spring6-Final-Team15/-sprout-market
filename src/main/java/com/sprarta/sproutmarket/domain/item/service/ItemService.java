@@ -8,17 +8,21 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
+import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
+import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
+import com.sprarta.sproutmarket.domain.item.repository.ItemRepositoryCustom;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
@@ -44,6 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemService {
     private final ItemRepository itemRepository;
+    private final ItemRepositoryCustom itemRepositoryCustom;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
     private final CategoryService categoryService;
@@ -53,6 +58,40 @@ public class ItemService {
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
     private final InterestedCategoryService interestedCategoryService;
+
+    /**
+     * 중고 매물에 대해서 검색하는 로직
+     * @param page 페이지당 카드 수
+     * @param size 현재 인증된 사용자 정보
+     * @param itemSearchRequest 매물 검색 조건을 포함한 요청 객체(키워드, 카테고리id, 판매상태)
+     * @param authUser 매물 수정을 요청한 사용자
+     * @return Page<ItemResponseDto> - 요청된 페이지에 해당하는 검색 조건에 맞는 매물 목록을 포함한 페이지 정보
+     * 각 매물은 ItemResponseDto 형태로 변환되어 반환됨
+     */
+    public Page<ItemSearchResponse> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
+        // 유저 조회
+        User user = userRepository.findById(authUser.getId())
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        // 반경 5km 행정동 이름 반환
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
+
+        Category category = null;
+        if(itemSearchRequest.getCategoryId() != null){
+            category = categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId());
+        }
+
+        ItemSaleStatus itemSaleStatus = null;
+        if(itemSearchRequest.isSaleStatus()){
+            itemSaleStatus = ItemSaleStatus.WAITING;
+        }
+
+        Pageable pageable = PageRequest.of(page-1, size);
+
+        Page<ItemSearchResponse> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
+
+        return result;
+    }
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
@@ -109,7 +148,6 @@ public class ItemService {
 
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
-
 
         return new ItemResponse(
             item.getTitle(),
@@ -184,6 +222,7 @@ public class ItemService {
 
         return new ItemResponse(
             item.getTitle(),
+            item.getPrice(),
             item.getStatus(),
             images.getName(),
             user.getNickname()
@@ -219,7 +258,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
      * @param itemId Item's ID
@@ -238,7 +276,6 @@ public class ItemService {
         item.solfDelete(
             Status.DELETED
         );
-
 
         return new ItemResponse(
             item.getTitle(),
@@ -267,7 +304,6 @@ public class ItemService {
         item.solfDelete(
             Status.DELETED
         );
-
 
         return new ItemResponse(
             item.getTitle(),
@@ -300,7 +336,6 @@ public class ItemService {
         );
     }
 
-
     /**
      * 현재 인증된 사용자의 모든 매물을 조회하는 로직
      * @param page 페이지 번호(1부터 시작)
@@ -331,7 +366,6 @@ public class ItemService {
             )
         );
     }
-
 
     /**
      * 특정 카테고리에 모든 매물을 조회
@@ -419,7 +453,7 @@ public class ItemService {
                 })
                 .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
                 .limit(5) // 상위 3개 선택
-                .collect(Collectors.toList());
+                .toList();
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
         return itemWithViewCounts.stream()
@@ -434,19 +468,6 @@ public class ItemService {
                         itemWithViewCount.getItem().getStatus()
                 ))
                 .collect(Collectors.toList());
-    }
-
-
-    /**
-     * 주어진 id에 해당하는 Item을 찾고,
-     * 존재하지 않을 경우 ItemNotFoundException을 던집니다.
-     * @param id Item's ID
-     * @return Item 객체
-     * @throws ApiException 해당 id의 매물이 존재하지 않을 경우 발생
-     */
-    public Item findByIdOrElseThrow(Long id){
-        return itemRepository.findById(id)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
     }
 
     private void incrementViewCount(Long itemId) {

@@ -64,7 +64,7 @@ public class RedisConfig {
     // Redis의 pub/sub 기능에서 사용할 주제 정의 이후 중고 거래 외에도 채팅 사용시 유용?
     @Bean
     public ChannelTopic channelTopic() { // Topic 공유를 위해 단일화
-        return new ChannelTopic("trade");
+        return new ChannelTopic("chat");
     }
 
 }
