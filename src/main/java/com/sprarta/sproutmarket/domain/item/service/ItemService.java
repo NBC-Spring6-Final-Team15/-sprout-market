@@ -259,21 +259,11 @@ public class ItemService {
      * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
      */
     public ItemResponseDto getItem(Long itemId){
-        // 매물 존재하는지
-        Item item = itemRepository.findByIdOrElseThrow(itemId);
+        Item item = findItemById(itemId);
 
         incrementViewCount(itemId);
 
-        return new ItemResponseDto(
-            item.getId(),
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            item.getSeller().getNickname(),
-            item.getItemSaleStatus(),
-            item.getCategory().getName(),
-            item.getStatus()
-        );
+        return convertToDto(item);
     }
 
     /**
@@ -286,25 +276,13 @@ public class ItemService {
      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
     public Page<ItemResponseDto> getMyItems(int page, int size, CustomUserDetails authUser){
-        // AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+        User user = findUserById(authUser.getId());
 
         Pageable pageable = PageRequest.of(page - 1, size);
 
         Page<Item> items = itemRepository.findBySeller(pageable, user);
 
-        return items.map(item -> new ItemResponseDto(
-                item.getId(),
-                item.getTitle(),
-                item.getDescription(),
-                item.getPrice(),
-                item.getSeller().getNickname(),
-                item.getItemSaleStatus(),
-                item.getCategory().getName(),
-                item.getStatus()
-            )
-        );
+        return items.map(this::convertToDto);
     }
 
     /**
@@ -316,30 +294,20 @@ public class ItemService {
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
     public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
-        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-        String area = user.getAddress();
-        // 카테고리 존재 확인
-        Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
+        User user = findUserById(authUser.getId());
+        Category category = findCategoryById(categoryId);
 
         // 반경 5km 행정동 이름 반환
-        List<String> areaList = admAreaService.getAdmNameListByAdmName(area);
+        List<String> areaList = getAreaListByUserAddress(user.getAddress());
 
-        Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
+        Pageable pageable = createPageable(requestDto);
 
-        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, findCategory.getId());
+        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, category.getId());
 
-        return result.map(item -> new ItemResponseDto(
-                item.getId(),
-                item.getTitle(),
-                item.getDescription(),
-                item.getPrice(),
-                item.getSeller().getNickname(),
-                item.getItemSaleStatus(),
-                item.getCategory().getName(),
-                item.getStatus()
-            )
-        );
+        return result.map(this::convertToDto);
     }
+
+
 
     /**
      * 내 주변에 있는 매물을 조회하는 메서드입니다.
@@ -357,17 +325,7 @@ public class ItemService {
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
         Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
-        return result.map(item -> new ItemResponseDto(
-                item.getId(),
-                item.getTitle(),
-                item.getDescription(),
-                item.getPrice(),
-                item.getSeller().getNickname(),
-                item.getItemSaleStatus(),
-                item.getCategory().getName(),
-                item.getStatus()
-            )
-        );
+        return result.map(this::convertToDto);
     }
 
     public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
@@ -487,5 +445,26 @@ public class ItemService {
         if (item.getPrice() != newPrice) {
             notifyUsersAboutPriceChange(item.getId(), newPrice);
         }
+    }
+
+    private ItemResponseDto convertToDto(Item item){
+        return new ItemResponseDto(
+            item.getId(),
+            item.getTitle(),
+            item.getDescription(),
+            item.getPrice(),
+            item.getSeller().getNickname(),
+            item.getItemSaleStatus(),
+            item.getCategory().getName(),
+            item.getStatus()
+        );
+    }
+
+    private List<String> getAreaListByUserAddress(String address){
+        return admAreaService.getAdmNameListByAdmName(address);
+    }
+
+    private Pageable createPageable(FindItemsInMyAreaRequestDto requestDto){
+        return PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
     }
 }
