@@ -13,8 +13,22 @@ import java.util.Optional;
 
 @Repository
 public interface InterestedCategoryRepository extends JpaRepository<InterestedCategory, Long> {
+
+    // 특정 사용자의 관심 카테고리 목록 조회
+    @Query("SELECT ic FROM InterestedCategory ic WHERE ic.user.id = :userId")
+    List<InterestedCategory> findByUserId(Long userId);
+
+    // 특정 카테고리를 관심 카테고리로 설정한 목록 조회
+    @Query("SELECT ic FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
+    List<InterestedCategory> findByCategoryId(Long categoryId);
+
+    // 특정 사용자와 카테고리의 관심 정보가 존재하는지 확인
     boolean existsByUserAndCategory(User user, Category category);
-    @Query("SELECT ic.user FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
-    List<User> findUsersByCategoryId(@Param("categoryId") Long categoryId);
+
+    // 특정 사용자와 카테고리로 관심 카테고리 찾기
     Optional<InterestedCategory> findByUserAndCategory(User user, Category category);
+
+    // 카테고리에 관심 있는 사용자 목록 조회
+    @Query("SELECT ic.user FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
+    List<User> findUsersByCategoryId(Long categoryId);
 }

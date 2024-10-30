@@ -10,6 +10,7 @@ import com.sprarta.sproutmarket.domain.report.entity.Report;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,8 +21,7 @@ import java.util.List;
 @Entity
 @Getter
 @Table(name = "users")
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,12 +61,6 @@ public class User extends Timestamped {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
-
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<InterestedItem> interestedItems = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<InterestedCategory> interestedCategories = new ArrayList<>();
 
     @Column(nullable = true)
     private String profileImageUrl;
@@ -125,28 +119,6 @@ public class User extends Timestamped {
             throw new IllegalArgumentException("유효하지 않은 주소입니다.");
         }
         this.address = newAddress;
-    }
-
-    // 양방향 관계 설정을 위한 메서드
-    public void addInterestedItem(InterestedItem interestedItem) {
-        interestedItems.add(interestedItem);
-        interestedItem.setUser(this);
-    }
-
-    // 관심 상품 제거 메서드
-    public void removeInterestedItem(Item item) {
-        interestedItems.removeIf(interestedItem -> interestedItem.getItem().equals(item));
-    }
-
-    // 관심 카테고리 추가 메서드
-    public void addInterestedCategory(InterestedCategory interestedCategory) {
-        interestedCategories.add(interestedCategory);
-        interestedCategory.setUser(this);
-    }
-
-    // 관심 카테고리 제거 메서드
-    public void removeInterestedCategory(Category category) {
-        interestedCategories.removeIf(interestedCategory -> interestedCategory.getCategory().equals(category));
     }
 
     // 프로필 이미지 업데이트 메서드
