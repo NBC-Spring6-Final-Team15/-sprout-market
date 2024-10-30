@@ -7,7 +7,7 @@
 //import org.springframework.context.annotation.Profile;
 //import redis.embedded.RedisServer;
 //
-//@Profile("local")       // 1.
+//@Profile("test")       // 1.
 //@Configuration
 //public class EmbeddedRedisConfig {
 //
