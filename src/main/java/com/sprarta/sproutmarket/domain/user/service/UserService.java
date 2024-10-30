@@ -101,7 +101,7 @@ public class UserService {
 
         String currentProfileImageUrl = user.getProfileImageUrl();
         if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
-            s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
+            //s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
         }
 
         userRepository.save(user);
