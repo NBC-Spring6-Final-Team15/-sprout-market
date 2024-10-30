@@ -14,11 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
 @RequiredArgsConstructor
 @RestController
 public class ReviewController {
-
     private final ReviewService reviewService;
 
     // 생성
@@ -27,7 +25,7 @@ public class ReviewController {
             @PathVariable Long tradeId,
             @RequestBody @Valid ReviewRequestDto dto,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
-            ) {
+    ) {
         ReviewResponseDto responseDto = reviewService.createReview(tradeId, dto, customUserDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
@@ -56,7 +54,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @RequestBody @Valid ReviewRequestDto dto,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
-            ) {
+    ) {
         ReviewResponseDto responseDto = reviewService.updateReview(reviewId, dto, customUserDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
@@ -66,12 +64,10 @@ public class ReviewController {
     public ResponseEntity<ApiResponse<Void>> deleteReview(
             @PathVariable Long reviewId,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
-            ) {
+    ) {
         reviewService.deleteReview(reviewId, customUserDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
-
-
 }
 
 
