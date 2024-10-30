@@ -2,6 +2,7 @@ package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
+import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -27,17 +28,29 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
+        return createUser(request, UserRole.USER);
+    }
 
+    @Transactional
+    public SignupResponse adminSignup(AdminSignupRequest request) {
+        return createAdminUser(request, UserRole.ADMIN);
+    }
+
+    public SigninResponse signin(SigninRequest request) {
+        return authenticateUser(request, UserRole.USER);
+    }
+
+    public SigninResponse adminSignin(SigninRequest request) {
+        return authenticateUser(request, UserRole.ADMIN);
+    }
+
+    private SignupResponse createUser(SignupRequest request, UserRole userRole) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        UserRole userRole = UserRole.of(request.getUserRole());
-
-        // 위도와 경도를 이용해 행정구역 조회
-        String address = administrativeAreaService.getAdministrativeAreaByCoordinates(request.getLongitude(), request.getLatitude());
+        String address = getAddressFromCoordinates(request.getLongitude(), request.getLatitude());
 
         User newUser = new User(
                 request.getUsername(),
@@ -49,28 +62,59 @@ public class AuthService {
                 userRole
         );
         User savedUser = userRepository.save(newUser);
-
         String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
 
         return new SignupResponse(bearerToken);
     }
 
-    public SigninResponse signin(SigninRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_AUTH_USER));
+    private SignupResponse createAdminUser(AdminSignupRequest request, UserRole userRole) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
 
-        // 1소프트 삭제된 유저인지 확인
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        User newUser = new User(
+                request.getUsername(),
+                request.getEmail(),
+                encodedPassword,
+                request.getNickname(),
+                request.getPhoneNumber(),
+                null, // adminSignup 에서는 address 가 필요하지 않으므로 null로 설정
+                userRole
+        );
+        User savedUser = userRepository.save(newUser);
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
+
+        return new SignupResponse(bearerToken);
+    }
+
+    private SigninResponse authenticateUser(SigninRequest request, UserRole requiredRole) {
+        User user = findUserByEmail(request.getEmail());
+
         if (user.getStatus() == Status.DELETED) {
             throw new ApiException(ErrorStatus.NOT_FOUND_USER);
         }
 
-        // 로그인 시 이메일과 비밀번호가 일치하지 않을 경우 401을 반환합니다.
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD);
+        }
+
+        if (user.getUserRole() != requiredRole) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_ACCESS);
         }
 
         String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole());
 
         return new SigninResponse(bearerToken);
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+    }
+
+    private String getAddressFromCoordinates(double longitude, double latitude) {
+        return administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
     }
 }
