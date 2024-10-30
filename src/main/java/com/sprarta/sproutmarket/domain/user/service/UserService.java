@@ -3,7 +3,7 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
+import com.sprarta.sproutmarket.domain.image.service.impl.S3ImageServiceImpl;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
@@ -24,7 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdministrativeAreaService administrativeAreaService;
-    private final S3ImageService s3ImageService;
+    private final S3ImageServiceImpl s3ImageServiceImpl;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -85,7 +85,7 @@ public class UserService {
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 프로필 이미지 S3 업로드
-        String profileImageUrl = s3ImageService.upload(image, user.getId(), authUser);
+        String profileImageUrl = s3ImageServiceImpl.uploadImage(image, user.getId(), authUser);
 
         // 유저 엔티티에 프로필 이미지 URL 업데이트
         user.updateProfileImage(profileImageUrl);
@@ -101,7 +101,7 @@ public class UserService {
 
         String currentProfileImageUrl = user.getProfileImageUrl();
         if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
-            s3ImageService.deleteImageFromS3(currentProfileImageUrl);
+            s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
         }
 
         userRepository.save(user);

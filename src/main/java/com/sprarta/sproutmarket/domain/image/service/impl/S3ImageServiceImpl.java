@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.image.service;
+package com.sprarta.sproutmarket.domain.image.service.impl;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,24 +32,23 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class S3ImageService implements ImageService {
-
+public class S3ImageServiceImpl implements ImageService {
     private final AmazonS3 amazonS3;
 
     @Value("${s3.bucketName}")
     private String bucketName;
 
-    public String upload(MultipartFile image, Long ItemId, CustomUserDetails authUser) {
+    public String uploadImage(MultipartFile image, Long ItemId, CustomUserDetails authUser) {
         // 입력된 이미지 파일이 빈 파일인지 검증
         if(image.isEmpty() || Objects.isNull(image.getOriginalFilename())){
             throw new ApiException(ErrorStatus.EMPTY_FILE_EXCEPTION);
         }
         // uploadImage 호출
-        return this.uploadImage(image, ItemId, authUser);
+        return this.getPublicImageUrl(image, ItemId, authUser);
     }
 
     // S3에 저장된 이미지의 public url을 반환해줌
-    private String uploadImage(MultipartFile image, Long ItemId, CustomUserDetails authUser) {
+    public String getPublicImageUrl(MultipartFile image, Long ItemId, CustomUserDetails authUser) {
         // 확장자 옳은지 확인
         this.validateImageFileExtention(image.getOriginalFilename());
         try {
@@ -117,7 +117,7 @@ public class S3ImageService implements ImageService {
     }
 
     // 이미지 삭제
-    public void deleteImageFromS3(String imageAddress){
+    public void deleteImage(String imageAddress){
         // 삭제에 필요한 key 가져옴
         String key = getKeyFromImageAddress(imageAddress);
         try{

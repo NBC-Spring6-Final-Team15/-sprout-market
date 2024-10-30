@@ -10,7 +10,6 @@ import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
-import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -270,7 +269,7 @@ public class ItemServiceTest {
         Long itemId = 1L;
         when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
         when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser)).thenReturn(mockItem1);
-        when(imageService.upload(any(MultipartFile.class), eq(itemId), eq(authUser))).thenReturn("image_url.jpg");
+        when(imageService.uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser))).thenReturn("image_url.jpg");
 
         Image savedImage = Image.builder().name("image_url.jpg").item(mockItem1).build();
         when(imageRepository.save(any(Image.class))).thenReturn(savedImage);
@@ -286,7 +285,7 @@ public class ItemServiceTest {
 
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockUser);
-        verify(imageService, times(1)).upload(any(MultipartFile.class), eq(itemId), eq(authUser));
+        verify(imageService, times(1)).uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser));
         verify(imageRepository, times(1)).save(any(Image.class));
     }
 
