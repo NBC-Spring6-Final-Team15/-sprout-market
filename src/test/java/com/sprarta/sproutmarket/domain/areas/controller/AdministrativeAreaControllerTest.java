@@ -40,7 +40,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                 .getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
                 .thenReturn(returnString);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/getHJD")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/areas")
                         .header("Authorization", "Bearer (JWT 토큰)")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
@@ -91,7 +91,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
         listResult.add(admNameDto1);
         listResult.add(admNameDto2);
         given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/getAreas")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/areas")
                         .header("Authorization", "Bearer (JWT 토큰)")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(

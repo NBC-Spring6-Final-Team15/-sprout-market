@@ -36,11 +36,11 @@ public class ReviewService {
                 new ApiException(ErrorStatus.NOT_FOUND_TRADE));
 
         User buyer = User.fromAuthUser(customUserDetails);
-        if (!buyer.getId().equals(trade.getBuyer().getId())) {
+        if (!buyer.getId().equals(trade.getChatRoom().getBuyer().getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_CREATE);
         }
 
-        User seller = trade.getSeller();
+        User seller = trade.getChatRoom().getSeller();
         rateChange(seller, dto);
 
         Review review = new Review(
@@ -97,7 +97,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_REVIEW));
 
-        if (!review.getTrade().getBuyer().getId().equals(customUserDetails.getId())) {
+        if (!review.getTrade().getChatRoom().getBuyer().getId().equals(customUserDetails.getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_UPDATE);
         }
 
@@ -120,7 +120,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_REVIEW));
 
-        if (!review.getTrade().getBuyer().getId().equals(customUserDetails.getId())) {
+        if (!review.getTrade().getChatRoom().getBuyer().getId().equals(customUserDetails.getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_REVIEW_DELETE);
         }
 

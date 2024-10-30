@@ -22,7 +22,7 @@ public class AdministrativeAreaController {
      * geoJson 파일을 데이터베이스에 삽입하는 작업입니다.
      * 처음에 DB 세팅을 할 때, 해당 테이블에 수정이 일어나서 정합성이 깨졌을 때, 행정구역이 변해서 새로운 파일로 DB에 넣어야 할 때 필요합니다.
      */
-    @PostMapping("/test/addGeoJson")
+    @PostMapping("/test/geojson")
     public ResponseEntity<ApiResponse<String>> addGeoJson(@RequestParam String filepath) {
         try {
             administrativeAreaService.insertGeoJsonData(filepath);
@@ -37,7 +37,7 @@ public class AdministrativeAreaController {
      * @param requestDto : 위도,경도를 double 로 받는 DTO
      * @return : 행정동 String 반환
      */
-    @PostMapping("/test/getHJD")
+    @PostMapping("/test/areas")
     public ResponseEntity<ApiResponse<String>> getHMD(@RequestBody AdministrativeAreaRequestDto requestDto) {
         return ResponseEntity.ok
                 (ApiResponse.onSuccess(
@@ -51,7 +51,7 @@ public class AdministrativeAreaController {
      * @param admNm : 행정동 문자열 (예시 : 경상남도 산청군 생초면)
      * @return 행정동 이름 리스트 반환
      */
-    @GetMapping("/test/getAreas")
+    @GetMapping("/test/areas")
     public ResponseEntity<ApiResponse<List<String>>> getAreas(@RequestParam String admNm) {
         List<String> areas = administrativeAreaService.getAdmNameListByAdmName(admNm);
         return ResponseEntity.ok(ApiResponse.onSuccess(areas));
