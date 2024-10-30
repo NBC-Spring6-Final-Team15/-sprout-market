@@ -68,6 +68,7 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
     BAD_REQUEST_CONFLICT_TRADE_RESERVATION(HttpStatus.CONFLICT, 400, "이미 물건이 예약됐습니다."),
     BAD_REQUEST_CONFLICT_TRADE(HttpStatus.CONFLICT, 400, "이미 물건이 거래됐습니다."),
+    BAD_REQUEST_NOT_RESERVED(HttpStatus.BAD_REQUEST,400," 해당 거래의 상태가 예약중이 아닙니다."),
 
     // tradeChat 예외
     NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, 404, "해당 채팅방을 찾을 수 없습니다."),

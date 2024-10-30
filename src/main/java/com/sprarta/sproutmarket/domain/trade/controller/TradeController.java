@@ -21,25 +21,23 @@ public class TradeController {
     private final TradeService tradeService;
 
     // 예약 생성
-    @PostMapping("/trades/reservations/items/{itemId}")
+    @PostMapping("/trades/reservations/{chatRoomId}")
     public ResponseEntity<ApiResponse<TradeResponseDto>> reserveTrade(
-            @PathVariable Long itemId,
-            @RequestBody @Valid TradeRequestDto dto,
+            @PathVariable Long chatRoomId,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
-        TradeResponseDto responseDto = tradeService.reserveTrade(itemId, dto, customUserDetails);
+        TradeResponseDto responseDto = tradeService.reserveTrade(chatRoomId, customUserDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
 
     // 판매 완료
-    @PutMapping("/trades/completions/items/{itemId}")
+    @PutMapping("/trades/{tradeId}")
     public ResponseEntity<ApiResponse<TradeResponseDto>> finishTrade(
-            @PathVariable Long itemId,
-            @RequestBody @Valid TradeRequestDto dto,
+            @PathVariable Long tradeId,
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
-        TradeResponseDto responseDto = tradeService.finishTrade(itemId, dto, customUserDetails);
+        TradeResponseDto responseDto = tradeService.finishTrade(tradeId, customUserDetails);
         return ResponseEntity.ok(ApiResponse.onSuccess(responseDto));
     }
 
