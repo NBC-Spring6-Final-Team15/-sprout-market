@@ -5,10 +5,12 @@ import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
 import com.sprarta.sproutmarket.domain.image.service.ImageService;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
+@Primary
 public class ImageServiceImpl implements ImageService {
     private final S3ImageServiceImpl s3ImageServiceImpl; // S3ImageServiceImpl 의존성 주입
     private final ImageRepository imageRepository;
@@ -35,8 +37,8 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public void deleteImage(String imageAddress) {
-        s3ImageServiceImpl.deleteImage(imageAddress);
+    public void deleteImage(Long itemId, CustomUserDetails authUser, String imageAddress) {
+        s3ImageServiceImpl.deleteImage(itemId, authUser, imageAddress);
         imageRepository.deleteByName(imageAddress);
     }
 }

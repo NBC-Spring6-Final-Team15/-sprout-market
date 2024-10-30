@@ -21,9 +21,9 @@ public class S3ImageController {
     }
 
     // 이미지 삭제
-    @GetMapping("/s3/delete")
-    public ResponseEntity<?> s3delete(@RequestParam(name = "address") String addr){
-        s3ImageServiceImpl.deleteImage(addr);
-        return ResponseEntity.ok(null);
-    }
+//    @GetMapping("/s3/delete")
+//    public ResponseEntity<?> s3delete(@RequestParam(name = "address") String addr){
+//        s3ImageServiceImpl.deleteImage(addr);
+//        return ResponseEntity.ok(null);
+//    }
 }

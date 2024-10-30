@@ -127,22 +127,26 @@ public class S3ImageServiceImpl implements ImageService {
     }
 
     // 이미지 삭제
-    public void deleteImage(String imageAddress){
+    public void deleteImage(Long itemId, CustomUserDetails authUser, String imageAddress){
         // 삭제에 필요한 key 가져옴
-        String key = getKeyFromImageAddress(imageAddress);
+        String key = getKeyFromImageAddress(itemId, authUser, imageAddress);
+        log.info("Attempting to delete object from S3: bucketName={}, key={}", bucketName, key);
         try{
             amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
+            log.info("Successfully deleted image from S3: {}", key);
         }catch (Exception e){
+            log.error("Failed to delete image from S3: {}. Reason: {}", key, e.getMessage());
             throw new ApiException(ErrorStatus.IO_EXCEPTION_ON_IMAGE_DELETE);
         }
     }
 
-    private String getKeyFromImageAddress(String imageAddress){
+    private String getKeyFromImageAddress(Long itemId, CustomUserDetails authUser, String imageAddress){
         try{
-            URL url = new URL(imageAddress);
-            String decodingKey = URLDecoder.decode(url.getPath(), "UTF-8");
+
+            String filePath = String.format("user-uploads/%d/%d/%s", authUser.getId(), itemId, imageAddress);
+            String decodingKey = URLDecoder.decode(filePath, "UTF-8");
             return decodingKey.substring(1); // 맨 앞의 '/' 제거
-        }catch (MalformedURLException | UnsupportedEncodingException e){
+        }catch (UnsupportedEncodingException e){
             throw new ApiException(ErrorStatus.IO_EXCEPTION_ON_IMAGE_DELETE);
         }
     }
@@ -151,7 +155,7 @@ public class S3ImageServiceImpl implements ImageService {
         String originalFilename = image.getOriginalFilename(); // 원본 파일명
 
         // 원본 파일명에서 확장자 추출
-        String extension = originalFilename.substring(originalFilename.lastIndexOf(".")); // 확장자명 추출
+        String extension = originalFilename.substring(originalFilename.indexOf(".") + 1); // 확장자명 추출
 
         // UUID를 기반으로 변경된 파일명 생성
         String s3FileName = UUID.randomUUID().toString().substring(0, 10) + extension; // 변경된 파일명
