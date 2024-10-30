@@ -2,30 +2,18 @@ package com.sprarta.sproutmarket.domain.auth.controller;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.auth.service.AuthService;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.RestDocumentationContextProvider;
-import org.springframework.restdocs.RestDocumentationExtension;
-import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,34 +24,10 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@ExtendWith(RestDocumentationExtension.class)
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AuthControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private AuthService authService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @BeforeEach
-    void setUp(RestDocumentationContextProvider restDocumentation) {
-        MockitoAnnotations.openMocks(this);
-        this.mockMvc = MockMvcBuilders
-                .standaloneSetup(new AuthController(authService))
-                .apply(MockMvcRestDocumentation.documentationConfiguration(restDocumentation))
-                .build();
-    }
 
     @Test
     void adminSignupSuccess() throws Exception {

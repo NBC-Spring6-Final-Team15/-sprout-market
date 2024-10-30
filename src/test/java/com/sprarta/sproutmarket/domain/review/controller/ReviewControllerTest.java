@@ -4,9 +4,7 @@ package com.sprarta.sproutmarket.domain.review.controller;
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.enums.ReviewRating;
@@ -14,22 +12,16 @@ import com.sprarta.sproutmarket.domain.review.service.ReviewService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -46,26 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureRestDocs
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class ReviewControllerTest {
-
-    @Autowired
-    MockMvc mockMvc;
-
+class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     ReviewService reviewService;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @MockBean
-    JwtUtil jwtUtil;
-
-    @MockBean
-    CustomUserDetailService customUserDetailService;
 
     @BeforeEach
     void setUp() {
@@ -307,6 +283,4 @@ class ReviewControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200));
     }
-
-
 }

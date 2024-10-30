@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.interestedItem.controller;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
@@ -47,29 +48,13 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(InterestedItemController.class)
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-@AutoConfigureRestDocs(outputDir = "build/generated-snippets")
-@ExtendWith(RestDocumentationExtension.class)
-public class InterestedItemControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+class InterestedItemControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private InterestedItemService interestedItemService;
 
     @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
-
-    @MockBean
     private UserService userService;
-
-    @MockBean
-    private CustomUserDetails mockAuthUser;
 
     @BeforeEach
     void setUp() {

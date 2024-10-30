@@ -2,7 +2,7 @@ package com.sprarta.sproutmarket.domain.user.controller;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
@@ -12,27 +12,19 @@ import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.request.RequestDocumentation;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -53,29 +45,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-@ExtendWith(RestDocumentationExtension.class)
-@AutoConfigureRestDocs(outputDir = "build/generated-snippets")
-public class UserControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+class UserControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private UserService userService;
-
-    @InjectMocks
-    private UserController userController;
-
-    @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
-
-    @MockBean
-    private CustomUserDetails mockAuthUser;
 
     @BeforeEach
     void setUp() {
