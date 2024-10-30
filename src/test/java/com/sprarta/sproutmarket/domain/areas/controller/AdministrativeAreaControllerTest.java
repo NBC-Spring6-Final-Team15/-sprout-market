@@ -13,15 +13,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
-import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
-import static org.mockito.ArgumentMatchers.anyString;
+import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -44,6 +41,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                 .thenReturn(returnString);
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/getHJD")
+                        .header("Authorization", "Bearer (JWT 토큰)")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(
@@ -53,6 +51,10 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                                         .description("double 타입의 위도, 경도를 받아서 특정 행정구역을 리턴합니다.")
                                         .summary("행정구역 반환 API")
                                         .tag("AdministrativeArea")
+                                        .requestHeaders(
+                                                headerWithName("Authorization")
+                                                        .description("Bearer (JWT 토큰)")
+                                        )
                                         .requestFields(List.of(
                                                 fieldWithPath("longitude").type(JsonFieldType.NUMBER)
                                                         .description("위도"),
@@ -90,6 +92,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
         listResult.add(admNameDto2);
         given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/getAreas")
+                        .header("Authorization", "Bearer (JWT 토큰)")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                                 "get-admNm-List",
@@ -97,6 +100,10 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                                         .description("특정 행정동을 받아서 주변 5km의 행정동 이름을 담은 리스트를 반환")
                                         .summary("주변 행정동 리스트 반환")
                                         .tag("AdministrativeArea")
+                                        .requestHeaders(
+                                                headerWithName("Authorization")
+                                                        .description("Bearer (JWT 토큰)")
+                                        )
                                         .queryParameters(
                                                 parameterWithName("admNm")
                                                         .description("행정동 이름")
