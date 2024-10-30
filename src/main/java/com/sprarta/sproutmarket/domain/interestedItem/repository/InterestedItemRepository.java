@@ -15,10 +15,6 @@ import java.util.Optional;
 @Repository
 public interface InterestedItemRepository extends JpaRepository<InterestedItem, Long> {
 
-    // 특정 사용자의 관심 상품 목록 조회
-    @Query("SELECT ii FROM InterestedItem ii WHERE ii.user.id = :userId")
-    List<InterestedItem> findByUserId(Long userId);
-
     // 특정 아이템을 관심 상품으로 설정한 사용자 목록 조회
     @Query("SELECT ii FROM InterestedItem ii WHERE ii.item.id = :itemId")
     List<InterestedItem> findByItemId(Long itemId);

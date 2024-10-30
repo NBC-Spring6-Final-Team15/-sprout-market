@@ -14,14 +14,6 @@ import java.util.Optional;
 @Repository
 public interface InterestedCategoryRepository extends JpaRepository<InterestedCategory, Long> {
 
-    // 특정 사용자의 관심 카테고리 목록 조회
-    @Query("SELECT ic FROM InterestedCategory ic WHERE ic.user.id = :userId")
-    List<InterestedCategory> findByUserId(Long userId);
-
-    // 특정 카테고리를 관심 카테고리로 설정한 목록 조회
-    @Query("SELECT ic FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
-    List<InterestedCategory> findByCategoryId(Long categoryId);
-
     // 특정 사용자와 카테고리의 관심 정보가 존재하는지 확인
     boolean existsByUserAndCategory(User user, Category category);
 

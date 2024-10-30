@@ -1,21 +1,15 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
-import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.interestedCategory.entity.InterestedCategory;
-import com.sprarta.sproutmarket.domain.interestedItem.entity.InterestedItem;
-import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.report.entity.Report;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
