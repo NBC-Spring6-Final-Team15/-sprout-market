@@ -30,7 +30,7 @@ public class ChatRoomController {
     }
 
     // 채팅방 조회
-    @GetMapping("/chatrooms/{chatroomId}")
+    @GetMapping("/chatrooms/{chatRoomId}")
     public ResponseEntity<ApiResponse<ChatRoomDto>> getChatRoom(
             @PathVariable Long chatRoomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(

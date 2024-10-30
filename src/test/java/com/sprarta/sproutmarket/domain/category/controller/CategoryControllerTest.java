@@ -230,7 +230,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                         resource(params)
                 ));
 
-        result.andExpect(status().isNoContent());
+        result.andExpect(status().isOk());
     }
 
     @Test
@@ -267,7 +267,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                         resource(params)
                 ));
 
-        result.andExpect(status().isNoContent());
+        result.andExpect(status().isOk());
     }
 
     @Test

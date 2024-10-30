@@ -298,9 +298,7 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("message")
                                                 .description("성공 메시지 : Ok"),
                                         fieldWithPath("statusCode")
-                                                .description("성공 상태 코드 : 200"),
-                                        fieldWithPath("data")
-                                                .description("따로 반환하는 본문 없습니다. : null")
+                                                .description("성공 상태 코드 : 200")
                                 )
                                 .responseSchema(Schema.schema("신고-삭제-성공-응답"))
                                 .build()

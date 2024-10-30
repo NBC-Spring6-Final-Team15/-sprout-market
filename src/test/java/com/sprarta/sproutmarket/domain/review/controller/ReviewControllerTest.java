@@ -306,8 +306,7 @@ class ReviewControllerTest {
                                 .tag("Review")
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
-                                        fieldWithPath("data").description("리뷰 삭제에 대한 데이터 (null)")
+                                        fieldWithPath("statusCode").description("HTTP 상태 코드")
                                 ))
                                 .responseHeaders(
                                         headerWithName("Content-Type").description("응답의 Content-Type")
