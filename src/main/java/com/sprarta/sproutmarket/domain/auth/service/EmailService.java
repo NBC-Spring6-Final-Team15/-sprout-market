@@ -48,6 +48,6 @@ public class EmailService {
     }
 
     public int createAuthNumber() {
-        return (int)((Math.random() * 1000000));
+        return (int)((Math.random() * 900000) + 100000);
     }
 }

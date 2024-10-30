@@ -85,6 +85,12 @@ public class AuthService {
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
+        // 이메일 인증
+        String redisKey = verifyAdminEmail(request);
+
+        // redis에서 데이터 제거
+        redisUtil.delete(redisKey);
+
         User newUser = new User(
                 request.getUsername(),
                 request.getEmail(),
@@ -130,6 +136,25 @@ public class AuthService {
     }
 
     private String verifyEmail(SignupRequest requestDto) {
+        String email = requestDto.getEmail();
+        String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
+        Integer authNumber = (Integer) redisUtil.get(redisKey);
+
+        // 메일 인증 중인 email 인지 확인
+        if(authNumber == null) {
+            emailService.sendEmail(redisKey, email);
+            throw new ApiException(ErrorStatus.SEND_AUTH_EMAIL);
+        }
+
+        // 인증번호 확인
+        if(authNumber != requestDto.getAuthNumber()) {
+            throw new ApiException(ErrorStatus.FAIL_EMAIL_AUTHENTICATION);
+        }
+
+        return redisKey;
+    }
+
+    private String verifyAdminEmail(AdminSignupRequest requestDto) {
         String email = requestDto.getEmail();
         String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
         Integer authNumber = (Integer) redisUtil.get(redisKey);
