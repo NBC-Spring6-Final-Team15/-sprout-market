@@ -329,12 +329,8 @@ public class ItemService {
     }
 
     public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
-        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-        String myArea = currentUser.getAddress();
-
-        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
-
-        // 근처 아이템 모두 조회
+        User user = findUserById(authUser.getId());
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
         List<Item> items = itemRepository.findByUserArea(areaList);
 
         // Redis에서 조회수를 가져와 정렬하기 위해, 아이템과 조회수를 Map에 저장

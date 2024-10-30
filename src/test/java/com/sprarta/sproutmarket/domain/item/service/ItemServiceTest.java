@@ -123,7 +123,9 @@ public class ItemServiceTest {
 
         // 가짜 카테고리 생성
         mockCategory1 = new Category("생활");
+        ReflectionTestUtils.setField(mockCategory1, "id", 1L);
         mockCategory2 = new Category( "가구");
+        ReflectionTestUtils.setField(mockCategory2, "id", 2L);
 
         // 가짜 매물 생성
         mockItem1 = Item.builder()
@@ -172,6 +174,8 @@ public class ItemServiceTest {
         // itemRepository.findById() 호출 시 mockItem1과 mockItem2를 반환하도록 설정
         when(itemRepository.findById(mockItem1.getId())).thenReturn(Optional.of(mockItem1));
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
+
+        when(imageRepository.findByIdOrElseThrow(image.getId())).thenReturn(image);
 
         when(viewCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
     }
@@ -247,7 +251,6 @@ public class ItemServiceTest {
 
         when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
         when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser)).thenReturn(mockItem1);
-        when(imageRepository.findById(imageId)).thenReturn(Optional.of(image));
 
         // When
         ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
@@ -255,30 +258,30 @@ public class ItemServiceTest {
         // Then
         assertEquals(mockItem1.getTitle(), itemResponse.getTitle());
         assertEquals(mockItem1.getStatus(), itemResponse.getStatus());
+        assertEquals(mockItem1.getPrice(), itemResponse.getPrice());
         assertEquals(mockUser.getNickname(), itemResponse.getNickname());
 
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockUser);
-        verify(imageRepository, times(1)).findById(imageId);
-        verify(imageRepository, times(1)).deleteById(imageId);
+        verify(imageRepository, times(1)).findByIdOrElseThrow(imageId);
+        verify(imageService, times(1)).deleteImage(image.getName());
     }
 
     @Test
     void 매물_이미지_추가_성공() {
         // Given
         Long itemId = 1L;
+
         when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
         when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser)).thenReturn(mockItem1);
         when(imageService.uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser))).thenReturn("image_url.jpg");
-
-        Image savedImage = Image.builder().name("image_url.jpg").item(mockItem1).build();
-        when(imageRepository.save(any(Image.class))).thenReturn(savedImage);
 
         // When
         ItemResponse itemResponse = itemService.addImage(itemId, authUser, mockImage);
 
         // Then
         assertEquals(mockItem1.getTitle(), itemResponse.getTitle());
+        assertEquals(mockItem1.getPrice(), itemResponse.getPrice());
         assertEquals(mockItem1.getStatus(), itemResponse.getStatus());
         assertEquals("image_url.jpg", itemResponse.getImageUrl());
         assertEquals(mockUser.getNickname(), itemResponse.getNickname());
@@ -286,7 +289,6 @@ public class ItemServiceTest {
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockUser);
         verify(imageService, times(1)).uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser));
-        verify(imageRepository, times(1)).save(any(Image.class));
     }
 
     @Test
