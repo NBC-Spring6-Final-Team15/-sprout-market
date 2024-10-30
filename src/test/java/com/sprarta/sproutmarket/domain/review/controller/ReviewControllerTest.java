@@ -301,8 +301,7 @@ class ReviewControllerTest {
                                 .tag("Review")
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("성공 메시지 : Ok"),
-                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
-                                        fieldWithPath("data").description("성공 시 data : NULL")
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200")
                                 ))
                                 .responseSchema(Schema.schema("리뷰-삭제-성공-응답"))
                                 .build()
