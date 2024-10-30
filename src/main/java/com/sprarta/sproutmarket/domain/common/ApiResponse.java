@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import lombok.Getter;
 
@@ -8,6 +9,7 @@ public class ApiResponse<T> {
 
     private final String message;
     private final Integer statusCode;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final T data;
 
     private ApiResponse(String message, Integer statusCode, T data) {
@@ -26,9 +28,5 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> onSuccess(T result) {
         return new ApiResponse<>("Ok", 200, result);
-    }
-
-    public static ApiResponse<String> onFailure(ErrorStatus errorStatus) {
-        return new ApiResponse<>(errorStatus.getMessage(), errorStatus.getStatusCode(), null);
     }
 }
