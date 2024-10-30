@@ -73,7 +73,8 @@ class AuthControllerTest {
                 123456,
                 "adminPassword",
                 "adminNickname",
-                "010-1234-5678"
+                "010-1234-5678",
+                "adminKey"
         );
         SignupResponse signupResponse = new SignupResponse("jwt-token");
 
@@ -94,7 +95,8 @@ class AuthControllerTest {
                                         fieldWithPath("authNumber").description("이메일 인증번호"),
                                         fieldWithPath("password").description("관리자 비밀번호"),
                                         fieldWithPath("nickname").description("관리자 닉네임"),
-                                        fieldWithPath("phoneNumber").description("관리자 전화번호")
+                                        fieldWithPath("phoneNumber").description("관리자 전화번호"),
+                                        fieldWithPath("adminKey").description("어드민 키")
                                 )
                                 .responseFields(
                                         fieldWithPath("bearerToken").description("JWT 토큰")

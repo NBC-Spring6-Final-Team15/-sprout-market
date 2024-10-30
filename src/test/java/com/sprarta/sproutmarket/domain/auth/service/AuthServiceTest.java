@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -50,6 +51,10 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        // Mock 된 adminKey 값을 설정합니다.
+        String mockAdminKey = "mock-encrypted-admin-key";
+        ReflectionTestUtils.setField(authService, "adminKey", mockAdminKey);
     }
 
     @Test
@@ -103,7 +108,8 @@ class AuthServiceTest {
                 123456,
                 "adminPassword",
                 "adminNickname",
-                "010-1234-5678"
+                "010-1234-5678",
+                "mock-encrypted-admin-key"
         );
 
         User savedUser = new User(
