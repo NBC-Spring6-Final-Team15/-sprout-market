@@ -168,24 +168,16 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse addImage(Long itemId, CustomUserDetails authUser, MultipartFile image){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+        User user = findUserById(authUser.getId());
+        Item item = verifyItemOwnership(itemId, user);
 
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
-
-        String imageUrl = imageService.upload(image, item.getId(), authUser);
-
-        Image images = Image.builder().name(imageUrl).item(item).build();
-
-        imageRepository.save(images);
+        String imageAddress = imageService.uploadImage(image, item.getId(), authUser);
 
         return new ItemResponse(
             item.getTitle(),
             item.getPrice(),
             item.getStatus(),
-            images.getName(),
+            imageAddress,
             user.getNickname()
         );
     }
@@ -199,17 +191,11 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse deleteImage(Long itemId, CustomUserDetails authUser, Long imageId){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+        User user = findUserById(authUser.getId());
+        Item item = verifyItemOwnership(itemId, user);
+        Image image = imageRepository.findByIdOrElseThrow(imageId);
 
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
-
-        Image image = imageRepository.findById(imageId)
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_IMAGE));
-
-        imageRepository.deleteById(image.getId());
+        imageService.deleteImage(image.getName());
 
         return new ItemResponse(
             item.getTitle(),
@@ -227,12 +213,8 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse softDeleteItem(Long itemId, CustomUserDetails authUser){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
-
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+        User user = findUserById(authUser.getId());
+        Item item = verifyItemOwnership(itemId, user);
 
         item.solfDelete(
             Status.DELETED
@@ -253,14 +235,11 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse softDeleteReportedItem(Long itemId, CustomUserDetails authUser){
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
-
         if(!authUser.getRole().equals(UserRole.ADMIN)){
             throw new ApiException(ErrorStatus.FORBIDDEN_TOKEN);
         }
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdOrElseThrow(itemId);
+
+        Item item = findItemById(itemId);
 
         item.solfDelete(
             Status.DELETED
@@ -280,7 +259,7 @@ public class ItemService {
      * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
      */
     public ItemResponseDto getItem(Long itemId){
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
+        // 매물 존재하는지
         Item item = itemRepository.findByIdOrElseThrow(itemId);
 
         incrementViewCount(itemId);
@@ -459,6 +438,10 @@ public class ItemService {
             simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
                     "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
         }
+    }
+
+    private Item findItemById(Long itemId){
+        return itemRepository.findByIdOrElseThrow(itemId);
     }
 
     // 유저 조회 메서드 분리
