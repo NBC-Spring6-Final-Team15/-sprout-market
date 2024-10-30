@@ -4,16 +4,12 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.auth.service.AuthService;
-import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
-import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
-import com.sprarta.sproutmarket.domain.user.entity.User;
-import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,18 +24,15 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
-import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
@@ -73,27 +66,92 @@ class AuthControllerTest {
     }
 
     @Test
-    void signupSuccess() throws Exception {
+    void adminSignupSuccess() throws Exception {
+        AdminSignupRequest adminSignupRequest = new AdminSignupRequest(
+                "adminUsername",
+                "admin@example.com",
+                "adminPassword",
+                "adminNickname",
+                "010-1234-5678"
+        );
+        SignupResponse signupResponse = new SignupResponse("jwt-token");
+
+        when(authService.adminSignup(any(AdminSignupRequest.class))).thenReturn(signupResponse);
+
+        mockMvc.perform(post("/adminUser/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminSignupRequest)))
+                .andExpect(status().isOk())
+                .andDo(document("auth-admin-signup-success",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("관리자 회원가입 API")
+                                .summary("새로운 관리자를 등록합니다.")
+                                .tag("Auth")
+                                .requestFields(
+                                        fieldWithPath("username").description("관리자 이름"),
+                                        fieldWithPath("email").description("관리자 이메일"),
+                                        fieldWithPath("password").description("관리자 비밀번호"),
+                                        fieldWithPath("nickname").description("관리자 닉네임"),
+                                        fieldWithPath("phoneNumber").description("관리자 전화번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("bearerToken").description("JWT 토큰")
+                                )
+                                .requestSchema(Schema.schema("관리자-회원가입-성공-요청"))
+                                .responseSchema(Schema.schema("관리자-회원가입-성공-응답"))
+                                .build())
+                ));
+    }
+
+    @Test
+    void adminSigninSuccess() throws Exception {
+        SigninRequest adminSigninRequest = new SigninRequest("admin@example.com", "adminPassword");
+        SigninResponse signinResponse = new SigninResponse("jwt-token");
+
+        when(authService.adminSignin(any(SigninRequest.class))).thenReturn(signinResponse);
+
+        mockMvc.perform(post("/adminUser/signin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminSigninRequest)))
+                .andExpect(status().isOk())
+                .andDo(document("auth-admin-signin-success",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("관리자 로그인 API")
+                                .summary("기존 관리자 계정으로 로그인합니다.")
+                                .tag("Auth")
+                                .requestFields(
+                                        fieldWithPath("email").description("관리자 이메일"),
+                                        fieldWithPath("password").description("관리자 비밀번호")
+                                )
+                                .responseFields(
+                                        fieldWithPath("bearerToken").description("JWT 토큰")
+                                )
+                                .requestSchema(Schema.schema("관리자-로그인-성공-요청"))
+                                .responseSchema(Schema.schema("관리자-로그인-성공-응답"))
+                                .build())
+                ));
+    }
+
+    @Test
+    void userSignupSuccess() throws Exception {
         SignupRequest signupRequest = new SignupRequest(
                 "username",
-                "email@example.com",
-                "password",
-                "nickname",
-                "010-1234-5678", // phoneNumber로 변경된 필드
+                "user@example.com",
+                "userPassword",
+                "userNickname",
+                "010-1234-5678",
                 126.976889,
-                37.575651,
-                "USER" // userRole로 변경된 필드
+                37.575651
         );
         SignupResponse signupResponse = new SignupResponse("jwt-token");
 
         when(authService.signup(any(SignupRequest.class))).thenReturn(signupResponse);
-        when(jwtUtil.createToken(any(Long.class), anyString(), any(UserRole.class))).thenReturn("jwt-token");
 
-        mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/signup")
+        mockMvc.perform(post("/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk())
-                .andDo(document("auth-signup-success",
+                .andDo(document("auth-user-signup-success",
                         resource(ResourceSnippetParameters.builder()
                                 .description("사용자 회원가입 API")
                                 .summary("새로운 사용자를 등록합니다.")
@@ -105,46 +163,32 @@ class AuthControllerTest {
                                         fieldWithPath("nickname").description("사용자 닉네임"),
                                         fieldWithPath("phoneNumber").description("사용자 전화번호"),
                                         fieldWithPath("longitude").description("사용자 경도"),
-                                        fieldWithPath("latitude").description("사용자 위도"),
-                                        fieldWithPath("userRole").description("사용자 역할")
+                                        fieldWithPath("latitude").description("사용자 위도")
                                 )
                                 .responseFields(
                                         fieldWithPath("bearerToken").description("JWT 토큰")
                                 )
-                                .requestSchema(Schema.schema("회원가입-성공-요청"))
-                                .responseSchema(Schema.schema("회원가입-성공-응답"))
+                                .requestSchema(Schema.schema("사용자-회원가입-성공-요청"))
+                                .responseSchema(Schema.schema("사용자-회원가입-성공-응답"))
                                 .build())
                 ));
     }
 
     @Test
-    void signinSuccess() throws Exception {
-        SigninRequest signinRequest = new SigninRequest("email@example.com", "password");
+    void userSigninSuccess() throws Exception {
+        SigninRequest signinRequest = new SigninRequest("user@example.com", "userPassword");
         SigninResponse signinResponse = new SigninResponse("jwt-token");
 
-        User user = new User(
-                "username",
-                "email@example.com",
-                "encodedPassword",
-                "nickname",
-                "010-1234-5678",
-                "서울특별시 종로구",
-                UserRole.USER
-        );
-
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
-        when(customUserDetailService.loadUserByUsername(anyString())).thenReturn(customUserDetails);
         when(authService.signin(any(SigninRequest.class))).thenReturn(signinResponse);
-        when(jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole())).thenReturn("jwt-token");
 
-        mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/signin")
+        mockMvc.perform(post("/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signinRequest)))
                 .andExpect(status().isOk())
-                .andDo(document("auth-signin-success",
+                .andDo(document("auth-user-signin-success",
                         resource(ResourceSnippetParameters.builder()
                                 .description("사용자 로그인 API")
-                                .summary("기존 사용자로 로그인합니다.")
+                                .summary("기존 사용자 계정으로 로그인합니다.")
                                 .tag("Auth")
                                 .requestFields(
                                         fieldWithPath("email").description("사용자 이메일"),
@@ -153,8 +197,8 @@ class AuthControllerTest {
                                 .responseFields(
                                         fieldWithPath("bearerToken").description("JWT 토큰")
                                 )
-                                .requestSchema(Schema.schema("로그인-성공-요청"))
-                                .responseSchema(Schema.schema("로그인-성공-응답"))
+                                .requestSchema(Schema.schema("사용자-로그인-성공-요청"))
+                                .responseSchema(Schema.schema("사용자-로그인-성공-응답"))
                                 .build())
                 ));
     }

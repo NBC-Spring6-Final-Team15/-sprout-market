@@ -49,6 +49,7 @@ public class SecurityConfig {
                         //Swagger 관련 오픈
                         .requestMatchers("/docs/**",
                                 "/v3/api-docs/swagger-config").permitAll()
+                        .requestMatchers("/adminUser/**").permitAll()
                         .requestMatchers("/admin/**",  "/test/**").hasRole("ADMIN")
                         .requestMatchers("/","/signup", "/signin", "/chat").permitAll()
                         .anyRequest().authenticated()

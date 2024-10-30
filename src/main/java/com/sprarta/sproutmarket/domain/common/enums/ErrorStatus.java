@@ -85,7 +85,8 @@ public enum ErrorStatus implements BaseCode {
 
     // 관심 카테고리 예외
     ALREADY_INTERESTED_CATEGORY(HttpStatus.BAD_REQUEST, 400, "이미 관심 카테고리로 지정되었습니다."),
-    NOT_FOUND_INTERESTED_CATEGORY(HttpStatus.NOT_FOUND, 404, "해당 관심 카테고리를 찾을 수 없습니다.");
+    NOT_FOUND_INTERESTED_CATEGORY(HttpStatus.NOT_FOUND, 404, "해당 관심 카테고리를 찾을 수 없습니다."),
+    FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, 403, "관리자만 접근이 가능합니다.");
 
     private final HttpStatus httpStatus;
     private final Integer statusCode;
