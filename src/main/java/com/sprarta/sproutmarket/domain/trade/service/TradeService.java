@@ -28,7 +28,7 @@ public class TradeService {
     private final TradeRepository tradeRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final SimpMessagingTemplate simpMessagingTemplate;;
+    private final SimpMessagingTemplate simpMessagingTemplate;
 
     // 예약
     @Transactional

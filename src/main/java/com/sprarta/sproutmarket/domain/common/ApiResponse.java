@@ -29,8 +29,4 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> onSuccess(T result) {
         return new ApiResponse<>("Ok", 200, result);
     }
-
-    public static ApiResponse<String> onFailure(ErrorStatus errorStatus) {
-        return new ApiResponse<>(errorStatus.getMessage(), errorStatus.getStatusCode(), null);
-    }
 }

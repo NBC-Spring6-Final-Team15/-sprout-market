@@ -181,7 +181,6 @@ public class UserControllerTest {
     @WithMockUser
     void changePasswordFail_IncorrectOldPassword() throws Exception {
         // given
-        UserChangePasswordRequest passwordRequest = new UserChangePasswordRequest("wrongOldPassword", "NewPass1!");
         doThrow(new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD))
                 .when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
 
@@ -208,7 +207,6 @@ public class UserControllerTest {
     @WithMockUser
     void deleteUserSuccess() throws Exception {
         // given
-        UserDeleteRequest deleteRequest = new UserDeleteRequest("password");
 
         // when, then
         mockMvc.perform(delete("/users")
