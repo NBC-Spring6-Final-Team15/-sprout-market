@@ -70,24 +70,13 @@ public class ItemService {
      */
     public Page<ItemSearchResponse> searchItems(int page, int size, ItemSearchRequest itemSearchRequest, CustomUserDetails authUser){
         // 유저 조회
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-
+        User user = findUserById(authUser.getId());
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
-
-        Category category = null;
-        if(itemSearchRequest.getCategoryId() != null){
-            category = categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId());
-        }
-
-        ItemSaleStatus itemSaleStatus = null;
-        if(itemSearchRequest.isSaleStatus()){
-            itemSaleStatus = ItemSaleStatus.WAITING;
-        }
+        Category category = findCategoryById(itemSearchRequest.getCategoryId());
+        ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);
-
         Page<ItemSearchResponse> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
 
         return result;
@@ -101,27 +90,14 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
-        // 유저 조회
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        User user = findUserById(authUser.getId());
+        Category category = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
-        // 카테고리 찾기
-        Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
-
-        Item item = Item.builder()
-            .title(itemCreateRequest.getTitle())
-            .description(itemCreateRequest.getDescription())
-            .price(itemCreateRequest.getPrice())
-            .itemSaleStatus(ItemSaleStatus.WAITING)
-            .category(findCategory)
-            .seller(user)
-            .status(Status.ACTIVE)
-            .build();
-
+        Item item = createItemFromRequest(itemCreateRequest, user, category);
         Item saveItem = itemRepository.save(item);
 
         // 카테고리에 관심 있는 사용자들에게 알림 전송
-        notifyUsersAboutNewItem(item.getCategory().getId(), item.getTitle());
+        notifyCategorySubscribersForNewItem(item.getCategory().getId(), item.getTitle());
 
         return new ItemResponse(
             saveItem.getTitle(),
@@ -140,11 +116,9 @@ public class ItemService {
     @Transactional
     public ItemResponse updateSaleStatus(Long itemId, String itemSaleStatus, CustomUserDetails authUser) {
         // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-
+        User user = findUserById(authUser.getId());
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+        Item item = verifyItemOwnership(itemId, user);
 
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
@@ -166,29 +140,16 @@ public class ItemService {
      */
     @Transactional
     public ItemResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser){
-        // response(user.email)를 위해 AuthUser에서 사용자 정보 가져오기
-        User user = userRepository.findById(authUser.getId())
-            .orElseThrow(() ->  new ApiException(ErrorStatus.NOT_FOUND_USER));
+        User user = findUserById(authUser.getId());
+        Item item = verifyItemOwnership(itemId, user);
 
-        // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
-        Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
-
-        // 기존 가격 저장
-        int oldPrice = item.getPrice();
+        sendPriceChangeNotification(item, itemContentsUpdateRequest.getPrice());
 
         item.changeContents(
             itemContentsUpdateRequest.getTitle(),
             itemContentsUpdateRequest.getDescription(),
             itemContentsUpdateRequest.getPrice()
         );
-
-        // 가격이 변경되었는지 확인
-        boolean isPriceChanged = oldPrice != itemContentsUpdateRequest.getPrice();
-
-        // 가격이 변경되었으면 알림 발송
-        if (isPriceChanged) {
-            notifyUsersAboutPriceChange(item.getId(), itemContentsUpdateRequest.getPrice());
-        }
 
         return new ItemResponse(
             item.getTitle(),
@@ -497,6 +458,51 @@ public class ItemService {
         for (User user : interestedUsers) {
             simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
                     "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
+        }
+    }
+
+    // 유저 조회 메서드 분리
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+    }
+
+    // 카테고리 조회 메서드 분리
+    private Category findCategoryById(Long categoryId) {
+        return (categoryId != null) ? categoryService.findByIdOrElseThrow(categoryId) : null;
+    }
+
+    // ItemSaleStatus 결정 메서드
+    private ItemSaleStatus setSaleStatus(ItemSearchRequest itemSearchRequest) {
+        return itemSearchRequest.isSaleStatus() ? ItemSaleStatus.WAITING : null;
+    }
+
+    // Item 객체 생성
+    private Item createItemFromRequest(ItemCreateRequest request, User seller, Category category){
+        return Item.builder()
+            .title(request.getTitle())
+            .description(request.getDescription())
+            .price(request.getPrice())
+            .itemSaleStatus(ItemSaleStatus.WAITING)
+            .category(category)
+            .seller(seller)
+            .status(Status.ACTIVE)
+            .build();
+    }
+
+    // 알림 전송(매물 등록시 해당 카테고리)
+    private void notifyCategorySubscribersForNewItem(Long categoryId, String title){
+        notifyUsersAboutNewItem(categoryId, title);
+    }
+
+    private Item verifyItemOwnership(Long itemId, User user){
+        return itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
+    }
+
+    // 알림 전송(가격 변동)
+    private void sendPriceChangeNotification(Item item, int newPrice){
+        if (item.getPrice() != newPrice) {
+            notifyUsersAboutPriceChange(item.getId(), newPrice);
         }
     }
 }
