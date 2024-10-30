@@ -101,8 +101,7 @@ public class InterestedItemControllerTest {
                                 )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("관심-상품-추가-성공-응답"))
                                 .build())
@@ -125,8 +124,7 @@ public class InterestedItemControllerTest {
                                 )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("관심-상품-삭제-성공-응답"))
                                 .build())

@@ -1,12 +1,14 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -21,6 +23,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +47,9 @@ class UserServiceTest {
     private UserService userService;
 
     private User user;
+    private User user2;
     private CustomUserDetails authUser;
+    private CustomUserDetails authUser2;
     private MockMultipartFile mockImage;
 
     @BeforeEach
@@ -53,8 +58,11 @@ class UserServiceTest {
 
         // Mock user data
         user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        user2 = new User(2L, "username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
         authUser = new CustomUserDetails(user);
+        authUser2 = new CustomUserDetails(user2);
         mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
+        user2.deactivate();
     }
 
     @Test
@@ -151,7 +159,6 @@ class UserServiceTest {
         // Then
         verify(userRepository, times(1)).findById(1L);
         verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword()); // Check password
-        verify(userRepository, times(1)).delete(user); // Verify user deletion
     }
 
     @Test
@@ -234,5 +241,35 @@ class UserServiceTest {
         verify(s3ImageService, times(1)).deleteImageFromS3(profileImageUrl); // S3에서 이미지 삭제 확인
         assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
         verify(userRepository, times(1)).findById(authUser.getId());
+    }
+
+    @Test
+    void 탈퇴_유저_복원_성공() {
+        // given
+        when(userRepository.findById(authUser2.getId())).thenReturn(Optional.of(user2));
+
+        // when
+        userService.activateUser(user2.getId());
+
+        // then
+        assertEquals(Status.ACTIVE, user2.getStatus());
+        verify(userRepository, times(1)).findById(user2.getId());
+    }
+
+    @Test
+    void 모든_상태_유저_모두_조회_성공() {
+        // given
+        List<User> users = List.of(user, user2);
+
+        when(userRepository.findAll()).thenReturn(users);
+
+        // when
+        List<UserAdminResponse> result = userService.getAllUsers();
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals("username", result.get(0).getUsername());
+        assertEquals("username", result.get(1).getUsername());
+        verify(userRepository, times(1)).findAll();
     }
 }

@@ -110,6 +110,8 @@ public class User extends Timestamped {
         this.status = Status.DELETED;
     }
 
+    public void activate() { this.status = Status.ACTIVE; }
+
     public void plusRate() {
         this.rate++;
     }

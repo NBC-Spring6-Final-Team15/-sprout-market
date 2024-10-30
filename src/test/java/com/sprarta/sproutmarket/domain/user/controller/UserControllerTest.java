@@ -7,6 +7,7 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.restdocs.request.RequestDocumentation;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -37,6 +39,8 @@ import java.util.List;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static com.sprarta.sproutmarket.domain.common.entity.Status.ACTIVE;
+import static com.sprarta.sproutmarket.domain.common.entity.Status.DELETED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -45,7 +49,6 @@ import static org.springframework.restdocs.headers.HeaderDocumentation.headerWit
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.partWithName;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -166,8 +169,7 @@ public class UserControllerTest {
                                 ))
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .requestSchema(Schema.schema("비밀번호-변경-성공-요청"))
                                 .responseSchema(Schema.schema("비밀번호-변경-성공-응답"))
@@ -221,8 +223,7 @@ public class UserControllerTest {
                                 ))
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .requestSchema(Schema.schema("유저-삭제-성공-요청"))
                                 .responseSchema(Schema.schema("유저-삭제-성공-응답"))
@@ -279,8 +280,7 @@ public class UserControllerTest {
                                 ))
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .requestSchema(Schema.schema("주소-변경-성공-요청"))
                                 .responseSchema(Schema.schema("주소-변경-성공-응답"))
@@ -348,7 +348,6 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Ok"))  // 기대 메시지를 "Ok"로 변경
                 .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.data").value("프로필 이미지 삭제 성공"))
                 .andDo(document("delete-profile-image",
                         resource(ResourceSnippetParameters.builder()
                                 .description("사용자 프로필 이미지 삭제 API")
@@ -359,11 +358,68 @@ public class UserControllerTest {
                                 )
                                 .responseFields(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("삭제 성공 메시지")
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 )
                                 .responseSchema(Schema.schema("프로필-이미지-삭제-성공-응답"))
                                 .build())
                 ));
+    }
+
+    @Test
+    @WithMockUser
+    void activateUser_Success() throws Exception {
+        // given
+        doNothing().when(userService).activateUser(anyLong());
+
+        // when & then
+        mockMvc.perform(RestDocumentationRequestBuilders.patch("/users/admin/deleted/{userId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document("activate-user",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("탈퇴 유저 복원 API")
+                                .summary("특정 유저를 복원합니다.")
+                                .tag("User")
+                                .pathParameters(RequestDocumentation.parameterWithName("userId").description("유저 ID"))
+                                .responseFields(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
+                                )
+                                .responseSchema(Schema.schema("유저-복원-성공-응답"))
+                                .build()
+                        )));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void getAllUsers_Success() throws Exception {
+        // given
+        List<UserAdminResponse> users = List.of(
+                new UserAdminResponse(1L, "username1", "email@example.com", ACTIVE),
+                new UserAdminResponse(2L, "username2", "another@example.com", DELETED)
+        );
+
+        given(userService.getAllUsers()).willReturn(users);
+
+        // when & then
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/users/admin")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document("get-all-users",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("모든 유저 조회 API")
+                                .summary("모든 유저 목록을 조회합니다.")
+                                .tag("User")
+                                .responseFields(
+                                        fieldWithPath("message").description("응답 메시지"),
+                                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                                        fieldWithPath("data[].userId").description("유저 ID"),
+                                        fieldWithPath("data[].username").description("유저 이름"),
+                                        fieldWithPath("data[].email").description("유저 이메일"),
+                                        fieldWithPath("data[].status").description("유저 상태")
+                                )
+                                .responseSchema(Schema.schema("모든-유저-조회-응답"))
+                                .build()
+                        )));
     }
 }
