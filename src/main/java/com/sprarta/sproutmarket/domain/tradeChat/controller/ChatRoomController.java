@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.tradeChat.dto.ChatRoomDto;
 import com.sprarta.sproutmarket.domain.tradeChat.service.ChatRoomService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class ChatRoomController {
             @PathVariable("itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
         ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(
                 itemId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(chatRoomDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201, chatRoomDto));
     }
 
     // 채팅방 조회
