@@ -30,6 +30,7 @@ public enum ErrorStatus implements BaseCode {
     UNKNOWN_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, 500, "알 수 없는 오류가 발생했습니다."),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, 400, "잘못된 파일 확장자입니다."),
     IO_EXCEPTION_ON_IMAGE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이미지 삭제 중 오류가 발생했습니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, 400, "파일 크기가 5MB를 초과할 수 없습니다."),
 
     // image 예외처리
     NOT_FOUND_IMAGE(HttpStatus.NOT_FOUND, 404, "존재하지 않는 이미지입니다."),

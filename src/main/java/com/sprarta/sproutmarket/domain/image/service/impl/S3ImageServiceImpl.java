@@ -38,12 +38,22 @@ public class S3ImageServiceImpl implements ImageService {
     @Value("${s3.bucketName}")
     private String bucketName;
 
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+
     public String uploadImage(MultipartFile image, Long ItemId, CustomUserDetails authUser) {
         // 입력된 이미지 파일이 빈 파일인지 검증
         if(image.isEmpty() || Objects.isNull(image.getOriginalFilename())){
             throw new ApiException(ErrorStatus.EMPTY_FILE_EXCEPTION);
         }
         // uploadImage 호출
+        return this.checkFileSizeLimit(image, ItemId, authUser);
+    }
+
+    public String checkFileSizeLimit(MultipartFile image, Long ItemId, CustomUserDetails authUser){
+        // 이미지의 크기가 5MB 이하인지 확인
+        if(image.getSize() > MAX_FILE_SIZE){
+            throw new ApiException(ErrorStatus.FILE_SIZE_EXCEEDED);
+        }
         return this.getPublicImageUrl(image, ItemId, authUser);
     }
 
