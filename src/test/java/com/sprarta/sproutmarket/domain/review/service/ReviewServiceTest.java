@@ -13,12 +13,13 @@ import com.sprarta.sproutmarket.domain.trade.repository.TradeRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
-import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -27,7 +28,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ReviewServiceTest {
@@ -41,27 +43,24 @@ public class ReviewServiceTest {
     @Mock
     private TradeRepository tradeRepository;
 
-    @Mock
-    private UserRepository userRepository;
+    @Spy
+    private Item item;
+
+    @Spy
+    private User seller;
 
     private ChatRoom chatRoom;
     private CustomUserDetails buyerUserDetails;
-    private Item item;
     private Trade trade;
-    private User seller;
-
     @BeforeEach
     void setUp() {
-        User buyer = new User();
-        ReflectionTestUtils.setField(buyer, "id", 1L);
-        ReflectionTestUtils.setField(buyer, "nickname", "buyer");
 
-        seller = new User();
+        User buyer = new User("buyer","a@a","Qwerasdf1234!","buyer","01012345676","지구", UserRole.USER);
+        ReflectionTestUtils.setField(buyer, "id", 1L);
+
         ReflectionTestUtils.setField(seller, "id", 2L);
-        ReflectionTestUtils.setField(seller, "nickname", "seller");
         ReflectionTestUtils.setField(seller, "rate", 0);
 
-        item = new Item();
         ReflectionTestUtils.setField(item, "id", 1L);
         ReflectionTestUtils.setField(item, "title", "아이템");
         ReflectionTestUtils.setField(item, "itemSaleStatus", ItemSaleStatus.WAITING);
