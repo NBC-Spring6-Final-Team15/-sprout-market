@@ -29,6 +29,7 @@ import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +54,7 @@ public class ItemService {
     private final ImageRepository imageRepository;
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
+    @Qualifier("imageServiceImpl")
     private final ImageService imageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
@@ -99,11 +101,11 @@ public class ItemService {
         // 카테고리에 관심 있는 사용자들에게 알림 전송
         notifyCategorySubscribersForNewItem(item.getCategory().getId(), item.getTitle());
 
-        return new ItemResponse(
-            saveItem.getTitle(),
-            saveItem.getPrice(),
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(saveItem.getTitle())
+            .price(saveItem.getPrice())
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -123,12 +125,12 @@ public class ItemService {
         ItemSaleStatus newItemSaleStatus = ItemSaleStatus.of(itemSaleStatus);
         item.changeSaleStatus(newItemSaleStatus);
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getPrice(),
-            item.getItemSaleStatus(),
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .price(item.getPrice())
+            .itemSaleStatus(item.getItemSaleStatus())
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -151,12 +153,12 @@ public class ItemService {
             itemContentsUpdateRequest.getPrice()
         );
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .price(item.getPrice())
+            .description(item.getDescription())
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -173,13 +175,13 @@ public class ItemService {
 
         String imageAddress = imageService.uploadImage(image, item.getId(), authUser);
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getPrice(),
-            item.getStatus(),
-            imageAddress,
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .price(item.getPrice())
+            .status(item.getStatus())
+            .imageUrl(imageAddress)
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -195,14 +197,14 @@ public class ItemService {
         Item item = verifyItemOwnership(itemId, user);
         Image image = imageRepository.findByIdOrElseThrow(imageId);
 
-        imageService.deleteImage(image.getName());
+        imageService.deleteImage(itemId, authUser, image.getName());
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getStatus(),
-            item.getPrice(),
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .price(item.getPrice())
+            .status(item.getStatus())
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -220,12 +222,12 @@ public class ItemService {
             Status.DELETED
         );
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getStatus(),
-            item.getPrice(),
-            user.getNickname()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .price(item.getPrice())
+            .status(item.getStatus())
+            .nickname(user.getNickname())
+            .build();
     }
 
     /**
@@ -245,12 +247,12 @@ public class ItemService {
             Status.DELETED
         );
 
-        return new ItemResponse(
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            item.getStatus()
-        );
+        return ItemResponse.builder()
+            .title(item.getTitle())
+            .description(item.getDescription())
+            .price(item.getPrice())
+            .status(item.getStatus())
+            .build();
     }
 
     /**
@@ -416,15 +418,15 @@ public class ItemService {
 
     // Item 객체 생성
     private Item createItemFromRequest(ItemCreateRequest request, User seller, Category category){
-        return Item.builder()
-            .title(request.getTitle())
-            .description(request.getDescription())
-            .price(request.getPrice())
-            .itemSaleStatus(ItemSaleStatus.WAITING)
-            .category(category)
-            .seller(seller)
-            .status(Status.ACTIVE)
-            .build();
+        return new Item(
+            request.getTitle(),
+            request.getDescription(),
+            request.getPrice(),
+            seller,
+            ItemSaleStatus.WAITING,
+            category,
+            Status.ACTIVE
+        );
     }
 
     // 알림 전송(매물 등록시 해당 카테고리)

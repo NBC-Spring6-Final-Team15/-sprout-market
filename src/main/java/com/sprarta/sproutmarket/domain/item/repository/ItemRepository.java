@@ -1,6 +1,5 @@
 package com.sprarta.sproutmarket.domain.item.repository;
 
-import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
@@ -31,12 +30,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
         "JOIN FETCH i.seller " +
         "WHERE i.seller = :seller AND i.status = 'ACTIVE' ")
     Page<Item> findBySeller(Pageable pageable, @Param("seller") User seller);
-
-    @Query("SELECT i FROM Item i " +
-        "JOIN FETCH i.seller " +
-        "JOIN FETCH i.category " +
-        "WHERE i.category = :category AND i.status = 'ACTIVE' ")
-    Page<Item> findByCategory(Pageable pageable, @Param("category") Category findCategory);
 
     @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.status = 'ACTIVE' ")
     Page<Item> findByAreaListAndUserArea(Pageable pageable, @Param("areaList") List<String> areaList);

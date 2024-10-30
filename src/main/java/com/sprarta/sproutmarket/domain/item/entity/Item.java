@@ -6,7 +6,7 @@ import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.image.entity.Image;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +15,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "items")
 public class Item extends Timestamped {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,17 +43,14 @@ public class Item extends Timestamped {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    // 빌더의 사용이유: 필드 개수가 많고, 더 추가될 예정이라
-    @Builder
-    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, User seller,  Category category, Status status, List<Image> images){
+    public Item(String title, String description, int price, User seller, ItemSaleStatus itemSaleStatus, Category category, Status status) {
         this.title = title;
         this.description = description;
         this.price = price;
-        this.itemSaleStatus = itemSaleStatus;
         this.seller = seller;
+        this.itemSaleStatus = itemSaleStatus;
         this.category = category;
         this.status = status;
-        this.images = images;
     }
 
     public void changeSaleStatus(ItemSaleStatus itemSaleStatus) {
