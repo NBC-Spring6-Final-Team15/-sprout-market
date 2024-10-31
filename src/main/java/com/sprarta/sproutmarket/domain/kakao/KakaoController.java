@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.kakao;
 
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,26 +22,24 @@ public class KakaoController {
     }
 
     @RequestMapping("/login/oauth2/code/kakao")
-    public String kakaoLogin(@RequestParam String code){
-        // 1. 인가 코드 받기 (@RequestParam String code)
-
-        // 2. 토큰 받기
+    public String kakaoLogin(@RequestParam String code, HttpSession session){
+        // 1. 토큰 받기
         OAuthToken oAuthToken = kakaoApi.getAccessToken(code);
         String accessToken = oAuthToken.getAccess_token();
 
-        // 3. 사용자 정보 받기
+        // 2. 사용자 정보 받기
         KakaoProfile kakaoProfile = kakaoApi.getUserInfo(accessToken);
 
-        // 사용자 정보 출력
-        String email = kakaoProfile.getEmail();
-        String nickname = kakaoProfile.getNickname();
-        String profileImage = kakaoProfile.getProfileImage();
+        // 3. 세션에 카카오 정보 저장
+        session.setAttribute("email", kakaoProfile.getEmail());
+        session.setAttribute("nickname", kakaoProfile.getNickname());
+        session.setAttribute("profileImageUrl", kakaoProfile.getProfileImage());
 
-        System.out.println("email = " + email);
-        System.out.println("nickname = " + nickname);
-        System.out.println("profileImage = " + profileImage);
+        System.out.println("email = " + kakaoProfile.getEmail());
+        System.out.println("nickname = " + kakaoProfile.getNickname());
+        System.out.println("profileImage = " + kakaoProfile.getProfileImage());
         System.out.println("accessToken = " + accessToken);
 
-        return "redirect:/result";
+        return "redirect:/additional-info";
     }
 }

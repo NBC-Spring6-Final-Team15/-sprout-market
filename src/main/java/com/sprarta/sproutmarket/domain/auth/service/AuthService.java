@@ -1,10 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.EmailVerificationDto;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.*;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.common.RedisUtil;
@@ -14,6 +11,8 @@ import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,6 +53,41 @@ public class AuthService {
 
     public SigninResponse adminSignin(SigninRequest request) {
         return authenticateUser(request, UserRole.ADMIN);
+    }
+
+    @Transactional
+    public SignupResponse kakaoSignup(KakaoSignupRequest request, HttpSession session) {
+        // 세션에서 카카오 로그인 정보를 가져옴
+        String email = (String) session.getAttribute("email");
+        String nickname = (String) session.getAttribute("nickname");
+        String profileImageUrl = (String) session.getAttribute("profileImageUrl");
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        // User 엔티티 생성
+        User newUser = new User(
+                request.getUsername(),
+                email,
+                nickname,
+                encodedPassword,
+                request.getPhoneNumber(),
+                request.getAddress(),
+                profileImageUrl,
+                UserRole.USER
+        );
+
+        // 데이터베이스에 저장
+        User savedUser = userRepository.save(newUser);
+
+        // JWT 토큰 생성
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), UserRole.USER);
+
+        return new SignupResponse(bearerToken);
     }
 
     private SignupResponse createUser(SignupRequest request, UserRole userRole) {

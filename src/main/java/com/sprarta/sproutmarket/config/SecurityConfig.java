@@ -52,7 +52,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/adminUser/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**","/test/**").hasRole("ADMIN")
-                        .requestMatchers("/","/signup", "/signin", "/chat").permitAll()
+                        .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

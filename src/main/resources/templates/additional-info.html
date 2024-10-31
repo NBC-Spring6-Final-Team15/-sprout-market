@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Signup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 400px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input {
+            width: 94%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            margin: 10px 0;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .link {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+
+        input[readonly] {
+            background-color: #f0f0f0;
+            color: #808080;
+            border: 1px solid #ccc;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Complete Signup</h2>
+    <form id="signupForm">
+        <input type="text" id="username" placeholder="Username" required>
+
+        <!-- Display Kakao-provided information as readonly -->
+        <input type="email" id="email" placeholder="Email" value="${session.email}" readonly>
+        <input type="text" id="nickname" placeholder="Nickname" value="${session.nickname}" readonly>
+
+        <!-- Additional fields to be filled by the user -->
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="text" id="phoneNumber" placeholder="Phone Number" required>
+        <input type="text" id="address" placeholder="위치 인증 버튼을 눌러주십시오." readonly>
+
+        <!-- Location verification button -->
+        <button type="button" id="getLocation" data-verified="false">현재 위치 인증</button>
+
+        <br/>
+        <button type="submit">Sign Up</button>
+    </form>
+    <div class="link">
+        <a href="/signin">Already have an account? Sign In</a>
+    </div>
+</div>
+
+<script>
+    document.getElementById('signupForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const getLocationButton = document.getElementById("getLocation");
+
+        const data = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            address: document.getElementById('address').value
+        };
+
+        if (getLocationButton.dataset.verified === "true") {
+            fetch('/auth/kakao-signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    alert('Signup successful');
+                    window.location.href = "/signin"; // 회원가입 후 로그인 페이지로 이동
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('Signup failed');
+                });
+        } else {
+            alert('주소 인증을 완료해주십시오.');
+        }
+    });
+
+    // 위치 인증 예제 함수
+    document.getElementById('getLocation').addEventListener('click', function () {
+        document.getElementById('address').value = '인증된 주소';
+        this.dataset.verified = "true";
+    });
+</script>
+</body>
+</html>

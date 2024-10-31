@@ -1,12 +1,10 @@
 package com.sprarta.sproutmarket.domain.auth.controller;
 
-import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.EmailVerificationDto;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.*;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.auth.service.AuthService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +34,11 @@ public class AuthController {
     @PostMapping("/adminUser/signin") // 관리자 로그인
     public SigninResponse adminSignin(@Valid @RequestBody SigninRequest request) {
         return authService.adminSignin(request);
+    }
+
+    @PostMapping("/auth/kakao-signup")
+    public SignupResponse kakaoSignup(@Valid @RequestBody KakaoSignupRequest request, HttpSession session) {
+        return authService.kakaoSignup(request, session);
     }
 
     /**

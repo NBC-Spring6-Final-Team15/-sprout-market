@@ -20,5 +20,8 @@ public class HomeController {
 
     @GetMapping("/chat")
     public String chat() {return "chat";}
+
+    @GetMapping("/additional-info")
+    public String additionalInfo() {return "additional-info";}
 }
 
