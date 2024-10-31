@@ -61,10 +61,10 @@ public class TradeService {
      * 예약중인 상태를 거래 완료로 변경
      * @param tradeId 변경하고자 하는 거래 ID
      * @param customUserDetails 인증된 판매자 유저
-     * @return 거래 정보를 담은 응답 DTO
+     * @param tradeStatus : TradeStatus 타입의 enum
      */
     @Transactional
-    public TradeResponseDto finishTrade(Long tradeId, CustomUserDetails customUserDetails) {
+    public void finishTrade(Long tradeId, CustomUserDetails customUserDetails, TradeStatus tradeStatus) {
         Trade trade = tradeRepository.findById(tradeId).orElseThrow(() ->
                 new ApiException(ErrorStatus.NOT_FOUND_TRADE));
 
@@ -78,15 +78,24 @@ public class TradeService {
             throw new ApiException(ErrorStatus.CONFLICT_NOT_RESERVED);
         }
 
-        trade.updateTradeStatus(TradeStatus.COMPLETED);
-        trade.getChatRoom().getItem().changeSaleStatus(ItemSaleStatus.SOLD);
+        String message;
+
+        if (tradeStatus.equals(TradeStatus.COMPLETED)) {
+            trade.updateTradeStatus(TradeStatus.COMPLETED);
+            trade.getChatRoom().getItem().changeSaleStatus(ItemSaleStatus.SOLD);
+            message = trade.getChatRoom().getItem().getTitle() + " 거래가 완료되었습니다.";
+
+        } else if (tradeStatus.equals(TradeStatus.CANCELLED)) {
+            trade.updateTradeStatus(TradeStatus.CANCELLED);
+            message = trade.getChatRoom().getItem().getTitle() + " 거래가 취소되었습니다.";
+
+        } else {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_INVALID_TRADE_STATUS);
+        }
 
         // 거래 완료 알림 전송 (구매자와 판매자 모두에게)
-        String message = trade.getChatRoom().getItem().getTitle() + " 거래가 완료되었습니다.";
         sendNotification(trade.getChatRoom().getBuyer().getId(), message);
         sendNotification(trade.getChatRoom().getSeller().getId(), message);
-
-        return TradeResponseDto.from(trade);
     }
 
     private void sendNotification(Long targetId, String message) {

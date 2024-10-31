@@ -50,13 +50,12 @@ public class AdministrativeAreaService {
             String admCd = feature.getProperties().get("adm_cd").toString();
 
             // Geometry 를 JTS 의 MultiPolygon 으로 변환
-            org.geojson.MultiPolygon geoJsonMultiPolygon = (org.geojson.MultiPolygon) feature.getGeometry();
-            MultiPolygon jtsMultiPolygon = convertToJtsMultiPolygon(geoJsonMultiPolygon);
+            MultiPolygon jtsMultiPolygon = convertToJtsMultiPolygon((org.geojson.MultiPolygon) feature.getGeometry());
+
+            Point centroid = jtsMultiPolygon.getCentroid();
 
             // SRID 설정 (경도,위도 정보로 DB 조회할 수 있게 설정하는 ID)
-            jtsMultiPolygon.setSRID(4326);
-            Point centroid = jtsMultiPolygon.getCentroid();
-            centroid.setSRID(4326);
+            setSRID(jtsMultiPolygon, centroid);
 
             //엔티티 생성
             AdministrativeArea area = AdministrativeArea.builder()
@@ -76,6 +75,11 @@ public class AdministrativeAreaService {
 
         //데이터 저장
         administrativeAreaRepository.saveAll(areaList);
+    }
+
+    private void setSRID(MultiPolygon jtsMultiPolygon, Point centroid) {
+        jtsMultiPolygon.setSRID(4326);
+        centroid.setSRID(4326);
     }
 
     /**

@@ -2,16 +2,14 @@ package com.sprarta.sproutmarket.domain.trade.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.trade.dto.TradeResponseDto;
+import com.sprarta.sproutmarket.domain.trade.enums.TradeStatus;
 import com.sprarta.sproutmarket.domain.trade.service.TradeService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -33,15 +31,18 @@ public class TradeController {
     }
 
     /**
-     * 예약중 상태의 거래를 거래 완료 상태로 변경
+     * 예약중 상태의 거래를 거래 완료/취소 상태로 변경
      * @param tradeId : 거래 ID
      * @param customUserDetails 요청한 판매자 유저
+     * @param tradeStatus : 완료 COMPLETED, 취소 CANCELLED 요청을 파라미터로 받음
      * @return 수정된 거래에 대한 정보를 담은 응답
      */
     @PatchMapping("/trades/{tradeId}")
     public ResponseEntity<ApiResponse<TradeResponseDto>> finishTrade(
             @PathVariable Long tradeId,
-            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(tradeService.finishTrade(tradeId, customUserDetails)));
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @RequestParam TradeStatus tradeStatus) {
+        tradeService.finishTrade(tradeId, customUserDetails, tradeStatus);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 }

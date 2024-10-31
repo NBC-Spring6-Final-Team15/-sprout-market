@@ -18,7 +18,6 @@ public enum ErrorStatus implements BaseCode {
     UNAUTHORIZED_EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED,401,"만료된 JWT 토큰입니다."),
     UNAUTHORIZED_TOKEN(HttpStatus.UNAUTHORIZED,401,"JWT 토큰 검증 중 오류가 발생했습니다."),
     FORBIDDEN_TOKEN(HttpStatus.FORBIDDEN, 403, "관리자 권한이 없습니다."),
-
     TEST_ERROR(HttpStatus.BAD_REQUEST, 400, "ApiException 예외 처리 테스트"),
 
     // file 에외처리
@@ -75,6 +74,7 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_TRADE(HttpStatus.NOT_FOUND, 404, "해당 거래를 찾을 수 없습니다."),
     CONFLICT_TRADE(HttpStatus.CONFLICT, 409, "이미 해당 물건이 예약중이거나 거래되었습니다."),
     CONFLICT_NOT_RESERVED(HttpStatus.CONFLICT,409," 해당 거래의 상태가 예약중이 아닙니다."),
+    BAD_REQUEST_INVALID_TRADE_STATUS(HttpStatus.BAD_REQUEST,400,"상태 변경 요청이 유효하지 않습니다."),
 
     // tradeChat 예외
     NOT_FOUND_CHATROOM(HttpStatus.NOT_FOUND, 404, "해당 채팅방을 찾을 수 없습니다."),
