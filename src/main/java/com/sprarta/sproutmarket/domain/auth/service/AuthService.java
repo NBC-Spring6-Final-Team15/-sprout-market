@@ -1,8 +1,8 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.EmailVerificationDto;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -31,7 +31,6 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
     private final RedisUtil redisUtil;
-    private final AdministrativeAreaService administrativeAreaService;
 
     private static final String AUTH_EMAIL_KEY = "authEmail:";
 
@@ -63,12 +62,6 @@ public class AuthService {
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        String address = getAddressFromCoordinates(request.getLongitude(), request.getLatitude());
-
-        // 이메일 인증
-        String redisKey = verifyEmail(request);
-
-        redisUtil.delete(redisKey);
 
         User newUser = new User(
                 request.getUsername(),
@@ -76,7 +69,7 @@ public class AuthService {
                 encodedPassword,
                 request.getNickname(),
                 request.getPhoneNumber(),
-                address,
+                request.getAddress(),
                 userRole
         );
         User savedUser = userRepository.save(newUser);
@@ -86,16 +79,7 @@ public class AuthService {
     }
 
     private SignupResponse createAdminUser(AdminSignupRequest request, UserRole userRole) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
-        }
-
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        // 이메일 인증
-        String redisKey = verifyAdminEmail(request);
-
-        redisUtil.delete(redisKey);
 
         User newUser = new User(
                 request.getUsername(),
@@ -137,46 +121,26 @@ public class AuthService {
                 () -> new ApiException(ErrorStatus.NOT_FOUND_USER));
     }
 
-    private String getAddressFromCoordinates(double longitude, double latitude) {
-        return administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
-    }
+    public void verifyEmail(EmailVerificationDto requestDto) {
+        if (userRepository.existsByEmail(requestDto.getEmail())) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
 
-    private String verifyEmail(SignupRequest requestDto) {
         String email = requestDto.getEmail();
         String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
         Integer authNumber = (Integer) redisUtil.get(redisKey);
 
         // 메일 인증 중인 email 인지 확인
-        if(authNumber == null) {
+        if (authNumber == null) {
             emailService.sendEmail(redisKey, email);
             throw new ApiException(ErrorStatus.SEND_AUTH_EMAIL);
         }
 
         // 인증번호 확인
-        if(authNumber != requestDto.getAuthNumber()) {
+        if (authNumber != requestDto.getAuthNumber()) {
             throw new ApiException(ErrorStatus.FAIL_EMAIL_AUTHENTICATION);
         }
 
-        return redisKey;
+        redisUtil.delete(redisKey);
     }
-
-    private String verifyAdminEmail(AdminSignupRequest requestDto) {
-        String email = requestDto.getEmail();
-        String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
-        Integer authNumber = (Integer) redisUtil.get(redisKey);
-
-        // 메일 인증 중인 email 인지 확인
-        if(authNumber == null) {
-            emailService.sendEmail(redisKey, email);
-            throw new ApiException(ErrorStatus.SEND_AUTH_EMAIL);
-        }
-
-        // 인증번호 확인
-        if(authNumber != requestDto.getAuthNumber()) {
-            throw new ApiException(ErrorStatus.FAIL_EMAIL_AUTHENTICATION);
-        }
-
-        return redisKey;
-    }
-
 }

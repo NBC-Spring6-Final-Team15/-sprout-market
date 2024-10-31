@@ -67,8 +67,7 @@ class AuthServiceTest {
                 "password",
                 "nickname",
                 "010-1234-5678",
-                126.976889,
-                37.575651
+                "서울특별시 마포구 합정동"
         );
 
         User savedUser = new User(
@@ -147,8 +146,7 @@ class AuthServiceTest {
                 "password",
                 "nickname",
                 "010-1234-5678",
-                126.976889,
-                37.575651
+                "서울특별시 마포구 합정동"
         );
 
         when(userRepository.existsByEmail(anyString())).thenReturn(true);

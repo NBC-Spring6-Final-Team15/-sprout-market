@@ -15,7 +15,7 @@
         }
 
         .container {
-            width: 300px;
+            width: 400px;
             padding: 20px;
             background-color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -27,7 +27,7 @@
         }
 
         input {
-            width: 100%;
+            width: 94%;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
@@ -38,6 +38,7 @@
             width: 100%;
             padding: 10px;
             background-color: #28a745;
+            margin: 10px 0;
             border: none;
             color: white;
             border-radius: 4px;
@@ -61,7 +62,16 @@
         .link a:hover {
             text-decoration: underline;
         }
+
+        input[readonly] {
+            background-color: #f0f0f0;
+            color: #808080;
+            border: 1px solid #ccc;
+        }
+
     </style>
+    <script src="/js/GetLocation.js"></script>
+    <script src="/js/EmailVerification.js"></script>
 </head>
 <body>
 <div class="container">
@@ -69,12 +79,15 @@
     <form id="signupForm">
         <input type="text" id="username" placeholder="Username" required>
         <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="authCode" data-verified="false" placeholder="인증번호" readonly>
+        <button type="button" id="sendEmail">인증 번호 발송</button>
+        <button type="button" id="verifyCode">인증 번호 확인</button>
         <input type="password" id="password" placeholder="Password" required>
         <input type="text" id="nickname" placeholder="Nickname" required>
         <input type="text" id="phoneNumber" placeholder="Phone Number" required>
-        <input type="text" id="userRole" placeholder="User Role" required>
-        <input type="text" id="longitude" placeholder="Longitude" required>
-        <input type="text" id="latitude" placeholder="Latitude" required>
+        <input type="text" id="address" placeholder="위치 인증 버튼을 눌러주십시오." readonly>
+        <button type="button" id="getLocation" data-verified="false" >현재 위치 인증</button>
+        <br/>
         <button type="submit">Sign Up</button>
     </form>
     <div class="link">
@@ -83,8 +96,10 @@
 </div>
 
 <script>
-    document.getElementById('signupForm').addEventListener('submit', function(event) {
+    document.getElementById('signupForm').addEventListener('submit', function (event) {
         event.preventDefault();
+        const verifyCodeButton = document.getElementById("verifyCode");
+        const getLocationButton = document.getElementById("getLocation");
 
         const data = {
             username: document.getElementById('username').value,
@@ -92,27 +107,28 @@
             password: document.getElementById('password').value,
             nickname: document.getElementById('nickname').value,
             phoneNumber: document.getElementById('phoneNumber').value,
-            longitude: parseFloat(document.getElementById('longitude').value),
-            latitude: parseFloat(document.getElementById('latitude').value),
-            userRole: document.getElementById('userRole').value
+            address: document.getElementById('address').value
         };
-
-        fetch('/auth/signup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                alert('Signup successful');
+        if (verifyCodeButton.dataset.verified === "true" && getLocationButton.dataset.verified === "true") {
+            fetch('/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
             })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('Signup failed');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    alert('Signup successful');
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('Signup failed');
+                });
+        } else {
+            alert('주소 인증, 이메일 인증을 전부 완료해주십시오.');
+        }
     });
 </script>
 </body>
