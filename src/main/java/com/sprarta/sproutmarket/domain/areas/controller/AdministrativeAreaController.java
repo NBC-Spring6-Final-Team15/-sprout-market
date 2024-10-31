@@ -45,7 +45,6 @@ public class AdministrativeAreaController {
                                 getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude())));
     }
 
-
     /**
      * 어떤 특정 행정동 문자열을 불러와서 주변 반경의 행정동 리스트를 반환합니다.
      * @param admNm : 행정동 문자열 (예시 : 경상남도 산청군 생초면)
