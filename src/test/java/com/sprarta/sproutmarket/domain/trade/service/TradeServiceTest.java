@@ -117,7 +117,7 @@ class TradeServiceTest {
         when(tradeRepository.findById(1L)).thenReturn(Optional.of(trade));
         doNothing().when(simpMessagingTemplate).convertAndSend(anyString(),anyString());
 
-        tradeService.finishTrade(1L, sellerUserDetails);
+        tradeService.finishTrade(1L, sellerUserDetails,TradeStatus.COMPLETED);
 
         assertThat(trade.getTradeStatus()).isEqualTo(TradeStatus.COMPLETED);
         assertThat(trade.getChatRoom().getItem().getItemSaleStatus()).isEqualTo(ItemSaleStatus.SOLD);
