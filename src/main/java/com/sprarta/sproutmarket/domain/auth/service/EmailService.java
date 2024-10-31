@@ -28,7 +28,7 @@ public class EmailService {
 
         try {
             String body = "";
-            body += "<h3> 가입 인증 번호입니다. </h3>";
+            body += "<h3> 새싹 마켓 가입 인증 번호입니다. </h3>";
             body += "<h1> " + authNumber + " </h1>";
 
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
