@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCate
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +26,11 @@ public class InterestedCategoryController {
      * @return ApiResponse - 관심 카테고리 등록 성공 메시지를 포함한 응답 객체
      */
     @PostMapping("/{categoryId}/interest")
-    public ResponseEntity<ApiResponse<String>> addInterestedCategory(
+    public ResponseEntity<ApiResponse<Void>> addInterestedCategory(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails authUser) {
         interestedCategoryService.addInterestedCategory(categoryId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess("해당 카테고리가 관심 카테고리로 등록되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**
@@ -39,11 +40,11 @@ public class InterestedCategoryController {
      * @return ApiResponse - 관심 카테고리 삭제 성공 메시지를 포함한 응답 객체
      */
     @DeleteMapping("/{categoryId}/interest")
-    public ResponseEntity<ApiResponse<String>> removeInterestedCategory(
+    public ResponseEntity<ApiResponse<Void>> removeInterestedCategory(
             @PathVariable Long categoryId,
             @AuthenticationPrincipal CustomUserDetails authUser) {
         interestedCategoryService.removeInterestedCategory(categoryId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess("해당 카테고리가 관심 카테고리에서 삭제되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**

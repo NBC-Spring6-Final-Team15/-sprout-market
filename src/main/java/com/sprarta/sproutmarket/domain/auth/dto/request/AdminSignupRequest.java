@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignupRequest {
+public class AdminSignupRequest {
 
     @NotBlank
     private String username;
@@ -28,6 +28,6 @@ public class SignupRequest {
     @NotBlank
     private String phoneNumber;
 
-    private double longitude;
-    private double latitude;
+    @NotBlank
+    private String adminKey;
 }

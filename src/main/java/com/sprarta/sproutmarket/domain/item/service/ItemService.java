@@ -349,7 +349,7 @@ public class ItemService {
                 })
                 .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
                 .limit(5) // 상위 3개 선택
-                .collect(Collectors.toList());
+                .toList();
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
         return itemWithViewCounts.stream()

@@ -60,13 +60,13 @@ class InterestedItemServiceTest {
 
         given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
         given(itemRepository.findById(anyLong())).willReturn(Optional.of(item));
+        given(interestedItemRepository.findByUserAndItem(user, item)).willReturn(Optional.empty());
 
         // when
         interestedItemService.addInterestedItem(1L, authUser);
 
         // then
         verify(interestedItemRepository).save(any(InterestedItem.class));  // 관심 상품 저장을 확인
-        verify(user).addInterestedItem(any(InterestedItem.class));  // 유저에 관심 상품 추가를 확인
     }
 
     @Test
@@ -89,17 +89,18 @@ class InterestedItemServiceTest {
         // given
         User user = mock(User.class);
         Item item = mock(Item.class);
+        InterestedItem interestedItem = mock(InterestedItem.class);
         CustomUserDetails authUser = new CustomUserDetails(user);
 
         given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
         given(itemRepository.findById(anyLong())).willReturn(Optional.of(item));
+        given(interestedItemRepository.findByUserAndItem(user, item)).willReturn(Optional.of(interestedItem));
 
         // when
         interestedItemService.removeInterestedItem(1L, authUser);
 
         // then
-        verify(user).removeInterestedItem(item);
-        verify(userRepository).save(user);  // 관심 상품 삭제 후 유저 저장 확인
+        verify(interestedItemRepository).delete(interestedItem);
     }
 
     @Test
@@ -113,7 +114,6 @@ class InterestedItemServiceTest {
         Item item = mock(Item.class);
         Category category = mock(Category.class);
 
-        // Mocking the behavior
         given(userRepository.findById(anyLong())).willReturn(Optional.of(user));
         given(interestedItemRepository.findByUser(user, pageable)).willReturn(new PageImpl<>(Collections.singletonList(interestedItem)));
         given(interestedItem.getItem()).willReturn(item);
@@ -124,7 +124,6 @@ class InterestedItemServiceTest {
         given(item.getSeller()).willReturn(user);
         given(user.getNickname()).willReturn("Seller Nickname");
 
-        // Ensure category is not null and has a name
         given(item.getCategory()).willReturn(category);
         given(category.getName()).willReturn("Category Name");
 

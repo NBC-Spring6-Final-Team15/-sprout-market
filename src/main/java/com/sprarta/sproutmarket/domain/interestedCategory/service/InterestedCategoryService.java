@@ -41,9 +41,8 @@ public class InterestedCategoryService {
             throw new ApiException(ErrorStatus.ALREADY_INTERESTED_CATEGORY);
         }
 
-        InterestedCategory interestedCategory = new InterestedCategory();
-        interestedCategory.setUser(user);
-        interestedCategory.setCategory(category);
+        // 생성자를 통해 InterestedCategory 객체 생성
+        InterestedCategory interestedCategory = new InterestedCategory(user, category);
 
         interestedCategoryRepository.save(interestedCategory);
     }

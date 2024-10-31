@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Rooms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 600px;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .chatroom-list {
+            margin-top: 20px;
+        }
+
+        .chatroom-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatroom-item button {
+            background-color: #28a745;
+        }
+
+        .chatroom-item button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Chat Rooms</h2>
+    <form id="createChatRoomForm">
+        <input type="text" id="itemId" placeholder="Item ID" required>
+        <button type="submit">Create Chat Room</button>
+    </form>
+
+    <h3>Available Chat Rooms</h3>
+    <div class="chatroom-list" id="chatroomList"></div>
+</div>
+
+<script>
+    document.getElementById('createChatRoomForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const itemId = document.getElementById('itemId').value;
+        const token = localStorage.getItem('token'); // JWT 토큰 가져오기
+
+        fetch(`http://localhost:8080/items/${itemId}/chatrooms`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert('Chat Room Created!');
+                loadChatRooms(); // 채팅방 목록 새로 고침
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to create chat room');
+            });
+    });
+
+    function loadChatRooms() {
+        const token = localStorage.getItem('token');
+
+        fetch('/chatrooms', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                const chatroomList = document.getElementById('chatroomList');
+                chatroomList.innerHTML = ''; // 기존 목록 초기화
+
+                data.data.forEach(chatRoom => {
+                    const chatroomItem = document.createElement('div');
+                    chatroomItem.classList.add('chatroom-item');
+                    chatroomItem.innerHTML = `
+                    <span>Chat Room ID: ${chatRoom.id}</span>
+                    <button onclick="enterChatRoom(${chatRoom.id})">Enter</button>
+                `;
+                    chatroomList.appendChild(chatroomItem);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load chat rooms');
+            });
+    }
+
+    function enterChatRoom(chatRoomId) {
+        const token = localStorage.getItem('token');
+
+        // WebSocket 연결 및 구독
+        const socket = new SockJS('http://localhost:8080/ws'); // WebSocket 엔드포인트
+        const stompClient = Stomp.over(socket);
+        stompClient.connect({Authorization: `Bearer ${token}`}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // 채팅방 ID로 구독
+            stompClient.subscribe(`/sub/chatroom/${chatRoomId}`, function (message) {
+                const messageContainer = document.getElementById('messages');
+                if (messageContainer) {
+                    messageContainer.innerHTML += '<p>' + message.body + '</p>';
+                } else {
+                    console.error('Message container not found!');
+                }
+            });
+        });
+
+        // 채팅방으로 이동하는 로직
+        window.location.href = `/chat.html?roomId=${chatRoomId}`;
+    }
+
+    // 페이지 로드 시 채팅방 목록 불러오기
+    loadChatRooms();
+</script>
+</body>
+</html>

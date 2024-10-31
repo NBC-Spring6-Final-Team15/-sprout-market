@@ -4,6 +4,7 @@ import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserAddressUpdateRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,28 +29,28 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<ApiResponse<String>> changePassword(
+    public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserChangePasswordRequest userChangePasswordRequest) {
         userService.changePassword(authUser, userChangePasswordRequest);
-        return ResponseEntity.ok(ApiResponse.onSuccess("비밀번호가 설공적으로 변경되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @DeleteMapping
-    public ResponseEntity<ApiResponse<String>> deleteUser(
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
             @AuthenticationPrincipal CustomUserDetails authUser,
             @RequestBody @Valid UserDeleteRequest userDeleteRequest) {
         userService.deleteUser(authUser, userDeleteRequest);
-        return ResponseEntity.ok(ApiResponse.onSuccess("탈퇴에 성공하였습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @PatchMapping()
-    public ResponseEntity<ApiResponse<String>> updateUserAddress(
+    public ResponseEntity<ApiResponse<Void>> updateUserAddress(
             @RequestBody UserAddressUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails authUser
     ) {
         userService.updateUserAddress(authUser.getId(), request.getLongitude(), request.getLatitude());
-        return ResponseEntity.ok(ApiResponse.onSuccess("주소가 성공적으로 업데이트되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @PutMapping("/profile-image")
@@ -59,8 +62,19 @@ public class UserController {
     }
 
     @DeleteMapping("/profile-image")
-    public ResponseEntity<ApiResponse<String>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
         userService.deleteProfileImage(authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess("프로필 이미지 삭제 성공"));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @PatchMapping("/admin/deleted/{userId}")
+    public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable long userId) {
+        userService.activateUser(userId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<List<UserAdminResponse>>> getUsers() {
+        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getAllUsers()));
     }
 }

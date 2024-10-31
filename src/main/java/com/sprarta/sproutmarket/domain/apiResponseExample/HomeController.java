@@ -17,5 +17,8 @@ public class HomeController {
     public String signup() {
         return "signup";  // templates 폴더 아래의 signup.html 렌더링
     }
+
+    @GetMapping("/chat")
+    public String chat() {return "chat";}
 }
 

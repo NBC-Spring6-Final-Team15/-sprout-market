@@ -189,8 +189,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "update-category",
                         resource(params)
-                ))
-                .andDo(print());
+                ));
 
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.categoryId").value(1L))
@@ -216,11 +215,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 )
                 .responseFields(
                         fieldWithPath("message").type(JsonFieldType.STRING)
-                                .description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
+                                .description("성공 시 응답 : OK , 예외 시 예외 메시지"),
                         fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                .description("성공 상태코드 : 204"),
-                        fieldWithPath("data").type(JsonFieldType.NULL)
-                                .description("성공 시 data : NULL")
+                                .description("성공 상태코드 : 200")
                 )
                 .requestSchema(Schema.schema("카테고리-삭제-성공-요청"))
                 .responseSchema(Schema.schema("카테고리-삭제-성공-응답"))
@@ -231,10 +228,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "delete-category",
                         resource(params)
-                ))
-                .andDo(print());
+                ));
 
-        result.andExpect(status().isNoContent());
+        result.andExpect(status().isOk());
     }
 
     @Test
@@ -256,11 +252,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 )
                 .responseFields(
                         fieldWithPath("message").type(JsonFieldType.STRING)
-                                .description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
+                                .description("성공 시 응답 : Ok , 예외 시 예외 메시지"),
                         fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                .description("성공 상태코드 : 204"),
-                        fieldWithPath("data").type(JsonFieldType.NULL)
-                                .description("성공 시 data : NULL")
+                                .description("성공 상태코드 : 200")
                 )
                 .requestSchema(Schema.schema("카테고리-복원-성공-요청"))
                 .responseSchema(Schema.schema("카테고리-복원-성공-응답"))
@@ -271,10 +265,9 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "recover-category",
                         resource(params)
-                ))
-                .andDo(print());
+                ));
 
-        result.andExpect(status().isNoContent());
+        result.andExpect(status().isOk());
     }
 
     @Test
@@ -316,8 +309,7 @@ class CategoryControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "category-get-all",
                         resource(params)
-                ))
-                .andDo(print());
+                ));
 
         result.andExpect(status().isOk());
     }

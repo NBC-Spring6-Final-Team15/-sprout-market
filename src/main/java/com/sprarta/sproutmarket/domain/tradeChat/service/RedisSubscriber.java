@@ -1,8 +1,7 @@
 package com.sprarta.sproutmarket.domain.tradeChat.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatRequest;
-import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatResponse;
+import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -30,18 +29,19 @@ public class RedisSubscriber implements MessageListener {
                     .getStringSerializer().deserialize(message.getBody());
 
             // 문자열 형식의 메시지를 TradeChatRequest 객체로 변환
-            TradeChatRequest tradeChatRequest = objectMapper.readValue(
-                    publishMessage, TradeChatRequest.class);
+            TradeChatDto tradeChatRequest = objectMapper.readValue(
+                    publishMessage, TradeChatDto.class);
 
-            TradeChatResponse tradeChatResponse = new TradeChatResponse(
+            TradeChatDto tradeChatResponse = new TradeChatDto(
+                    tradeChatRequest.getRoomId(),
                     tradeChatRequest.getContent(),
-                    tradeChatRequest.getChatReadStatus()
+                    tradeChatRequest.getSender()
             );
 
             // WebSocket을 통해 특정 주제에 tradeChatResponse 전송
-            messagingTemplate.convertAndSend(
-                    "/sub/trade/" + tradeChatRequest.getChatRoom().getId() , // 세부 경로 지정을 메시지 전송할 때 하는 것
-                    tradeChatResponse);
+//            messagingTemplate.convertAndSend(
+//                    "/sub/trade/" + tradeChatRequest.getRoomId() , // 세부 경로 지정을 메시지 전송할 때 하는 것
+//                    tradeChatResponse);
             // 이후 다중 주제 지원하도록 수정? 일단 trade로
 
         } catch (Exception e) {
