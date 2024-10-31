@@ -14,6 +14,7 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    @Value("${sprout.market.admin.key}")
+    private String adminKey;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -33,6 +37,10 @@ public class AuthService {
 
     @Transactional
     public SignupResponse adminSignup(AdminSignupRequest request) {
+        if (!request.getAdminKey().equals(adminKey)) {
+            throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
+        }
+
         return createAdminUser(request, UserRole.ADMIN);
     }
 

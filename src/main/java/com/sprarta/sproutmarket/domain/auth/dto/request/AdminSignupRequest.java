@@ -25,4 +25,7 @@ public class AdminSignupRequest {
 
     @NotBlank
     private String phoneNumber;
+
+    @NotBlank
+    private String adminKey;
 }

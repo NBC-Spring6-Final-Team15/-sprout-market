@@ -41,6 +41,7 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
     BAD_REQUEST_PASSWORD(HttpStatus.BAD_REQUEST, 400, "잘못된 비밀번호입니다."),
     BAD_REQUEST_NEW_PASSWORD(HttpStatus.BAD_REQUEST, 400, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
+    INVALID_ADMIN_KEY(HttpStatus.FORBIDDEN, 403,  "admin key 값이 일치하지 않습니다."),
 
     // Item
     NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, 404, "존재하지 않는 아이템입니다."),
