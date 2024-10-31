@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const latitude = position.coords.latitude;
                 const longitude = position.coords.longitude;
 
-                fetch('/test/areas', {
+                fetch('/auth/areas', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
