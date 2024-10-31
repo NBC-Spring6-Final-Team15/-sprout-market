@@ -107,7 +107,8 @@ public class ChatRoomControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(chatRoomDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(MockMvcRestDocumentationWrapper.document("create-report",
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "create-chatRoom",
                                 resource(ResourceSnippetParameters.builder()
                                         .description("특정 아이템에 대한 채팅방 생성")
                                         .summary("채팅방 생성")
@@ -259,7 +260,8 @@ public class ChatRoomControllerTest {
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/chatrooms/{chatRoomId}", chatRoomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(MockMvcRestDocumentationWrapper.document("update-report",
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "delete-chatRoom",
                         resource(ResourceSnippetParameters.builder()
                                 .description("채팅방 Id를 받아 해당 채팅방 삭제")
                                 .summary("채팅방 삭제")
