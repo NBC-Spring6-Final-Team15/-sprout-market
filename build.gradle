@@ -136,6 +136,9 @@ dependencies {
 
     // 헬스체크, 캐시 확인용
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // mail
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {

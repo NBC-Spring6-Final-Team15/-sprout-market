@@ -17,6 +17,8 @@ public class AdminSignupRequest {
     @NotBlank @Email
     private String email;
 
+    private int authNumber;
+
     @NotBlank
     private String password;
 
@@ -25,4 +27,7 @@ public class AdminSignupRequest {
 
     @NotBlank
     private String phoneNumber;
+
+    @NotBlank
+    private String adminKey;
 }

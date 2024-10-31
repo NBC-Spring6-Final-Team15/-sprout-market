@@ -41,6 +41,13 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
     BAD_REQUEST_PASSWORD(HttpStatus.BAD_REQUEST, 400, "잘못된 비밀번호입니다."),
     BAD_REQUEST_NEW_PASSWORD(HttpStatus.BAD_REQUEST, 400, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
+    INVALID_ADMIN_KEY(HttpStatus.FORBIDDEN, 403,  "admin key 값이 일치하지 않습니다."),
+
+    //이메일 인증 관련 예외
+    FAIL_EMAIL_SENDING(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이메일 전송에 실패했습니다."),
+    SEND_AUTH_EMAIL(HttpStatus.OK, 200, "메일이 전송되었습니다. 인증번호와 함께 다시 요청을 보내주십시오."),
+    FAIL_EMAIL_AUTHENTICATION(HttpStatus.FORBIDDEN, 403, "인증번호가 일치하지 않습니다."),
+    EMAIL_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, 400, "이미 사용 중인 이메일입니다."),
 
     // Item
     NOT_FOUND_ITEM(HttpStatus.NOT_FOUND, 404, "존재하지 않는 아이템입니다."),
