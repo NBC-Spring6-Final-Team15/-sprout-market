@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.tradeChat.controller;
 
+import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatDto;
@@ -37,8 +38,8 @@ public class TradeChatController {
     }
 
     @GetMapping("/chatRoom/{roomId}/chats")
-    public ResponseEntity<List<TradeChatDto>> getChats(@PathVariable("roomId") Long roomId){
-        return ResponseEntity.ok(tradeChatService.getChats(roomId));
+    public ResponseEntity<ApiResponse<List<TradeChatDto>>> getChats(@PathVariable("roomId") Long roomId){
+        return ResponseEntity.ok(ApiResponse.onSuccess((tradeChatService.getChats(roomId))));
     }
 
 }
