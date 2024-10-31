@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**",
+                                "/login/**",
                                 "/error/**",
                                 "/notifications/**").permitAll()
                         .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
