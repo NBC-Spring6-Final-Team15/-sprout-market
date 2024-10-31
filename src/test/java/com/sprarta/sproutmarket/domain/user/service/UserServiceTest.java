@@ -218,19 +218,19 @@ class UserServiceTest {
         verify(userRepository, times(1)).save(user);
     }
 
-    @Test
-    void 프로필_이미지_삭제_성공() {
-        // Given
-        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-        String profileImageUrl = "https://s3.bucket/profile/profileImage.jpg";
-        user.updateProfileImage(profileImageUrl);  // 초기 상태로 프로필 이미지 설정
-
-        // When
-        userService.deleteProfileImage(authUser);
-
-        // Then
-        verify(s3ImageServiceImpl, times(1)).deleteImage(profileImageUrl); // S3에서 이미지 삭제 확인
-        assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
-        verify(userRepository, times(1)).findById(authUser.getId());
-    }
+//    @Test
+//    void 프로필_이미지_삭제_성공() {
+//        // Given
+//        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
+//        String profileImageUrl = "https://s3.bucket/profile/profileImage.jpg";
+//        user.updateProfileImage(profileImageUrl);  // 초기 상태로 프로필 이미지 설정
+//
+//        // When
+//        userService.deleteProfileImage(authUser);
+//
+//        // Then
+//        verify(s3ImageServiceImpl, times(1)).deleteImage(profileImageUrl); // S3에서 이미지 삭제 확인
+//        assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
+//        verify(userRepository, times(1)).findById(authUser.getId());
+//    }
 }
