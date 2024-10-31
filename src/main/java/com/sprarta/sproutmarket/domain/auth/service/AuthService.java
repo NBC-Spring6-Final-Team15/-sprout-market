@@ -68,7 +68,6 @@ public class AuthService {
         // 이메일 인증
         String redisKey = verifyEmail(request);
 
-        // redis에서 데이터 제거
         redisUtil.delete(redisKey);
 
         User newUser = new User(
@@ -96,7 +95,6 @@ public class AuthService {
         // 이메일 인증
         String redisKey = verifyAdminEmail(request);
 
-        // redis에서 데이터 제거
         redisUtil.delete(redisKey);
 
         User newUser = new User(
