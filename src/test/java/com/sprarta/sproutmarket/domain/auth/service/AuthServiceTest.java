@@ -7,6 +7,7 @@ import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
+import com.sprarta.sproutmarket.domain.common.RedisUtil;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -41,6 +42,9 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private RedisUtil redisUtil;
+
     @InjectMocks
     private AuthService authService;
 
@@ -59,6 +63,7 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
+                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
@@ -83,6 +88,7 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getUserRole()))
                 .thenReturn("jwt-token");
+        when(redisUtil.get(anyString())).thenReturn(123456);
 
         // When
         SignupResponse response = authService.signup(request);
@@ -99,6 +105,7 @@ class AuthServiceTest {
         AdminSignupRequest request = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
+                123456,
                 "adminPassword",
                 "adminNickname",
                 "010-1234-5678",
@@ -120,6 +127,7 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getUserRole()))
                 .thenReturn("jwt-token");
+        when(redisUtil.get(anyString())).thenReturn(123456);
 
         // When
         SignupResponse response = authService.adminSignup(request);
@@ -135,6 +143,7 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
+                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
