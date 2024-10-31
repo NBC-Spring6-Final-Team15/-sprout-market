@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.kakao;
+package com.sprarta.sproutmarket.domain.auth.dto.response;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -12,14 +12,14 @@ import java.time.format.DateTimeFormatter;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class KakaoProfile {
+public class KakaoProfileResponse {
     private Integer id;
     private LocalDateTime connectedAt;
     private String email;
     private String nickname;
     private String profileImage;
 
-    public KakaoProfile(String jsonResponseBody){
+    public KakaoProfileResponse(String jsonResponseBody){
         JsonParser parser = new JsonParser();
         JsonElement element = parser.parse(jsonResponseBody);
 

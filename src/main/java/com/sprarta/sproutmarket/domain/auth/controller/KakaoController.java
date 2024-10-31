@@ -1,5 +1,8 @@
-package com.sprarta.sproutmarket.domain.kakao;
+package com.sprarta.sproutmarket.domain.auth.controller;
 
+import com.sprarta.sproutmarket.domain.auth.dto.response.KakaoProfileResponse;
+import com.sprarta.sproutmarket.domain.auth.service.KakaoService;
+import com.sprarta.sproutmarket.domain.auth.dto.response.OAuthTokenResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -12,23 +15,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class KakaoController {
 
-    private final KakaoApi kakaoApi;
+    private final KakaoService kakaoService;
 
     @GetMapping("/login")
     public String loginForm(Model model){
-        model.addAttribute("kakaoApiKey", kakaoApi.getKakaoApiKey());
-        model.addAttribute("redirectUri", kakaoApi.getKakaoRedirectUri());
+        model.addAttribute("kakaoApiKey", kakaoService.getKakaoApiKey());
+        model.addAttribute("redirectUri", kakaoService.getKakaoRedirectUri());
         return "login";
     }
 
     @RequestMapping("/login/oauth2/code/kakao")
     public String kakaoLogin(@RequestParam String code, HttpSession session){
         // 1. 토큰 받기
-        OAuthToken oAuthToken = kakaoApi.getAccessToken(code);
+        OAuthTokenResponse oAuthToken = kakaoService.getAccessToken(code);
         String accessToken = oAuthToken.getAccess_token();
 
         // 2. 사용자 정보 받기
-        KakaoProfile kakaoProfile = kakaoApi.getUserInfo(accessToken);
+        KakaoProfileResponse kakaoProfile = kakaoService.getUserInfo(accessToken);
 
         // 3. 세션에 카카오 정보 저장
         session.setAttribute("email", kakaoProfile.getEmail());

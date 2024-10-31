@@ -1,6 +1,8 @@
-package com.sprarta.sproutmarket.domain.kakao;
+package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.google.gson.Gson;
+import com.sprarta.sproutmarket.domain.auth.dto.response.KakaoProfileResponse;
+import com.sprarta.sproutmarket.domain.auth.dto.response.OAuthTokenResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +22,7 @@ import java.net.URL;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class KakaoApi {
+public class KakaoService {
     @Value("${kakao.api_key}")
     private String kakaoApiKey;
 
@@ -31,7 +33,7 @@ public class KakaoApi {
     private final Gson gson;
 
     //인가 코드를 받아서 accessToken 을 반환
-    public OAuthToken getAccessToken(String code) {
+    public OAuthTokenResponse getAccessToken(String code) {
         String reqUrl = "https://kauth.kakao.com/oauth/token";
 
         // HttpHeaders 설정
@@ -58,14 +60,14 @@ public class KakaoApi {
 
         if (response.getStatusCode() == HttpStatus.OK) {
             // 응답 Body 를 OAuthToken 객체로 변환
-            return gson.fromJson(response.getBody(), OAuthToken.class);
+            return gson.fromJson(response.getBody(), OAuthTokenResponse.class);
         } else {
             throw new RuntimeException("Failed to get Kakao Access Token");
         }
     }
 
     //accessToken 을 받아서 UserInfo 반환
-    public KakaoProfile getUserInfo(String accessToken) {
+    public KakaoProfileResponse getUserInfo(String accessToken) {
         String reqUrl = "https://kapi.kakao.com/v2/user/me";
 
         RestTemplate rt = new RestTemplate();
@@ -83,7 +85,7 @@ public class KakaoApi {
         ResponseEntity<String> response =
                 rt.exchange(reqUrl, HttpMethod.POST, kakaoProfileRequest, String.class);
 
-        KakaoProfile kakaoProfile = new KakaoProfile(response.getBody());
+        KakaoProfileResponse kakaoProfile = new KakaoProfileResponse(response.getBody());
 
         return kakaoProfile;
     }
