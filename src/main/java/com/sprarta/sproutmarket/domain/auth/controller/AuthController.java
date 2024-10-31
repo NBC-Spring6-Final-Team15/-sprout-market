@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.controller;
 
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.EmailVerificationDto;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -35,5 +36,17 @@ public class AuthController {
     @PostMapping("/adminUser/signin") // 관리자 로그인
     public SigninResponse adminSignin(@Valid @RequestBody SigninRequest request) {
         return authService.adminSignin(request);
+    }
+
+    /**
+     * 이메일 인증 요청
+     * 1. 이메일만 보내서 검증 후 이메일 발송
+     * 2. 코드 입력하면 authNumber에 입력된 코드 채워서 맞는지 확인
+     * 3. redis에서 해당 레코드 삭제
+     * @param emailVerificationDto 이메일(필수), 인증 코드를 담아서 요청을 보냄
+     */
+    @PostMapping("/auth/email")
+    public void emailVerification(@RequestBody @Valid EmailVerificationDto emailVerificationDto) {
+        authService.verifyEmail(emailVerificationDto);
     }
 }

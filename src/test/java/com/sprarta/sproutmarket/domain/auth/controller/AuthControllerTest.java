@@ -109,8 +109,7 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                 "userPassword",
                 "userNickname",
                 "010-1234-5678",
-                126.976889,
-                37.575651
+                "서울특별시 마포구 합정동"
         );
         SignupResponse signupResponse = new SignupResponse("jwt-token");
 
@@ -132,8 +131,7 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("password").description("사용자 비밀번호"),
                                         fieldWithPath("nickname").description("사용자 닉네임"),
                                         fieldWithPath("phoneNumber").description("사용자 전화번호"),
-                                        fieldWithPath("longitude").description("사용자 경도"),
-                                        fieldWithPath("latitude").description("사용자 위도")
+                                        fieldWithPath("address").description("사용자 주소")
                                 )
                                 .responseFields(
                                         fieldWithPath("bearerToken").description("JWT 토큰")

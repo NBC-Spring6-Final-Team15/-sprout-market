@@ -35,7 +35,7 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_IMAGE(HttpStatus.NOT_FOUND, 404, "존재하지 않는 이미지입니다."),
 
     // user 예외처리
-    BAD_REQUEST_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
+    BAD_REQUEST_EMAIL(HttpStatus.BAD_REQUEST, 400, "이미 존재하는 이메일입니다."),
     NOT_FOUND_AUTH_USER(HttpStatus.NOT_FOUND, 404, "가입되지 않은 유저입니다."),
     BAD_REQUEST_USER(HttpStatus.BAD_REQUEST, 404, "비활성화된 계정입니다. 관리자에 문의하세요."),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
@@ -46,7 +46,7 @@ public enum ErrorStatus implements BaseCode {
     //이메일 인증 관련 예외
     FAIL_EMAIL_SENDING(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이메일 전송에 실패했습니다."),
     SEND_AUTH_EMAIL(HttpStatus.OK, 200, "메일이 전송되었습니다. 인증번호와 함께 다시 요청을 보내주십시오."),
-    FAIL_EMAIL_AUTHENTICATION(HttpStatus.FORBIDDEN, 403, "인증번호가 일치하지 않습니다."),
+    FAIL_EMAIL_AUTHENTICATION(HttpStatus.BAD_REQUEST, 400, "인증번호가 일치하지 않습니다."),
     EMAIL_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, 400, "이미 사용 중인 이메일입니다."),
 
     // Item
