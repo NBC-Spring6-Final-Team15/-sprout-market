@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**",
+                                "/login/**",
                                 "/error/**",
                                 "/notifications/**").permitAll()
                         .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
@@ -51,7 +52,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/adminUser/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**","/test/**").hasRole("ADMIN")
-                        .requestMatchers("/","/signup", "/signin", "/chat").permitAll()
+                        .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat").permitAll()
+                        .requestMatchers("/kakao_login_medium_wide.png", "/kakao_login_medium_narrow.png", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();
