@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignupRequest {
+public class AdminSignupRequest {
 
     @NotBlank
     private String username;
@@ -29,5 +29,5 @@ public class SignupRequest {
     private String phoneNumber;
 
     @NotBlank
-    private String address;
+    private String adminKey;
 }

@@ -1,8 +1,7 @@
-package com.sprarta.sproutmarket.domain.apiResponseExample;
+package com.sprarta.sproutmarket.domain.common.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @Controller
 public class HomeController {
@@ -20,5 +19,8 @@ public class HomeController {
 
     @GetMapping("/chat")
     public String chat() {return "chat";}
+
+    @GetMapping("/additional-info")
+    public String additionalInfo() {return "additional-info";}
 }
 

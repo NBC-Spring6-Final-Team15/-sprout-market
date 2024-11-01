@@ -1,27 +1,21 @@
 package com.sprarta.sproutmarket.domain.user.entity;
 
-import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.interestedCategory.entity.InterestedCategory;
-import com.sprarta.sproutmarket.domain.interestedItem.entity.InterestedItem;
-import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.report.entity.Report;
 import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
 @Table(name = "users")
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,12 +56,6 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<InterestedItem> interestedItems = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
-    private List<InterestedCategory> interestedCategories = new ArrayList<>();
-
     @Column(nullable = true)
     private String profileImageUrl;
 
@@ -92,6 +80,18 @@ public class User extends Timestamped {
         this.userRole = userRole;
     }
 
+    // 카카오 회원가입에 필요한 생성자
+    public User(String username, String email, String nickname, String password, String phoneNumber, String address, String profileImageUrl, UserRole userRole) {
+        this.username = username;
+        this.email = email;
+        this.nickname = nickname;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.profileImageUrl = profileImageUrl;
+        this.userRole = userRole;
+    }
+
     public User(Long id, String email, UserRole userRole) {
         this.id = id;
         this.email = email;
@@ -110,6 +110,8 @@ public class User extends Timestamped {
         this.status = Status.DELETED;
     }
 
+    public void activate() { this.status = Status.ACTIVE; }
+
     public void plusRate() {
         this.rate++;
     }
@@ -123,28 +125,6 @@ public class User extends Timestamped {
             throw new IllegalArgumentException("유효하지 않은 주소입니다.");
         }
         this.address = newAddress;
-    }
-
-    // 양방향 관계 설정을 위한 메서드
-    public void addInterestedItem(InterestedItem interestedItem) {
-        interestedItems.add(interestedItem);
-        interestedItem.setUser(this);
-    }
-
-    // 관심 상품 제거 메서드
-    public void removeInterestedItem(Item item) {
-        interestedItems.removeIf(interestedItem -> interestedItem.getItem().equals(item));
-    }
-
-    // 관심 카테고리 추가 메서드
-    public void addInterestedCategory(InterestedCategory interestedCategory) {
-        interestedCategories.add(interestedCategory);
-        interestedCategory.setUser(this);
-    }
-
-    // 관심 카테고리 제거 메서드
-    public void removeInterestedCategory(Category category) {
-        interestedCategories.removeIf(interestedCategory -> interestedCategory.getCategory().equals(category));
     }
 
     // 프로필 이미지 업데이트 메서드

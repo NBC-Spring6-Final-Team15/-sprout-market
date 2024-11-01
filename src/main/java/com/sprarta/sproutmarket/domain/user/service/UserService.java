@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -15,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +68,6 @@ public class UserService {
 
         // 유저 비활성화 및 삭제
         user.deactivate();
-        userRepository.delete(user);
     }
 
     @Transactional
@@ -106,6 +108,23 @@ public class UserService {
 
         userRepository.save(user);
         user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
+    }
+
+    // 탈퇴된 유저 복원
+    @Transactional
+    public void activateUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        user.activate();
+    }
+
+    // ACTIVE, DELETED 상태 유저 모두 조회
+    @Transactional
+    public List<UserAdminResponse> getAllUsers() {
+        return userRepository
+                .findAll()
+                .stream().map(UserAdminResponse::new).toList();
     }
 }
 

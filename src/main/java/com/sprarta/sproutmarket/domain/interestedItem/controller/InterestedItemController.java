@@ -6,6 +6,7 @@ import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +24,11 @@ public class InterestedItemController {
      * @return ApiResponse - 관심 상품 등록 성공 메시지를 포함한 응답 객체
      */
     @PostMapping("/{itemId}/interest")
-    public ResponseEntity<ApiResponse<String>> addInterestedItem(
+    public ResponseEntity<ApiResponse<Void>> addInterestedItem(
             @PathVariable Long itemId,
             @AuthenticationPrincipal CustomUserDetails authUser) {
         interestedItemService.addInterestedItem(itemId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess("해당 물품이 관심 리스트에 등록되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**
@@ -37,9 +38,9 @@ public class InterestedItemController {
      * @return ApiResponse - 관심 상품 삭제 성공 메시지를 포함한 응답 객체
      */
     @DeleteMapping("/{itemId}/interest")
-    public ResponseEntity<ApiResponse<String>> removeInterestedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
+    public ResponseEntity<ApiResponse<Void>> removeInterestedItem(@PathVariable Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
         interestedItemService.removeInterestedItem(itemId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess("해당 물품이 관심 리스트에서 삭제되었습니다."));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**
