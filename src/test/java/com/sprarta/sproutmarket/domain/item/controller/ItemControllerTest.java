@@ -605,7 +605,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 mockItem.getStatus()
         );
 
-        given(itemService.getItem(itemId)).willReturn(itemResponseDto);
+        given(itemService.getItem(anyLong(), any(CustomUserDetails.class))).willReturn(itemResponseDto);
 
         // When, Then
         mockMvc.perform(RestDocumentationRequestBuilders.get("/items/{itemId}", itemId)

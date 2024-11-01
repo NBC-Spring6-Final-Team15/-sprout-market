@@ -31,7 +31,7 @@ public class AuthService {
     private final EmailService emailService;
     private final RedisUtil redisUtil;
 
-    private static final String AUTH_EMAIL_KEY = "authEmail:";
+    private static final String AUTH_EMAIL_KEY = "AuthEmail:";
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {

@@ -40,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -318,11 +319,11 @@ public class ItemService {
      * @param itemId Item's ID
      * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
      */
-    public ItemResponseDto getItem(Long itemId){
+    public ItemResponseDto getItem(Long itemId, CustomUserDetails authUser){
         // 매물 존재하는지, 해당 유저의 매물이 맞는지 확인
         Item item = itemRepository.findByIdOrElseThrow(itemId);
 
-        incrementViewCount(itemId);
+        incrementViewCount(itemId, authUser.getId());
 
         return new ItemResponseDto(
             item.getId(),
@@ -452,7 +453,7 @@ public class ItemService {
                     return new ItemWithViewCount(item, finalViewCount);
                 })
                 .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
-                .limit(5) // 상위 3개 선택
+                .limit(5) // 상위 5개 선택
                 .toList();
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
@@ -470,9 +471,20 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
-    private void incrementViewCount(Long itemId) {
+    private void incrementViewCount(Long itemId, Long userId) {
         String redisKey = "ViewCount:ItemId:" + itemId;
-        viewCountRedisTemplate.opsForValue().increment(redisKey);
+        String userKey = "UserView:ItemId:" + itemId + ":UserId:" + userId;
+
+        // 사용자가 이미 조회했는지 확인
+        Boolean hasViewed = viewCountRedisTemplate.hasKey(userKey);
+
+        // 사용자가 조회하지 않은 경우
+        if (hasViewed == null || !hasViewed) {
+            // 조회수 증가
+            viewCountRedisTemplate.opsForValue().increment(redisKey);
+            // 사용자의 조회 기록을 1시간 후 만료되도록 설정
+            viewCountRedisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
+        }
     }
 
     /**
