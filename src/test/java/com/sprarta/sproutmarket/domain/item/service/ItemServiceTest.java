@@ -184,7 +184,7 @@ public class ItemServiceTest {
         when(itemRepository.findByIdOrElseThrow(itemId)).thenReturn(mockItem1);
 
         // When
-        ItemResponseDto result = itemService.getItem(itemId);
+        ItemResponseDto result = itemService.getItem(itemId, authUser);
 
         // Then
         assertEquals(mockItem1.getId(), result.getId());
