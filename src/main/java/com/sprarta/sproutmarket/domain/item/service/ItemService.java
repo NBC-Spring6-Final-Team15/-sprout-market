@@ -170,31 +170,6 @@ public class ItemService {
             .build();
     }
 
-
-
-    /**
-     * 저장되어있는 매물의 이미지를 삭제하는 로직
-     * @param itemId  수정할 Item's ID
-     * @param authUser  매물의 이미지를 삭제 요청한 사용자
-     * @param imageId 삭제할 이미지 id
-     * @return ItemResponse - 이미지가 삭제된 매물의 제목, 상태, 저장되어있는 이미지 리스트, 수정한 사용자의 닉네임을 포함한 응답 객체
-     */
-    @Transactional
-    public ItemResponse deleteImage(Long itemId, CustomUserDetails authUser, Long imageId){
-        User user = findUserById(authUser.getId());
-        Item item = verifyItemOwnership(itemId, user);
-        ItemImage itemImage = itemImageRepository.findByIdOrElseThrow(imageId);
-
-        itemImageService.deleteItemImage(itemId, itemImage.getName(), authUser);
-
-        return ItemResponse.builder()
-            .title(item.getTitle())
-            .price(item.getPrice())
-            .status(item.getStatus())
-            .nickname(user.getNickname())
-            .build();
-    }
-
     /**
      * 자신이 등록한 매물을 논리적 삭제하는 로직
      * @param itemId Item's ID

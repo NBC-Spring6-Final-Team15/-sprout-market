@@ -81,21 +81,6 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
-
-
-    /**
-     * 매물에 저장된 이미지를 삭제하는 로직
-     * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
-     * @param imageId 삭제할 이미지의 ID
-     * @return ApiResponse - 특정 이미지가 삭제된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
-     */
-    @DeleteMapping("/items/{itemId}/image")
-    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
-        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-    }
-
     /**
      * 자신이 등록한 매물을 (논리적)삭제하는 로직
      * @param itemId Item's ID
