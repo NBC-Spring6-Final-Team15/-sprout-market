@@ -35,6 +35,8 @@ public enum ErrorStatus implements BaseCode {
     // image 예외처리
     NOT_FOUND_IMAGE(HttpStatus.NOT_FOUND, 404, "존재하지 않는 이미지입니다."),
 
+    FORBIDDEN_PROFILE_UPDATE(HttpStatus.FORBIDDEN,403,"헤당 프로필을 수정할 수 있는 권한이 없습니다."),
+
     // user 예외처리
     BAD_REQUEST_EMAIL(HttpStatus.NOT_FOUND, 404, "이미 존재하는 이메일입니다."),
     NOT_FOUND_AUTH_USER(HttpStatus.NOT_FOUND, 404, "가입되지 않은 유저입니다."),
