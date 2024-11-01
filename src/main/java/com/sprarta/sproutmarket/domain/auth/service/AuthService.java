@@ -5,14 +5,12 @@ import com.sprarta.sproutmarket.domain.auth.dto.request.*;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.common.RedisUtil;
-import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +33,7 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        return createUser(request, UserRole.USER);
+        return createUser(request);
     }
 
     @Transactional
@@ -44,7 +42,7 @@ public class AuthService {
             throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
         }
 
-        return createAdminUser(request, UserRole.ADMIN);
+        return createAdminUser(request);
     }
 
     public SigninResponse signin(SigninRequest request) {
@@ -90,7 +88,7 @@ public class AuthService {
         return new SignupResponse(bearerToken);
     }
 
-    private SignupResponse createUser(SignupRequest request, UserRole userRole) {
+    private SignupResponse createUser(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
         }
@@ -104,15 +102,15 @@ public class AuthService {
                 request.getNickname(),
                 request.getPhoneNumber(),
                 request.getAddress(),
-                userRole
+                UserRole.USER
         );
         User savedUser = userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), UserRole.USER);
 
         return new SignupResponse(bearerToken);
     }
 
-    private SignupResponse createAdminUser(AdminSignupRequest request, UserRole userRole) {
+    private SignupResponse createAdminUser(AdminSignupRequest request) {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         User newUser = new User(
@@ -122,20 +120,17 @@ public class AuthService {
                 request.getNickname(),
                 request.getPhoneNumber(),
                 null, // adminSignup 에서는 address 가 필요하지 않으므로 null로 설정
-                userRole
+                UserRole.ADMIN
         );
         User savedUser = userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), UserRole.ADMIN);
 
         return new SignupResponse(bearerToken);
     }
 
     private SigninResponse authenticateUser(SigninRequest request, UserRole requiredRole) {
-        User user = findUserByEmail(request.getEmail());
-
-        if (user.getStatus() == Status.DELETED) {
-            throw new ApiException(ErrorStatus.NOT_FOUND_USER);
-        }
+        User user = userRepository.findByEmailAndStatusIsActive(request.getEmail()).orElseThrow(
+        ()-> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_PASSWORD);
@@ -148,11 +143,6 @@ public class AuthService {
         String bearerToken = jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole());
 
         return new SigninResponse(bearerToken);
-    }
-
-    private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_USER));
     }
 
     public void verifyEmail(EmailVerificationDto requestDto) {
