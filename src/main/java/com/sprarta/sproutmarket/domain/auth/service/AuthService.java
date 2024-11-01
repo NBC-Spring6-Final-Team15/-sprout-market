@@ -1,10 +1,7 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
-import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.*;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.common.RedisUtil;
@@ -14,6 +11,8 @@ import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,7 +30,6 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
     private final RedisUtil redisUtil;
-    private final AdministrativeAreaService administrativeAreaService;
 
     private static final String AUTH_EMAIL_KEY = "authEmail:";
 
@@ -57,18 +55,47 @@ public class AuthService {
         return authenticateUser(request, UserRole.ADMIN);
     }
 
+    @Transactional
+    public SignupResponse kakaoSignup(KakaoSignupRequest request, HttpSession session) {
+        // 세션에서 카카오 로그인 정보를 가져옴
+        String email = (String) session.getAttribute("email");
+        String nickname = (String) session.getAttribute("nickname");
+        String profileImageUrl = (String) session.getAttribute("profileImageUrl");
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+
+        // User 엔티티 생성
+        User newUser = new User(
+                request.getUsername(),
+                email,
+                nickname,
+                encodedPassword,
+                request.getPhoneNumber(),
+                request.getAddress(),
+                profileImageUrl,
+                UserRole.USER
+        );
+
+        // 데이터베이스에 저장
+        User savedUser = userRepository.save(newUser);
+
+        // JWT 토큰 생성
+        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), UserRole.USER);
+
+        return new SignupResponse(bearerToken);
+    }
+
     private SignupResponse createUser(SignupRequest request, UserRole userRole) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-        String address = getAddressFromCoordinates(request.getLongitude(), request.getLatitude());
-
-        // 이메일 인증
-        String redisKey = verifyEmail(request);
-
-        redisUtil.delete(redisKey);
 
         User newUser = new User(
                 request.getUsername(),
@@ -76,7 +103,7 @@ public class AuthService {
                 encodedPassword,
                 request.getNickname(),
                 request.getPhoneNumber(),
-                address,
+                request.getAddress(),
                 userRole
         );
         User savedUser = userRepository.save(newUser);
@@ -86,16 +113,7 @@ public class AuthService {
     }
 
     private SignupResponse createAdminUser(AdminSignupRequest request, UserRole userRole) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
-        }
-
         String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        // 이메일 인증
-        String redisKey = verifyAdminEmail(request);
-
-        redisUtil.delete(redisKey);
 
         User newUser = new User(
                 request.getUsername(),
@@ -137,46 +155,26 @@ public class AuthService {
                 () -> new ApiException(ErrorStatus.NOT_FOUND_USER));
     }
 
-    private String getAddressFromCoordinates(double longitude, double latitude) {
-        return administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
-    }
+    public void verifyEmail(EmailVerificationDto requestDto) {
+        if (userRepository.existsByEmail(requestDto.getEmail())) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
 
-    private String verifyEmail(SignupRequest requestDto) {
         String email = requestDto.getEmail();
         String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
         Integer authNumber = (Integer) redisUtil.get(redisKey);
 
         // 메일 인증 중인 email 인지 확인
-        if(authNumber == null) {
+        if (authNumber == null) {
             emailService.sendEmail(redisKey, email);
             throw new ApiException(ErrorStatus.SEND_AUTH_EMAIL);
         }
 
         // 인증번호 확인
-        if(authNumber != requestDto.getAuthNumber()) {
+        if (authNumber != requestDto.getAuthNumber()) {
             throw new ApiException(ErrorStatus.FAIL_EMAIL_AUTHENTICATION);
         }
 
-        return redisKey;
+        redisUtil.delete(redisKey);
     }
-
-    private String verifyAdminEmail(AdminSignupRequest requestDto) {
-        String email = requestDto.getEmail();
-        String redisKey = AUTH_EMAIL_KEY + requestDto.getEmail();
-        Integer authNumber = (Integer) redisUtil.get(redisKey);
-
-        // 메일 인증 중인 email 인지 확인
-        if(authNumber == null) {
-            emailService.sendEmail(redisKey, email);
-            throw new ApiException(ErrorStatus.SEND_AUTH_EMAIL);
-        }
-
-        // 인증번호 확인
-        if(authNumber != requestDto.getAuthNumber()) {
-            throw new ApiException(ErrorStatus.FAIL_EMAIL_AUTHENTICATION);
-        }
-
-        return redisKey;
-    }
-
 }

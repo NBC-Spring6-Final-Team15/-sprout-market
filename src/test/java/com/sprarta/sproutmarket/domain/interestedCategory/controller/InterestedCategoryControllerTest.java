@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.interestedCategory.controller;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
@@ -41,29 +42,13 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(InterestedCategoryController.class)
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-@AutoConfigureRestDocs(outputDir = "build/generated-snippets")
-@ExtendWith({MockitoExtension.class, RestDocumentationExtension.class})
-public class InterestedCategoryControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+class InterestedCategoryControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private InterestedCategoryService interestedCategoryService;
 
     @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
-
-    @MockBean
     private UserService userService;
-
-    @MockBean
-    private CustomUserDetails mockAuthUser;
 
     @BeforeEach
     void setUp() {

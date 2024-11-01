@@ -37,7 +37,7 @@ public class AdministrativeAreaController {
      * @param requestDto : 위도,경도를 double 로 받는 DTO
      * @return : 행정동 String 반환
      */
-    @PostMapping("/test/areas")
+    @PostMapping("/auth/areas")
     public ResponseEntity<ApiResponse<String>> getHMD(@RequestBody AdministrativeAreaRequestDto requestDto) {
         return ResponseEntity.ok
                 (ApiResponse.onSuccess(

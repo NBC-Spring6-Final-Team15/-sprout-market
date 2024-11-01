@@ -40,7 +40,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                 .getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
                 .thenReturn(returnString);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/areas")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/areas")
                         .header("Authorization", "Bearer (JWT 토큰)")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
