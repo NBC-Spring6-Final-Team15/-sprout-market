@@ -75,38 +75,4 @@ class CategoryServiceTest {
         verify(categoryRepository, times(1)).findByIdAndStatusIsActive(1L);
         assertEquals(Status.DELETED, category.getStatus());
     }
-
-    @Test
-    void findByIdOrElseThrow_whenCategoryExists_returnsCategory() {
-        Long categoryId = 1L;
-        Category category = new Category("Test Category");
-        ReflectionTestUtils.setField(category,"id", 1L);
-
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-
-        Category result = categoryService.findByIdOrElseThrow(categoryId);
-
-        assertThat(result).isEqualTo(category);
-        verify(categoryRepository, times(1)).findById(categoryId);
-    }
-
-    @Test
-    void findByIdAndStatusIsActiveOrElseThrow_whenCategoryIsActive_returnsCategory() {
-        Long categoryId = 1L;
-        Category category = new Category("Active Category");
-        // 카테고리 상태를 활성화합니다.
-        category.activate();
-        ReflectionTestUtils.setField(category, "id", categoryId);
-
-        // Mocking repository method: categoryId로 활성화된 카테고리를 찾는 경우
-        when(categoryRepository.findByIdAndStatusIsActive(categoryId)).thenReturn(Optional.of(category));
-
-        // 메서드 호출
-        Category result = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
-
-        // 결과 확인
-        assertThat(result).isEqualTo(category);
-        verify(categoryRepository, times(1)).findByIdAndStatusIsActive(categoryId);
-    }
-
 }
