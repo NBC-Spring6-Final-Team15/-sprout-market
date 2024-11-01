@@ -37,7 +37,7 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom {
                 qItem.title,
                 qItem.price,
                 qItem.seller.address,
-                qItem.images.get(0).name,
+                qItem.itemImages,
                 qItem.createdAt))
             .from(qItem)
             .where(builder)

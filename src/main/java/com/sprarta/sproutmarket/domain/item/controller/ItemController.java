@@ -24,6 +24,7 @@ import java.util.List;
 public class ItemController {
     private final ItemService itemService;
 
+
     /**
      * 중고 매물에 대해서 검색하는 로직
      * @param page 페이지당 카드 수
@@ -53,6 +54,7 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
+
     /**
      * 매물의 판매 상태만을 변경하는 로직
      * @param itemId Item's ID
@@ -79,18 +81,7 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
-    /**
-     * 매물에 이미지를 추가하는 로직
-     * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
-     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
-     * @return ApiResponse - 이미지가 수정된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
-     */
-    @PutMapping("/items/{itemId}/image")
-    public ResponseEntity<ApiResponse<ItemResponse>> addItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestPart(value = "image", required = false, name = "image") MultipartFile image){
-        ItemResponse itemResponse = itemService.addImage(itemId, authUser, image);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-    }
+
 
     /**
      * 매물에 저장된 이미지를 삭제하는 로직
@@ -99,11 +90,11 @@ public class ItemController {
      * @param imageId 삭제할 이미지의 ID
      * @return ApiResponse - 특정 이미지가 삭제된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
      */
-//    @DeleteMapping("/items/{itemId}/image")
-//    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
-//        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
-//        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-//    }
+    @DeleteMapping("/items/{itemId}/image")
+    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
+        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+    }
 
     /**
      * 자신이 등록한 매물을 (논리적)삭제하는 로직

@@ -56,8 +56,8 @@ public class UserController {
     @PutMapping("/profile-image")
     public ResponseEntity<ApiResponse<String>> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails authUser,
-            @RequestPart(value = "image", required = true) MultipartFile image) {
-        String profileImageUrl = userService.updateProfileImage(authUser, image);
+            @RequestBody String profileImageName) {
+        String profileImageUrl = userService.updateProfileImage(authUser, profileImageName);
         return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
     }
 

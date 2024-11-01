@@ -3,7 +3,7 @@ package com.sprarta.sproutmarket.domain.item.entity;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,7 +38,7 @@ public class Item extends Timestamped {
     // 파일
     @Column(nullable = false)
     @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>();
+    private List<ItemImage> itemImages = new ArrayList<>();
     // 삭제 상태
     @Enumerated(EnumType.STRING)
     private Status status;

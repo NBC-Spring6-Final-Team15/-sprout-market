@@ -6,10 +6,10 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.service.ImageService;
+import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
-import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -56,13 +56,13 @@ public class ItemServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private ImageRepository imageRepository;
+    private ItemImageRepository itemImageRepository;
     @Mock
     private ItemRepositoryCustom itemRepositoryCustom;
     @Mock
     private CategoryService categoryService;
     @Mock
-    private ImageService imageService;
+    private ItemImageService itemImageService;
     @Mock
     private AdministrativeAreaService admAreaService;
     @Mock
@@ -87,14 +87,14 @@ public class ItemServiceTest {
     private CustomUserDetails authUser;
     private CustomUserDetails authAdmin;
     private FindItemsInMyAreaRequestDto requestDto;
-    private Image image;
+    private ItemImage itemImage;
     private MockMultipartFile mockImage;
 
     @BeforeEach // 코드 실행 전 작동 + 테스트 환경 초기화
     void setup(){
         MockitoAnnotations.openMocks(this); //어노테이션 Mock과 InjectMocks를 초기화
 
-        mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
+        mockImage = new MockMultipartFile("file", "itemImage.jpg", "image/jpeg", "itemImage content".getBytes());
 
         // 가짜 사용자 생성
         //String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole
@@ -155,7 +155,7 @@ public class ItemServiceTest {
             .size(10)
             .build();
 
-        image = Image.builder()
+        itemImage = ItemImage.builder()
             .id(1L)
             .item(mockItem1)
             .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
@@ -178,7 +178,7 @@ public class ItemServiceTest {
         when(itemRepository.findById(mockItem1.getId())).thenReturn(Optional.of(mockItem1));
         when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
 
-        when(imageRepository.findByIdOrElseThrow(image.getId())).thenReturn(image);
+        when(itemImageRepository.findByIdOrElseThrow(itemImage.getId())).thenReturn(itemImage);
 
         when(viewCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
     }
@@ -245,55 +245,6 @@ public class ItemServiceTest {
         verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size));
     }
 
-
-//    @Test
-//    void 매물_이미지_삭제_성공() {
-//        // Given
-//        Long itemId = 1L;
-//        Long imageId = 1L;
-//
-//        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
-//        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser)).thenReturn(mockItem1);
-//
-//        // When
-//        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
-//
-//        // Then
-//        assertEquals(mockItem1.getTitle(), itemResponse.getTitle());
-//        assertEquals(mockItem1.getStatus(), itemResponse.getStatus());
-//        assertEquals(mockItem1.getPrice(), itemResponse.getPrice());
-//        assertEquals(mockUser.getNickname(), itemResponse.getNickname());
-//
-//        verify(userRepository, times(1)).findById(authUser.getId());
-//        verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockUser);
-//        verify(imageRepository, times(1)).findByIdOrElseThrow(imageId);
-//        verify(imageService, times(1)).deleteImage(image.getName());
-//    }
-
-    @Test
-    void 매물_이미지_추가_성공() {
-        // Given
-        Long itemId = 1L;
-
-        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
-        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser)).thenReturn(mockItem1);
-        when(imageService.uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser))).thenReturn("image_url.jpg");
-
-        // When
-        ItemResponse itemResponse = itemService.addImage(itemId, authUser, mockImage);
-
-        // Then
-        assertEquals(mockItem1.getTitle(), itemResponse.getTitle());
-        assertEquals(mockItem1.getPrice(), itemResponse.getPrice());
-        assertEquals(mockItem1.getStatus(), itemResponse.getStatus());
-        assertEquals("image_url.jpg", itemResponse.getImageUrl());
-        assertEquals(mockUser.getNickname(), itemResponse.getNickname());
-
-        verify(userRepository, times(1)).findById(authUser.getId());
-        verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockUser);
-        verify(imageService, times(1)).uploadImage(any(MultipartFile.class), eq(itemId), eq(authUser));
-    }
-
     @Test
     void 매물_생성_성공(){
         // Given
@@ -302,11 +253,13 @@ public class ItemServiceTest {
             .description("가짜 설명1")
             .price(10000)
             .categoryId(mockCategory1.getId())
+            .imageName("test.jpg")
             .build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
         when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
+        when(itemImageService.uploadItemImage(any(Long.class), any(String.class), any(CustomUserDetails.class))).thenReturn("test.jpg");
 
         // When
         ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);

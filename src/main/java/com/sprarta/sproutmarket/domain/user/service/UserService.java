@@ -3,7 +3,8 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.service.impl.S3ImageServiceImpl;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
@@ -27,7 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdministrativeAreaService administrativeAreaService;
-    private final S3ImageServiceImpl s3ImageServiceImpl;
+    private final ProfileImageService profileImageService;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -82,12 +83,12 @@ public class UserService {
     }
 
     @Transactional
-    public String updateProfileImage(CustomUserDetails authUser, MultipartFile image) {
+    public String updateProfileImage(CustomUserDetails authUser, String profileImageName) {
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 프로필 이미지 S3 업로드
-        String profileImageUrl = s3ImageServiceImpl.uploadImage(image, user.getId(), authUser);
+        String profileImageUrl = profileImageService.uploadProfileImage(profileImageName, authUser);
 
         // 유저 엔티티에 프로필 이미지 URL 업데이트
         user.updateProfileImage(profileImageUrl);

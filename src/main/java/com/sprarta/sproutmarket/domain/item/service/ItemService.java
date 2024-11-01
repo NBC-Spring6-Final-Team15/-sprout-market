@@ -2,13 +2,15 @@ package com.sprarta.sproutmarket.domain.item.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
+import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
-import com.sprarta.sproutmarket.domain.image.repository.ImageRepository;
-import com.sprarta.sproutmarket.domain.image.service.ImageService;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
+import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
@@ -29,7 +31,6 @@ import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +38,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Comparator;
 import java.util.List;
@@ -51,11 +51,12 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final ItemRepositoryCustom itemRepositoryCustom;
     private final UserRepository userRepository;
-    private final ImageRepository imageRepository;
+    private final ItemImageRepository itemImageRepository;
+    private final CategoryRepository categoryRepository;
     private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
-    @Qualifier("imageServiceImpl")
-    private final ImageService imageService;
+    private final S3ImageService s3ImageService;
+    private final ItemImageService itemImageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
@@ -75,7 +76,7 @@ public class ItemService {
         User user = findUserById(authUser.getId());
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
-        Category category = findCategoryById(itemSearchRequest.getCategoryId());
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
         ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);
@@ -86,18 +87,26 @@ public class ItemService {
 
     /**
      * 로그인한 사용자가 중고 물품을 등록하는 로직
-     * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id)
+     * @param itemCreateRequest 매물 세부 정보를 포함한 요청 객체(제목, 설명, 가격, 카테고리id, 업로드한 이미지 이름)
      * @param authUser 매물 수정을 요청한 사용자
      * @return ItemResponse - 등록된 매물의 제목, 가격, 등록한 사용자의 닉네임을 포함한 응답 객체
      */
     @Transactional
     public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         User user = findUserById(authUser.getId());
-        Category category = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
-
-        Item item = createItemFromRequest(itemCreateRequest, user, category);
+        Category category = categoryService.findByIdAndStatusIsActive(itemCreateRequest.getCategoryId());
+        Item item = new Item(
+            itemCreateRequest.getTitle(),
+            itemCreateRequest.getDescription(),
+            itemCreateRequest.getPrice(),
+            user,
+            ItemSaleStatus.WAITING,
+            category,
+            Status.ACTIVE
+        );;
         Item saveItem = itemRepository.save(item);
 
+        // itemImageService.uploadItemImage(item.getId(), itemCreateRequest.getImageName(), authUser);
         // 카테고리에 관심 있는 사용자들에게 알림 전송
         notifyCategorySubscribersForNewItem(item.getCategory().getId(), item.getTitle());
 
@@ -161,28 +170,7 @@ public class ItemService {
             .build();
     }
 
-    /**
-     * 생성되어있는 매물의 이미지를 추가하는 로직
-     * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
-     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
-     * @return ItemResponse - 수정된 매물의 제목, 이미지 이름, 수정한 사용자의 닉네임을 포함한 응답 객체
-     */
-    @Transactional
-    public ItemResponse addImage(Long itemId, CustomUserDetails authUser, MultipartFile image){
-        User user = findUserById(authUser.getId());
-        Item item = verifyItemOwnership(itemId, user);
 
-        String imageAddress = imageService.uploadImage(image, item.getId(), authUser);
-
-        return ItemResponse.builder()
-            .title(item.getTitle())
-            .price(item.getPrice())
-            .status(item.getStatus())
-            .imageUrl(imageAddress)
-            .nickname(user.getNickname())
-            .build();
-    }
 
     /**
      * 저장되어있는 매물의 이미지를 삭제하는 로직
@@ -195,9 +183,9 @@ public class ItemService {
     public ItemResponse deleteImage(Long itemId, CustomUserDetails authUser, Long imageId){
         User user = findUserById(authUser.getId());
         Item item = verifyItemOwnership(itemId, user);
-        Image image = imageRepository.findByIdOrElseThrow(imageId);
+        ItemImage itemImage = itemImageRepository.findByIdOrElseThrow(imageId);
 
-        imageService.deleteImage(itemId, authUser, image.getName());
+        itemImageService.deleteItemImage(itemId, itemImage.getName(), authUser);
 
         return ItemResponse.builder()
             .title(item.getTitle())
@@ -297,7 +285,7 @@ public class ItemService {
      */
     public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
         User user = findUserById(authUser.getId());
-        Category category = findCategoryById(categoryId);
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
         List<String> areaList = getAreaListByUserAddress(user.getAddress());
@@ -406,10 +394,6 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
     }
 
-    // 카테고리 조회 메서드 분리
-    private Category findCategoryById(Long categoryId) {
-        return (categoryId != null) ? categoryService.findByIdOrElseThrow(categoryId) : null;
-    }
 
     // ItemSaleStatus 결정 메서드
     private ItemSaleStatus setSaleStatus(ItemSearchRequest itemSearchRequest) {

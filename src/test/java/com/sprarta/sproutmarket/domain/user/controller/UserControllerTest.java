@@ -300,7 +300,7 @@ public class UserControllerTest {
         );
         String expectedImageUrl = "https://s3.bucket/profile/profileImage.jpg";
 
-        when(userService.updateProfileImage(any(CustomUserDetails.class), any(MultipartFile.class)))
+        when(userService.updateProfileImage(any(CustomUserDetails.class), any(String.class)))
                 .thenReturn(expectedImageUrl);
 
         // when & then
@@ -333,7 +333,7 @@ public class UserControllerTest {
                                 .build())
                 ));
 
-        verify(userService, times(1)).updateProfileImage(any(CustomUserDetails.class), any(MultipartFile.class));
+        verify(userService, times(1)).updateProfileImage(any(CustomUserDetails.class), any(String.class));
     }
 
     @Test

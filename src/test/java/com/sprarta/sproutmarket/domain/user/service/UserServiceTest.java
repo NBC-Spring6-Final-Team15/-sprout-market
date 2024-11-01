@@ -4,7 +4,8 @@ import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.service.impl.S3ImageServiceImpl;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
@@ -39,7 +40,9 @@ class UserServiceTest {
     private AdministrativeAreaService administrativeAreaService;
 
     @Mock
-    private S3ImageServiceImpl s3ImageServiceImpl;
+    private S3ImageService s3ImageService;
+    @Mock
+    private ProfileImageService profileImageService;
 
     @InjectMocks
     private UserService userService;
@@ -213,16 +216,17 @@ class UserServiceTest {
     void 프로필_이미지_업로드_성공() {
         // Given
         when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-        when(s3ImageServiceImpl.uploadImage(mockImage, user.getId(), authUser)).thenReturn("https://s3.bucket/profile/test.jpg");
+        when(s3ImageService.uploadImage(mockImage, authUser)).thenReturn("https://s3.bucket/profile/test.jpg");
+        when(profileImageService.uploadProfileImage(mockImage.getName(), authUser)).thenReturn(mockImage.getName());
 
         // When
-        String resultUrl = userService.updateProfileImage(authUser, mockImage);
+        String resultUrl = userService.updateProfileImage(authUser, mockImage.getName());
 
         // Then
         assertEquals("https://s3.bucket/profile/test.jpg", resultUrl);
         assertEquals("https://s3.bucket/profile/test.jpg", user.getProfileImageUrl());
         verify(userRepository, times(1)).findById(authUser.getId());
-        verify(s3ImageServiceImpl, times(1)).uploadImage(mockImage, user.getId(), authUser);
+        verify(s3ImageService, times(1)).uploadImage(mockImage, authUser);
         verify(userRepository, times(1)).save(user);
     }
 
