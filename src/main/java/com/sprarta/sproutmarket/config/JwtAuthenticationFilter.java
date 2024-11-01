@@ -49,15 +49,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // JWT 토큰 추출 및 검증
         String jwt = jwtUtil.substringToken(authorizationHeader);
         Claims claims = null;
+
         try{
             claims = jwtUtil.extractClaims(jwt);
-        } catch(ExpiredJwtException e) {
-            jwtExceptionHandler(response, ErrorStatus.UNAUTHORIZED_EXPIRED_TOKEN);
-            return;
-        }
-
-        if (claims == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
+        } catch(Exception ex) {
+            JwtExceptionHandler.handleJwtException(response, ex);
             return;
         }
 
@@ -83,13 +79,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 필터 체인 통과
         filterChain.doFilter(request, response);
-    }
-
-    public void jwtExceptionHandler(HttpServletResponse response, ErrorStatus errorStatus) throws IOException {
-        response.setStatus(errorStatus.getStatusCode());
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        String json = new ObjectMapper().writeValueAsString(ApiResponse.createError(errorStatus.getMessage(), errorStatus.getStatusCode()));
-        response.getWriter().write(json);
     }
 }

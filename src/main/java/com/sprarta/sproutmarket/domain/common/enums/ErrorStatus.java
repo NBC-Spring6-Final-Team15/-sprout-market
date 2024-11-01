@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum ErrorStatus implements BaseCode {
+    INTERNAL_SERVER_ERROR_WE_DO_NOT_KNOW(HttpStatus.INTERNAL_SERVER_ERROR,500,"알 수 없는 오류가 발생했습니다."),
     BAD_REQUEST_EMPTY_TITLE(HttpStatus.BAD_REQUEST, 400, "제목이 비어 있습니다."),
 
     //예외 예시
