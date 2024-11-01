@@ -76,7 +76,7 @@ public class ItemService {
         User user = findUserById(authUser.getId());
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
-        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
+        Category category = categoryService.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
         ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);

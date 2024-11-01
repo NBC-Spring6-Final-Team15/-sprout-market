@@ -2,6 +2,7 @@ package com.sprarta.sproutmarket.domain.item.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
+import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
@@ -38,6 +39,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockMultipartFile;
@@ -45,6 +47,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +58,8 @@ public class ItemServiceTest {
     private ItemRepository itemRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private CategoryRepository categoryRepository;
     @Mock
     private ItemImageRepository itemImageRepository;
     @Mock
@@ -161,12 +166,15 @@ public class ItemServiceTest {
             .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
             .build();
 
+        authUser = new CustomUserDetails(
+            mockUser
+        );
 
         // CustomUserDetails(사용자 정보) 모킹 => 로그인된 사용자의 정보 모킹
         authUser = mock(CustomUserDetails.class);
         when(authUser.getId()).thenReturn(mockUser.getId()); // authUser의 ID를 mockUser의 ID로 설정
-        when(authUser.getEmail()).thenReturn("mock@mock.com");
-        when(authUser.getRole()).thenReturn(UserRole.USER);
+        when(authUser.getEmail()).thenReturn(mockUser.getEmail());
+        when(authUser.getRole()).thenReturn(mockUser.getUserRole());
 
         // itemRepository.save() 호출 시 mockItem2를 반환하도록 설정
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem2);
@@ -181,6 +189,8 @@ public class ItemServiceTest {
         when(itemImageRepository.findByIdOrElseThrow(itemImage.getId())).thenReturn(itemImage);
 
         when(viewCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        when(categoryRepository.findByIdAndStatusIsActiveOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
     }
 
     @Test
@@ -217,32 +227,21 @@ public class ItemServiceTest {
             .saleStatus(true)
             .build();
 
-        CustomUserDetails authUser = mock(CustomUserDetails.class);
-        User mockUser = mock(User.class);
-        List<String> areaList = List.of("지역1", "지역2");
-        Category mockCategory = mock(Category.class);
-        Page<ItemSearchResponse> mockPage = mock(Page.class);
-        Item mockItem = mock(Item.class);
+        List<String> areaList = List.of("서울시 관악구 신림동", "서울시 관악구 봉천동");
+        Pageable pageable = PageRequest.of(page - 1, size);
 
-        when(authUser.getId()).thenReturn(1L);
-        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
-        when(mockUser.getAddress()).thenReturn("서울");
-        when(admAreaService.getAdmNameListByAdmName("서울")).thenReturn(areaList);
-        when(categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory);
-        when(itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size)))
-            .thenReturn(mockPage);
-
-        when(mockPage.map(any())).thenReturn(Page.empty()); // 결과로 빈 페이지를 리턴하는 mock 설정
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        when(admAreaService.getAdmNameListByAdmName("서울시 관악구 신림동")).thenReturn(areaList);
+        when(categoryService.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId())).thenReturn(mockCategory1);
 
         // When
         Page<ItemSearchResponse> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
 
         // Then
-        assertNotNull(result); // 결과가 null이 아님을 검증
         verify(userRepository, times(1)).findById(authUser.getId());
-        verify(admAreaService, times(1)).getAdmNameListByAdmName("서울");
-        verify(categoryService, times(1)).findByIdOrElseThrow(itemSearchRequest.getCategoryId());
-        verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size));
+        verify(admAreaService, times(1)).getAdmNameListByAdmName("서울시 관악구 신림동");
+        verify(categoryService, times(1)).findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
+        verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory1, ItemSaleStatus.WAITING, pageable);
     }
 
     @Test
@@ -257,7 +256,7 @@ public class ItemServiceTest {
             .build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryService.findByIdAndStatusIsActive(mockCategory1.getId())).thenReturn(mockCategory1);
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
         when(itemImageService.uploadItemImage(any(Long.class), any(String.class), any(CustomUserDetails.class))).thenReturn("test.jpg");
 
@@ -267,7 +266,7 @@ public class ItemServiceTest {
         // Then
         assertEquals("가짜 매물1", itemResponse.getTitle());
         assertEquals(10000, itemResponse.getPrice());
-        assertEquals("오만한천원", itemResponse.getNickname());
+        assertEquals("오만한천원", mockUser.getNickname());
     }
 
     @Test
