@@ -1,10 +1,11 @@
 package com.sprarta.sproutmarket.domain.auth.controller;
 
 import com.sprarta.sproutmarket.domain.auth.dto.response.KakaoProfileResponse;
-import com.sprarta.sproutmarket.domain.auth.service.KakaoService;
 import com.sprarta.sproutmarket.domain.auth.dto.response.OAuthTokenResponse;
+import com.sprarta.sproutmarket.domain.auth.service.KakaoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RequiredArgsConstructor
 @Controller
+@Slf4j
 public class KakaoController {
 
     private final KakaoService kakaoService;
@@ -38,10 +40,10 @@ public class KakaoController {
         session.setAttribute("nickname", kakaoProfile.getNickname());
         session.setAttribute("profileImageUrl", kakaoProfile.getProfileImage());
 
-        System.out.println("email = " + kakaoProfile.getEmail());
-        System.out.println("nickname = " + kakaoProfile.getNickname());
-        System.out.println("profileImage = " + kakaoProfile.getProfileImage());
-        System.out.println("accessToken = " + accessToken);
+        log.info("email = {}", kakaoProfile.getEmail());
+        log.info("nickname = {}", kakaoProfile.getNickname());
+        log.info("profileImage = {}", kakaoProfile.getProfileImage());
+        log.info("accessToken = {}", accessToken);
 
         return "redirect:/additional-info";
     }
