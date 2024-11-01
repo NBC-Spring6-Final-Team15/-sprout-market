@@ -149,22 +149,22 @@ class UserServiceTest {
         verify(passwordEncoder, times(0)).encode(anyString());
     }
 
-//    @Test
-//    void deleteUser_Success() {
-//        // Given
-//        UserDeleteRequest request = new UserDeleteRequest("encodedOldPassword");
-//
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(passwordEncoder.matches("encodedOldPassword", user.getPassword())).thenReturn(true); // Correct password
-//
-//        // When
-//        userService.deleteUser(authUser, request);
-//
-//        // Then
-//        verify(userRepository, times(1)).findById(1L);
-//        verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword()); // Check password
-//        verify(userRepository, times(1)).delete(user); // Verify user deletion
-//    }
+    @Test
+    void deleteUser_Success() {
+        // Given
+        UserDeleteRequest request = new UserDeleteRequest("encodedOldPassword");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("encodedOldPassword", user.getPassword())).thenReturn(true); // Correct password
+
+        // When
+        userService.deleteUser(authUser, request);
+
+        // Then
+        verify(userRepository, times(1)).findById(1L);
+        verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword()); // Check password
+        assertEquals(Status.DELETED, user.getStatus());
+    }
 
     @Test
     void deleteUser_Failure_WrongPassword() {
@@ -215,22 +215,6 @@ class UserServiceTest {
         verify(userRepository, times(0)).save(any(User.class));
     }
 
-//    @Test
-//    void 프로필_이미지_업로드_성공() {
-//        // Given
-//        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-//        when(profileImageService.uploadProfileImage(profileImage.getName(), authUser)).thenReturn("https://s3.bucket/profile/test.jpg");
-//
-//        // When
-//        String resultUrl = userService.updateProfileImage(authUser, profileImage.getName());
-//
-//        // Then
-//        assertEquals("https://s3.bucket/profile/test.jpg", resultUrl);
-//        assertEquals("https://s3.bucket/profile/test.jpg", user.getProfileImageUrl());
-//        verify(userRepository, times(1)).findById(authUser.getId());
-//        verify(userRepository, times(1)).save(user);
-//    }
-
     @Test
     void 탈퇴_유저_복원_성공() {
         // given
@@ -260,19 +244,4 @@ class UserServiceTest {
         assertEquals("username", result.get(1).getUsername());
         verify(userRepository, times(1)).findAll();
     }
-//    @Test
-//    void 프로필_이미지_삭제_성공() {
-//        // Given
-//        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-//        String profileImageUrl = "https://s3.bucket/profile/profileImage.jpg";
-//        user.updateProfileImage(profileImageUrl);  // 초기 상태로 프로필 이미지 설정
-//
-//        // When
-//        userService.deleteProfileImage(authUser);
-//
-//        // Then
-//        verify(s3ImageServiceImpl, times(1)).deleteImage(profileImageUrl); // S3에서 이미지 삭제 확인
-//        assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
-//        verify(userRepository, times(1)).findById(authUser.getId());
-//    }
 }
