@@ -119,7 +119,7 @@ public class TradeChatControllerTest {
                                         fieldWithPath("data[].content")
                                                 .description("채팅 내용")
                                 )
-                                .responseSchema(Schema.schema("채팅방-단건-조회-성공-응답"))
+                                .responseSchema(Schema.schema("특정-채팅방-채팅-다건-조회-성공-응답"))
                                 .build()
                         )));
 
