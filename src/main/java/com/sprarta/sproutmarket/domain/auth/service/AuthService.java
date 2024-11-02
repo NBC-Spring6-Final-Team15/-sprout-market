@@ -69,8 +69,8 @@ public class AuthService {
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // User 엔티티 생성
-        User newUser = new User(
+        // User 엔티티 생성 (forKakao 사용)
+        User newUser = User.forKakao(
                 request.getUsername(),
                 email,
                 nickname,
