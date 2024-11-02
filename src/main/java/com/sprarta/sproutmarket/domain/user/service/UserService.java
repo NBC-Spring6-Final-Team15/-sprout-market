@@ -12,12 +12,12 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -121,10 +121,10 @@ public class UserService {
 
     // ACTIVE, DELETED 상태 유저 모두 조회
     @Transactional
-    public List<UserAdminResponse> getAllUsers() {
+    public Page<UserAdminResponse> getAllUsers(Pageable pageable) {
         return userRepository
-                .findAll()
-                .stream().map(UserAdminResponse::new).toList();
+                .findAll(pageable)
+                .map(UserAdminResponse::new);
     }
 }
 

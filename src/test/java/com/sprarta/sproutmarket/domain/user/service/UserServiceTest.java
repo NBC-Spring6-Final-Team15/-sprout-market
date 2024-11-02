@@ -19,6 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -262,17 +266,17 @@ class UserServiceTest {
     @Test
     void 모든_상태_유저_모두_조회_성공() {
         // given
-        List<User> users = List.of(user, user2);
+        Page<User> users = new PageImpl<>(List.of(user, user2));
 
-        when(userRepository.findAll()).thenReturn(users);
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(users);
 
         // when
-        List<UserAdminResponse> result = userService.getAllUsers();
+        Page<UserAdminResponse> result = userService.getAllUsers(PageRequest.of(0, 10));
 
         // then
-        assertEquals(2, result.size());
-        assertEquals("username", result.get(0).getUsername());
-        assertEquals("username", result.get(1).getUsername());
-        verify(userRepository, times(1)).findAll();
+        assertEquals(2, result.getTotalElements());
+        assertEquals("username", result.getContent().get(0).getUsername());
+        assertEquals("username", result.getContent().get(1).getUsername());
+        verify(userRepository, times(1)).findAll(any(Pageable.class));
     }
 }
