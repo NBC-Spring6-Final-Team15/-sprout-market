@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -77,8 +77,6 @@ public class UserService {
         String administrativeArea = administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
 
         user.changeAddress(administrativeArea);
-
-        userRepository.save(user);
     }
 
     @Transactional
@@ -92,7 +90,6 @@ public class UserService {
         // 유저 엔티티에 프로필 이미지 URL 업데이트
         user.updateProfileImage(profileImageUrl);
 
-        userRepository.save(user);
         return profileImageUrl;
     }
 
@@ -106,7 +103,6 @@ public class UserService {
             s3ImageService.deleteImageFromS3(currentProfileImageUrl);
         }
 
-        userRepository.save(user);
         user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
     }
 

@@ -200,7 +200,6 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(1L);
         verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(longitude, latitude);
         assertEquals(newAddress, user.getAddress());
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
@@ -214,7 +213,6 @@ class UserServiceTest {
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-        verify(userRepository, times(0)).save(any(User.class));
     }
 
     @Test
@@ -231,7 +229,6 @@ class UserServiceTest {
         assertEquals("https://s3.bucket/profile/test.jpg", user.getProfileImageUrl());
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(s3ImageService, times(1)).upload(mockImage, user.getId(), authUser);
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
