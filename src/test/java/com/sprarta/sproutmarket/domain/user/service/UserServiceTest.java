@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -57,8 +58,10 @@ class UserServiceTest {
         MockitoAnnotations.openMocks(this);
 
         // Mock user data
-        user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
-        user2 = new User(2L, "username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        user = new User("username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        user2 = new User("username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user2, "id", 2L);
         authUser = new CustomUserDetails(user);
         authUser2 = new CustomUserDetails(user2);
         mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());

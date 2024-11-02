@@ -69,17 +69,6 @@ public class User extends Timestamped {
         this.userRole = userRole;
     }
 
-    public User(Long id, String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.userRole = userRole;
-    }
-
     public static User forKakao(String username, String email, String nickname, String password, String phoneNumber, String address, String profileImageUrl, UserRole userRole) {
         User user = new User();
         user.username = username;
