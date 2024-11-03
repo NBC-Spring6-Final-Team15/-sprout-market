@@ -2,7 +2,7 @@ package com.sprarta.sproutmarket.domain.item.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
-import com.sprarta.sproutmarket.domain.category.service.CategoryService;
+import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
@@ -58,7 +58,7 @@ public class ItemServiceTest {
     @Mock
     private ItemRepositoryCustom itemRepositoryCustom;
     @Mock
-    private CategoryService categoryService;
+    private CategoryRepository categoryRepository;
     @Mock
     private ImageService imageService;
     @Mock
@@ -219,7 +219,7 @@ public class ItemServiceTest {
         when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(mockUser));
         when(mockUser.getAddress()).thenReturn("서울");
         when(admAreaService.getAdmNameListByAdmName("서울")).thenReturn(areaList);
-        when(categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory);
+        when(categoryRepository.findByIdOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory);
         when(itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size)))
             .thenReturn(mockPage);
 
@@ -232,7 +232,7 @@ public class ItemServiceTest {
         assertNotNull(result); // 결과가 null이 아님을 검증
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(admAreaService, times(1)).getAdmNameListByAdmName("서울");
-        verify(categoryService, times(1)).findByIdOrElseThrow(itemSearchRequest.getCategoryId());
+        verify(categoryRepository, times(1)).findByIdOrElseThrow(itemSearchRequest.getCategoryId());
         verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory, ItemSaleStatus.WAITING, PageRequest.of(page - 1, size));
     }
 
@@ -299,7 +299,7 @@ public class ItemServiceTest {
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
 
         // When
         ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
@@ -441,7 +441,7 @@ public class ItemServiceTest {
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(admAreaService.getAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"));
         when(itemRepository.findItemByAreaAndCategory(pageable, List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"), mockCategory1.getId())).thenReturn(pageResult);
 

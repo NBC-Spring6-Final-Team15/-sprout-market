@@ -2,6 +2,7 @@ package com.sprarta.sproutmarket.domain.item.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
+import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
@@ -52,6 +53,7 @@ public class ItemService {
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
     private final CategoryService categoryService;
+    private final CategoryRepository categoryRepository;
     private final AdministrativeAreaService admAreaService;
     private final ImageService imageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
@@ -78,7 +80,7 @@ public class ItemService {
 
         Category category = null;
         if(itemSearchRequest.getCategoryId() != null){
-            category = categoryService.findByIdOrElseThrow(itemSearchRequest.getCategoryId());
+            category = categoryRepository.findByIdOrElseThrow(itemSearchRequest.getCategoryId());
         }
 
         ItemSaleStatus itemSaleStatus = null;
@@ -106,7 +108,7 @@ public class ItemService {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
         // 카테고리 찾기
-        Category findCategory = categoryService.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
+        Category findCategory = categoryRepository.findByIdOrElseThrow(itemCreateRequest.getCategoryId());
 
         Item item = Item.builder()
             .title(itemCreateRequest.getTitle())
@@ -379,7 +381,7 @@ public class ItemService {
         User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
         String area = user.getAddress();
         // 카테고리 존재 확인
-        Category findCategory = categoryService.findByIdOrElseThrow(categoryId);
+        Category findCategory = categoryRepository.findByIdOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(area);

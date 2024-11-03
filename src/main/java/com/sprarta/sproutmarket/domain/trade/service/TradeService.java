@@ -34,8 +34,7 @@ public class TradeService {
      */
     @Transactional
     public TradeResponseDto reserveTrade(Long chatRoomId, CustomUserDetails customUserDetails) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CHATROOM));
+        ChatRoom chatRoom = chatRoomRepository.findByIdOrElseThrow(chatRoomId);
 
         // 판매자와 거래 생성자가 다른 경우 예외 발생
         if (!chatRoom.getSeller().getId().equals(customUserDetails.getId())) {
@@ -65,8 +64,7 @@ public class TradeService {
      */
     @Transactional
     public void finishTrade(Long tradeId, CustomUserDetails customUserDetails, TradeStatus tradeStatus) {
-        Trade trade = tradeRepository.findById(tradeId).orElseThrow(() ->
-                new ApiException(ErrorStatus.NOT_FOUND_TRADE));
+        Trade trade = tradeRepository.findByIdOrElseThrow(tradeId);
 
         //요청한 유저가 해당 아이템의 판매자인지 검증
         if (!trade.getChatRoom().getSeller().getId().equals(customUserDetails.getId())) {
