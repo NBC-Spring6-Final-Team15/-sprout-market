@@ -224,7 +224,7 @@ public class ItemService {
      * @param itemId Item's ID
      * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
      */
-    public ItemResponseDto getItem(Long itemId){
+    public ItemResponseDto getItem(Long itemId, CustomUserDetails authUser){
         Item item = findItemById(itemId);
 
         incrementViewCount(itemId, authUser.getId());
