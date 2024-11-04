@@ -31,7 +31,7 @@ public class AuthService {
     private final EmailService emailService;
     private final RedisUtil redisUtil;
 
-    private static final String AUTH_EMAIL_KEY = "authEmail:";
+    private static final String AUTH_EMAIL_KEY = "AuthEmail:";
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -40,6 +40,7 @@ public class AuthService {
 
     @Transactional
     public SignupResponse adminSignup(AdminSignupRequest request) {
+
         if (!request.getAdminKey().equals(adminKey)) {
             throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
         }
@@ -69,8 +70,8 @@ public class AuthService {
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // User 엔티티 생성
-        User newUser = new User(
+        // User 엔티티 생성 (forKakao 사용)
+        User newUser = User.forKakao(
                 request.getUsername(),
                 email,
                 nickname,
@@ -81,11 +82,11 @@ public class AuthService {
                 UserRole.USER
         );
 
-        // 데이터베이스에 저장
-        User savedUser = userRepository.save(newUser);
+        // DB 저장
+        userRepository.save(newUser);
 
         // JWT 토큰 생성
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), UserRole.USER);
+        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), UserRole.USER);
 
         return new SignupResponse(bearerToken);
     }
@@ -106,8 +107,9 @@ public class AuthService {
                 request.getAddress(),
                 userRole
         );
-        User savedUser = userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
+
+        userRepository.save(newUser);
+        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), userRole);
 
         return new SignupResponse(bearerToken);
     }
@@ -124,8 +126,9 @@ public class AuthService {
                 null, // adminSignup 에서는 address 가 필요하지 않으므로 null로 설정
                 userRole
         );
-        User savedUser = userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), userRole);
+
+        userRepository.save(newUser);
+        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), userRole);
 
         return new SignupResponse(bearerToken);
     }

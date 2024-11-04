@@ -3,11 +3,10 @@ package com.sprarta.sproutmarket.domain.item.entity;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -39,22 +38,19 @@ public class Item extends Timestamped {
     // 파일
     @Column(nullable = false)
     @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE)
-    private List<Image> images = new ArrayList<>();
+    private List<ItemImage> itemImages = new ArrayList<>();
     // 삭제 상태
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    // 빌더의 사용이유: 필드 개수가 많고, 더 추가될 예정이라
-    @Builder
-    private Item(String title, String description, int price, ItemSaleStatus itemSaleStatus, User seller,  Category category, Status status, List<Image> images){
+    public Item(String title, String description, int price, User seller, ItemSaleStatus itemSaleStatus, Category category, Status status) {
         this.title = title;
         this.description = description;
         this.price = price;
-        this.itemSaleStatus = itemSaleStatus;
         this.seller = seller;
+        this.itemSaleStatus = itemSaleStatus;
         this.category = category;
         this.status = status;
-        this.images = images;
     }
 
     public void changeSaleStatus(ItemSaleStatus itemSaleStatus) {

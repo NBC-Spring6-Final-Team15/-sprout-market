@@ -10,6 +10,8 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -53,19 +55,19 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
-    @PutMapping("/profile-image")
-    public ResponseEntity<ApiResponse<String>> updateProfileImage(
-            @AuthenticationPrincipal CustomUserDetails authUser,
-            @RequestPart(value = "image", required = true) MultipartFile image) {
-        String profileImageUrl = userService.updateProfileImage(authUser, image);
-        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
-    }
-
-    @DeleteMapping("/profile-image")
-    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
-        userService.deleteProfileImage(authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-    }
+//    @PutMapping("/profile-image")
+//    public ResponseEntity<ApiResponse<String>> updateProfileImage(
+//            @AuthenticationPrincipal CustomUserDetails authUser,
+//            @RequestBody String profileImageName) {
+//        String profileImageUrl = userService.updateProfileImage(authUser, profileImageName);
+//        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
+//    }
+//
+//    @DeleteMapping("/profile-image")
+//    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
+//        userService.deleteProfileImage(authUser);
+//        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+//    }
 
     @PatchMapping("/admin/deleted/{userId}")
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable long userId) {
@@ -74,7 +76,7 @@ public class UserController {
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<ApiResponse<List<UserAdminResponse>>> getUsers() {
-        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getAllUsers()));
+    public ResponseEntity<ApiResponse<Page<UserAdminResponse>>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getAllUsers(pageable)));
     }
 }
