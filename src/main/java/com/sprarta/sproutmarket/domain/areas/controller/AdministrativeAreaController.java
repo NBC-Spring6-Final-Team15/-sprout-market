@@ -61,7 +61,7 @@ public class AdministrativeAreaController {
     /**
      * 특정 행정동 기준 5km 떨어진 행정구역 리스트 조회하는 쿼리를 캐싱합니다.
      */
-    @GetMapping("/admin/cache")
+    @GetMapping("/admin/areas/cache")
     public ResponseEntity<ApiResponse<Void>> cachingAllAdms() {
         admCachingService.cachingAllAdms();
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
