@@ -3,14 +3,13 @@ package com.sprarta.sproutmarket.domain.item.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
-import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
-import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
+import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -18,7 +17,6 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
-import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
@@ -28,10 +26,6 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -42,30 +36,27 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-public class ItemServiceTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+class ItemServiceTest {
     @Mock
     private ItemRepository itemRepository;
     @Mock
     private UserRepository userRepository;
     @Mock
-    private CategoryRepository categoryRepository;
-    @Mock
     private ItemImageRepository itemImageRepository;
     @Mock
     private ItemRepositoryCustom itemRepositoryCustom;
     @Mock
-    private CategoryService categoryService;
+    private CategoryRepository categoryRepository;
     @Mock
     private ItemImageService itemImageService;
     @Mock
@@ -86,23 +77,18 @@ public class ItemServiceTest {
     private User mockUser;
     private User mockAdmin;
     private Category mockCategory1;
-    private Category mockCategory2;
     private Item mockItem1;
     private Item mockItem2;
     private CustomUserDetails authUser;
     private CustomUserDetails authAdmin;
     private FindItemsInMyAreaRequestDto requestDto;
-    private ItemImage itemImage;
-    private MockMultipartFile mockImage;
 
     @BeforeEach // 코드 실행 전 작동 + 테스트 환경 초기화
     void setup(){
         MockitoAnnotations.openMocks(this); //어노테이션 Mock과 InjectMocks를 초기화
 
-        mockImage = new MockMultipartFile("file", "itemImage.jpg", "image/jpeg", "itemImage content".getBytes());
-
         // 가짜 사용자 생성
-        //String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole
+        //String username, String email, String password, String nickname, String phoneNumber, String address
         mockUser = new User(
             "가짜 객체1",
             "mock@mock.com",
@@ -129,7 +115,7 @@ public class ItemServiceTest {
         // 가짜 카테고리 생성
         mockCategory1 = new Category("생활");
         ReflectionTestUtils.setField(mockCategory1, "id", 1L);
-        mockCategory2 = new Category( "가구");
+        Category mockCategory2 = new Category("가구");
         ReflectionTestUtils.setField(mockCategory2, "id", 2L);
 
         // 가짜 매물 생성
@@ -150,7 +136,7 @@ public class ItemServiceTest {
             3000,
             mockUser,
             ItemSaleStatus.WAITING,
-            mockCategory2,
+                mockCategory2,
             Status.ACTIVE
         );
         ReflectionTestUtils.setField(mockItem2, "id", 2L);
@@ -160,11 +146,11 @@ public class ItemServiceTest {
             .size(10)
             .build();
 
-        itemImage = ItemImage.builder()
-            .id(1L)
-            .item(mockItem1)
-            .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
-            .build();
+        ItemImage itemImage = ItemImage.builder()
+                .id(1L)
+                .item(mockItem1)
+                .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
+                .build();
 
         authUser = new CustomUserDetails(
             mockUser
@@ -228,19 +214,19 @@ public class ItemServiceTest {
             .build();
 
         List<String> areaList = List.of("서울시 관악구 신림동", "서울시 관악구 봉천동");
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(0, size);
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
         when(admAreaService.getAdmNameListByAdmName("서울시 관악구 신림동")).thenReturn(areaList);
-        when(categoryService.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory1);
 
         // When
-        Page<ItemSearchResponse> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
+        itemService.searchItems(page, size, itemSearchRequest, authUser);
 
         // Then
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(admAreaService, times(1)).getAdmNameListByAdmName("서울시 관악구 신림동");
-        verify(categoryService, times(1)).findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
+        verify(categoryRepository, times(1)).findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
         verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory1, ItemSaleStatus.WAITING, pageable);
     }
 
@@ -256,8 +242,9 @@ public class ItemServiceTest {
             .build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-        when(categoryService.findByIdAndStatusIsActive(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdAndStatusIsActiveOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
+        when(categoryRepository.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(itemImageService.uploadItemImage(any(Long.class), any(String.class), any(CustomUserDetails.class))).thenReturn("test.jpg");
 
         // When
@@ -400,7 +387,7 @@ public class ItemServiceTest {
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
-        when(categoryService.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(admAreaService.getAdmNameListByAdmName(mockUser.getAddress())).thenReturn(List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"));
         when(itemRepository.findItemByAreaAndCategory(pageable, List.of("서울시 관악구 신림동", "서울시 관악구 봉천동"), mockCategory1.getId())).thenReturn(pageResult);
 

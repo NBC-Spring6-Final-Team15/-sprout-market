@@ -7,7 +7,6 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
 import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
@@ -77,7 +76,7 @@ public class ItemService {
         User user = findUserById(authUser.getId());
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
-        Category category = categoryService.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
         ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);
@@ -95,7 +94,7 @@ public class ItemService {
     @Transactional
     public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         User user = findUserById(authUser.getId());
-        Category category = categoryService.findByIdAndStatusIsActive(itemCreateRequest.getCategoryId());
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemCreateRequest.getCategoryId());
         Item item = new Item(
             itemCreateRequest.getTitle(),
             itemCreateRequest.getDescription(),
@@ -260,8 +259,10 @@ public class ItemService {
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
     public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
-        User user = findUserById(authUser.getId());
-        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String area = user.getAddress();
+        // 카테고리 존재 확인
+        Category category = categoryRepository.findByIdOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
         List<String> areaList = getAreaListByUserAddress(user.getAddress());
