@@ -3,7 +3,8 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
@@ -27,7 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdministrativeAreaService administrativeAreaService;
-    private final S3ImageService s3ImageService;
+    private final ProfileImageService profileImageService;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -79,32 +80,34 @@ public class UserService {
         user.changeAddress(administrativeArea);
     }
 
-    @Transactional
-    public String updateProfileImage(CustomUserDetails authUser, MultipartFile image) {
-        User user = userRepository.findById(authUser.getId())
-                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-
-        // 프로필 이미지 S3 업로드
-        String profileImageUrl = s3ImageService.upload(image, user.getId(), authUser);
-
-        // 유저 엔티티에 프로필 이미지 URL 업데이트
-        user.updateProfileImage(profileImageUrl);
-
-        return profileImageUrl;
-    }
-
-    @Transactional
-    public void deleteProfileImage(CustomUserDetails authUser) {
-        User user = userRepository.findById(authUser.getId())
-                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-
-        String currentProfileImageUrl = user.getProfileImageUrl();
-        if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
-            s3ImageService.deleteImageFromS3(currentProfileImageUrl);
-        }
-
-        user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
-    }
+//    @Transactional
+//    public String updateProfileImage(CustomUserDetails authUser, String profileImageName) {
+//        User user = userRepository.findById(authUser.getId())
+//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+//
+//        // 프로필 이미지 S3 업로드
+//        String profileImageUrl = profileImageService.uploadProfileImage(profileImageName, authUser);
+//
+//        // 유저 엔티티에 프로필 이미지 URL 업데이트
+//        user.updateProfileImage(profileImageUrl);
+//
+//        userRepository.save(user);
+//        return profileImageUrl;
+//    }
+//
+//    @Transactional
+//    public void deleteProfileImage(CustomUserDetails authUser) {
+//        User user = userRepository.findById(authUser.getId())
+//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+//
+//        String currentProfileImageUrl = user.getProfileImageUrl();
+//        if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
+//            //s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
+//        }
+//
+//        userRepository.save(user);
+//        user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
+//    }
 
     // 탈퇴된 유저 복원
     @Transactional

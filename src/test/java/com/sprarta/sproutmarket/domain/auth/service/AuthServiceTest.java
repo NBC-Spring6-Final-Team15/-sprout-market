@@ -68,7 +68,6 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
-                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
@@ -109,7 +108,6 @@ class AuthServiceTest {
         AdminSignupRequest request = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
-                123456,
                 "adminPassword",
                 "adminNickname",
                 "010-1234-5678",
@@ -147,7 +145,6 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
-                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
@@ -175,7 +172,7 @@ class AuthServiceTest {
                 UserRole.USER
         );
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()))
                 .thenReturn("jwt-token");
@@ -202,7 +199,7 @@ class AuthServiceTest {
         SigninRequest request = new SigninRequest("email@example.com", "password");
         User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));

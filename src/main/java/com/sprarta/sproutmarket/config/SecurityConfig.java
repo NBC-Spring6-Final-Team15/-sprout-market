@@ -45,7 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**",
                                 "/login/**",
                                 "/error/**",
-                                "/notifications/**").permitAll()
+                                "/notifications/**",
+                                "/actuator/**").permitAll()
                         .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
                         //Swagger 관련 오픈
                         .requestMatchers("/docs/**",

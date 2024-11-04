@@ -1,6 +1,5 @@
 package com.sprarta.sproutmarket.domain.areas.repository;
 
-import com.sprarta.sproutmarket.domain.areas.dto.AdmNameDto;
 import com.sprarta.sproutmarket.domain.areas.entity.AdministrativeArea;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -35,7 +35,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
         AdminSignupRequest adminSignupRequest = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
-                123456,
                 "adminPassword",
                 "adminNickname",
                 "010-1234-5678",
@@ -57,7 +56,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .requestFields(
                                         fieldWithPath("username").description("관리자 이름"),
                                         fieldWithPath("email").description("관리자 이메일"),
-                                        fieldWithPath("authNumber").description("이메일 인증번호"),
                                         fieldWithPath("password").description("관리자 비밀번호"),
                                         fieldWithPath("nickname").description("관리자 닉네임"),
                                         fieldWithPath("phoneNumber").description("관리자 전화번호"),
@@ -106,7 +104,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
         SignupRequest signupRequest = new SignupRequest(
                 "username",
                 "user@example.com",
-                123456,
                 "userPassword",
                 "userNickname",
                 "010-1234-5678",
@@ -128,7 +125,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .requestFields(
                                         fieldWithPath("username").description("사용자 이름"),
                                         fieldWithPath("email").description("사용자 이메일"),
-                                        fieldWithPath("authNumber").description("이메일 인증번호"),
                                         fieldWithPath("password").description("사용자 비밀번호"),
                                         fieldWithPath("nickname").description("사용자 닉네임"),
                                         fieldWithPath("phoneNumber").description("사용자 전화번호"),

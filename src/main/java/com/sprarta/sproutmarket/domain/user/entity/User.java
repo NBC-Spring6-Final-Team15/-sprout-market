@@ -2,15 +2,11 @@ package com.sprarta.sproutmarket.domain.user.entity;
 
 import com.sprarta.sproutmarket.domain.common.Timestamped;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.report.entity.Report;
-import com.sprarta.sproutmarket.domain.review.entity.Review;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -46,17 +42,11 @@ public class User extends Timestamped {
     @Column(nullable = false)
     private UserRole userRole;
 
-    @OneToMany(mappedBy = "seller", fetch = FetchType.LAZY)
-    private List<Review> reviews;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Report> reports;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
 
-    @Column(nullable = true)
+    @Column
     private String profileImageUrl;
 
     public User(String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {

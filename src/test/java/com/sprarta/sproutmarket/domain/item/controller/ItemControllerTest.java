@@ -6,7 +6,7 @@ import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -74,7 +74,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     private Item mockItem;
     private Category mockCategory;
-    private Image image;
+    private ItemImage itemImage;
     private User mockUser;
     private MockMultipartFile mockImage;
 
@@ -82,18 +82,18 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
         // 테스트 전 수행
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
+        mockImage = new MockMultipartFile("file", "itemImage.jpg", "image/jpeg", "itemImage content".getBytes());
 
         // 클래스 인스턴스 생성
         mockUser = new User("김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         ReflectionTestUtils.setField(mockUser, "id", 1L);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
-        image = Image.builder()
-                .id(1L)
-                .item(mockItem)
-                .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
-                .build();
+        itemImage = ItemImage.builder()
+            .id(1L)
+            .item(mockItem)
+            .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
+            .build();
 
         // 객체 생성
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -103,15 +103,15 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
         mockCategory = new Category("청소");
 
         // Mock Item 생성
-        mockItem = Item.builder()
-                .title("가짜 아이템")
-                .description("가짜 설명")
-                .price(10000)
-                .itemSaleStatus(ItemSaleStatus.WAITING)
-                .seller(mockUser)
-                .category(mockCategory)
-                .status(Status.ACTIVE)
-                .build();
+        mockItem =  new Item(
+            "가짜 아이템",
+            "가짜 설명",
+            10000,
+            mockUser,
+            ItemSaleStatus.WAITING,
+            mockCategory,
+            Status.ACTIVE
+        );
 
         ReflectionTestUtils.setField(mockItem, "id", 1L);
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
@@ -126,409 +126,273 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_검색_성공() throws Exception {
-        ItemSearchRequest requestDto = new ItemSearchRequest(
-                "1", 1L, true
-        );
+    void 매물_검색_성공 () throws Exception {
+        ItemSearchRequest requestDto = ItemSearchRequest.builder()
+            .searchKeyword("1")
+            .categoryId(1L)
+            .saleStatus(true)
+            .build();
+
         //페이지 직접 만들어주기
         List<ItemSearchResponse> responseList = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             ItemSearchResponse response = new ItemSearchResponse(
-                    (long) i,
-                    "제목" + i,
-                    15000,
-                    "주소" + i,
-                    "url" + i,
-                    LocalDateTime.now() // 생성 날짜
+                (long) i,
+                "제목" + i,
+                15000,
+                "주소" + i,
+                "url" + i,
+                LocalDateTime.now() // 생성 날짜
             );
             responseList.add(response);
         }
 
-
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0 , 10);
         Page<ItemSearchResponse> pageResult = new PageImpl<>(responseList, pageable, responseList.size());
-        given(itemService.searchItems(anyInt(), anyInt(), any(ItemSearchRequest.class), any(CustomUserDetails.class)))
-                .willReturn(pageResult);
+        given(itemService.searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class)))
+            .willReturn(pageResult);
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/search")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("page", String.valueOf(1))
-                        .param("size", String.valueOf(10))
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(MockMvcRestDocumentationWrapper.document(
-                        "search-items-by-my-areas",
-                        resource(ResourceSnippetParameters.builder()
-                                .description("우리 동네의 검색 조건에 속하는 매물을 조회합니다.")
-                                .summary("조건에 해당하는 우리 동네 매물 조회")
-                                .tag("Items")
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
-                                .queryParameters(
-                                        parameterWithName("page").description("페이지 넘버, 기본값 1, 최소값 1"),
-                                        parameterWithName("size").description("페이지 크기, 기본값 10, 최소값 1")
-                                )
-                                .requestFields(
-                                        fieldWithPath("searchKeyword").type(JsonFieldType.STRING)
-                                                .description("검색 명"),
-                                        fieldWithPath("categoryId").type(JsonFieldType.NUMBER)
-                                                .description("검색할 카테고리 아이디"),
-                                        fieldWithPath("saleStatus").type(JsonFieldType.BOOLEAN)
-                                                .description("판매중")
-                                )
-                                .responseFields(
-                                        fieldWithPath("message").type(JsonFieldType.STRING)
-                                                .description("성공 상태 메시지"),
-                                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                .description("성공 시 응답 코드 : 200"),
-                                        fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                                .description("응답 본문"),
-                                        fieldWithPath("data.content").type(JsonFieldType.ARRAY)
-                                                .description("아이템 리스트"),
-                                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER)
-                                                .description("아이템 ID"),
-                                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
-                                                .description("아이템 제목"),
-                                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
-                                                .description("아이템 가격"),
-                                        fieldWithPath("data.content[].address").type(JsonFieldType.STRING)
-                                                .description("판매자 행정동"),
-                                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING)
-                                                .description("이미지 Url"),
-                                        fieldWithPath("data.content[].createAt").type(JsonFieldType.STRING)
-                                                .description("생성일"),
-                                        fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
-                                                .description("페이지 관련 정보"),
-                                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지 번호 (0부터 시작)"),
-                                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER)
-                                                .description("페이지 크기"),
-                                        fieldWithPath("data.pageable.sort").type(JsonFieldType.OBJECT)
-                                                .description("정렬 정보"),
-                                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬 정보가 비어 있는지 여부"),
-                                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬되었는지 여부"),
-                                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬되지 않았는지 여부"),
-                                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지의 시작점 오프셋"),
-                                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN)
-                                                .description("페이징 여부"),
-                                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN)
-                                                .description("페이징되지 않은 여부"),
-                                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN)
-                                                .description("마지막 페이지인지 여부"),
-                                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER)
-                                                .description("전체 페이지 수"),
-                                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER)
-                                                .description("전체 아이템 수"),
-                                        fieldWithPath("data.size").type(JsonFieldType.NUMBER)
-                                                .description("페이지 크기"),
-                                        fieldWithPath("data.number").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지 번호"),
-                                        fieldWithPath("data.sort").type(JsonFieldType.OBJECT)
-                                                .description("현재 페이지의 정렬 정보"),
-                                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지의 정렬 정보가 비어 있는지 여부"),
-                                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 정렬되었는지 여부"),
-                                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 정렬되지 않았는지 여부"),
-                                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN)
-                                                .description("첫 번째 페이지인지 여부"),
-                                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지에 있는 아이템 수"),
-                                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 비어 있는지 여부")
-                                )
-                                .requestSchema(Schema.schema("동네-특정-조건-매물-검색-성공-요청"))
-                                .responseSchema(Schema.schema("동네-특정-조건-매물-검색-성공-응답"))
-                                .build()
-                        )
-                ));
-        verify(itemService, times(1)).searchItems(anyInt(), anyInt(), any(ItemSearchRequest.class), any(CustomUserDetails.class));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements").value(responseList.size()));
-    }
-
-    @Test
-    @WithMockUser
-    void 매물_이미지_삭제_성공() throws Exception {
-        Long itemId = 1L;
-        Long imageId = 1L;
-        ItemResponse itemResponse = new ItemResponse(
-                mockItem.getTitle(),
-                Status.ACTIVE,
-                mockItem.getPrice(),
-                mockAuthUser.getUsername()
-        );
-
-
-        when(itemService.deleteImage(eq(itemId), any(CustomUserDetails.class), eq(imageId))).thenReturn(itemResponse);
-
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}/image", itemId)
-                        .param("imageId", String.valueOf(imageId))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(
-                        MockMvcRestDocumentationWrapper.document(
-                                "remove-image",
-                                resource(ResourceSnippetParameters.builder()
-                                        .description("매물의 이미지를 삭제합니다.")
-                                        .pathParameters(
-                                                parameterWithName("itemId").description("매물 ID")
-                                        )
-                                        .summary("매물의 이미지 삭제")
-                                        .tag("Items")
-                                        .requestHeaders(
-                                                headerWithName("Authorization")
-                                                        .description("Bearer (JWT 토큰)")
-                                        )
-                                        .requestSchema(Schema.schema("이미지-삭제-성공-요청"))
-                                        .responseFields(
-                                                fieldWithPath("message").type(JsonFieldType.STRING)
-                                                        .description("성공 시 메시지"),
-                                                fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                        .description("200 상태 코드"),
-                                                fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                                        .description("반환된 정보"),
-                                                fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                                        .description("이미지가 삭제된 매물의 제목"),
-                                                fieldWithPath("data.status").type(JsonFieldType.STRING)
-                                                        .description("이미지가 삭제된 매물의 내용"),
-                                                fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                                        .description("이미지가 삭제된 매물의 가격"),
-                                                fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                                        .description("수정한 유저 닉네임")
-                                        )
-                                        .responseSchema(Schema.schema("이미지-삭제-성공-응답"))
-                                        .build()
-                                )
-                        )
-                );
-
-        verify(itemService, times(1)).deleteImage(any(Long.class), any(CustomUserDetails.class), any(Long.class));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))
-                .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
-                .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()));
-    }
-
-
-    @Test
-    @WithMockUser
-    void 매물_이미지_추가_성공() throws Exception {
-        // given
-        Long itemId = 1L;
-        MockMultipartFile mockImage = new MockMultipartFile(
-                "image",  // 필드 이름
-                "mockImage.jpg",  // 파일 이름
-                MediaType.IMAGE_JPEG_VALUE,  // 콘텐츠 타입
-                "image content".getBytes()  // 파일의 바이트 배열
-        );
-        ItemResponse mockItemResponse = new ItemResponse(
-                mockItem.getTitle(),
-                mockItem.getPrice(),
-                Status.ACTIVE,
-                mockImage.getName(),
-                mockUser.getNickname()
-        );
-        when(itemService.addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class))).thenReturn(mockItemResponse);
-
-        // when & then
-        mockMvc.perform(multipart("/items/{itemId}/image", itemId)
-                        .file(mockImage)
-                        .with(request -> {
-                            request.setMethod("PUT");
-                            return request;
-                        })
-                        .contentType(MediaType.MULTIPART_FORM_DATA)
-                        .header("Authorization", "Bearer (JWT 토큰)")
+                .contentType(MediaType.APPLICATION_JSON)
+                .param("page", String.valueOf(1))
+                .param("size", String.valueOf(10))
+                .content(objectMapper.writeValueAsString(requestDto))
+                .header("Authorization", "Bearer (JWT 토큰)"))
+            .andDo(MockMvcRestDocumentationWrapper.document(
+                "search-items-by-my-areas",
+                resource(ResourceSnippetParameters.builder()
+                    .description("우리 동네의 검색 조건에 속하는 매물을 조회합니다.")
+                    .summary("조건에 해당하는 우리 동네 매물 조회")
+                    .tag("Items")
+                    .requestHeaders(
+                        headerWithName("Authorization")
+                            .description("Bearer (JWT 토큰)")
+                    )
+                    .queryParameters(
+                        parameterWithName("page").description("페이지 넘버, 기본값 1, 최소값 1"),
+                        parameterWithName("size").description("페이지 크기, 기본값 10, 최소값 1")
+                    )
+                    .requestFields(
+                        fieldWithPath("searchKeyword").type(JsonFieldType.STRING)
+                            .description("검색 명"),
+                        fieldWithPath("categoryId").type(JsonFieldType.NUMBER)
+                            .description("검색할 카테고리 아이디"),
+                        fieldWithPath("saleStatus").type(JsonFieldType.BOOLEAN)
+                            .description("판매중")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                            .description("성공 상태 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                            .description("성공 시 응답 코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                            .description("응답 본문"),
+                        fieldWithPath("data.content").type(JsonFieldType.ARRAY)
+                            .description("아이템 리스트"),
+                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER)
+                            .description("아이템 ID"),
+                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
+                            .description("아이템 제목"),
+                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
+                            .description("아이템 가격"),
+                        fieldWithPath("data.content[].address").type(JsonFieldType.STRING)
+                            .description("판매자 행정동"),
+                        fieldWithPath("data.content[].imageUrl").type(JsonFieldType.STRING)
+                            .description("이미지 Url"),
+                        fieldWithPath("data.content[].createAt").type(JsonFieldType.STRING)
+                            .description("생성일"),
+                        fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
+                            .description("페이지 관련 정보"),
+                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호 (0부터 시작)"),
+                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.pageable.sort").type(JsonFieldType.OBJECT)
+                            .description("정렬 정보"),
+                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되었는지 여부"),
+                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되지 않았는지 여부"),
+                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지의 시작점 오프셋"),
+                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징 여부"),
+                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징되지 않은 여부"),
+                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN)
+                            .description("마지막 페이지인지 여부"),
+                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER)
+                            .description("전체 페이지 수"),
+                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER)
+                            .description("전체 아이템 수"),
+                        fieldWithPath("data.size").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.number").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호"),
+                        fieldWithPath("data.sort").type(JsonFieldType.OBJECT)
+                            .description("현재 페이지의 정렬 정보"),
+                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지의 정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되었는지 여부"),
+                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되지 않았는지 여부"),
+                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN)
+                            .description("첫 번째 페이지인지 여부"),
+                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지에 있는 아이템 수"),
+                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 비어 있는지 여부")
+                    )
+                    .requestSchema(Schema.schema("동네-특정-조건-매물-검색-성공-요청"))
+                    .responseSchema(Schema.schema("동네-특정-조건-매물-검색-성공-응답"))
+                    .build()
                 )
-                .andDo(
-                        MockMvcRestDocumentationWrapper.document(
-                                "add-image",
-                                resource(ResourceSnippetParameters.builder()
-                                        .description("매물에 이미지를 추가합니다.")
-                                        .pathParameters(
-                                                parameterWithName("itemId").description("매물 ID")
-                                        )
-                                        .summary("매물에 이미지 추가")
-                                        .tag("Items")
-                                        .requestHeaders(
-                                                headerWithName("Authorization")
-                                                        .description("Bearer (JWT 토큰)")
-                                        )
-                                        .requestSchema(Schema.schema("이미지-추가-성공-요청"))
-                                        .responseFields(
-                                                fieldWithPath("message").type(JsonFieldType.STRING)
-                                                        .description("성공 시 메시지"),
-                                                fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                        .description("200 상태 코드"),
-                                                fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                                        .description("반환된 정보"),
-                                                fieldWithPath("data.title").type(JsonFieldType.STRING)
-                                                        .description("제목"),
-                                                fieldWithPath("data.price").type(JsonFieldType.NUMBER)
-                                                        .description("가격"),
-                                                fieldWithPath("data.status").type(JsonFieldType.STRING)
-                                                        .description("활성상태"),
-                                                fieldWithPath("data.imageUrl").type(JsonFieldType.STRING)
-                                                        .description("추가된 이미지"),
-                                                fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                                        .description("이미지를 추가한 유저 닉네임")
-                                        )
-                                        .responseSchema(Schema.schema("이미지-추가-성공-응답"))
-                                        .build()
-                                )
-                        )
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.title").value(mockItemResponse.getTitle()))  // 응답 검증
-                .andExpect(jsonPath("$.data.status").value(mockItemResponse.getStatus().toString()))  // 응답 검증
-                .andExpect(jsonPath("$.data.imageUrl").value(mockItemResponse.getImageUrl()))  // 응답 검증
-                .andExpect(jsonPath("$.data.nickname").value(mockItemResponse.getNickname()));
-
-        verify(itemService, times(1)).addImage(eq(itemId), any(CustomUserDetails.class), any(MultipartFile.class));
+            ));
+        verify(itemService,times(1)).searchItems(anyInt(),anyInt(),any(ItemSearchRequest.class),any(CustomUserDetails.class));
+        result.andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.totalElements").value(responseList.size()));
     }
 
     @Test
     @WithMockUser
     void 내_주변_특정카테고리_매물_조회_성공() throws Exception {
         Long categoryId = 1L;
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1, 10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();
         //페이지 직접 만들어주기
         List<ItemResponseDto> dtoList = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
+        for(int i = 1; i <= 5; i++) {
             ItemResponseDto dto = new ItemResponseDto(
-                    (long) i, //
-                    "제목" + i,
-                    "내용" + i,
-                    15000,
-                    "닉네임" + i,
-                    ItemSaleStatus.WAITING,
-                    mockCategory.getName(),
-                    Status.ACTIVE
+                (long) i, //
+                "제목" + i,
+                "내용" + i,
+                15000,
+                "닉네임" + i,
+                ItemSaleStatus.WAITING,
+                mockCategory.getName(),
+                Status.ACTIVE
             );
             dtoList.add(dto);
         }
 
-        Pageable pageable = PageRequest.of(requestDto.getPage() - 1, requestDto.getSize());
-        Page<ItemResponseDto> pageResult = new PageImpl<>(dtoList, pageable, dtoList.size());
+        Pageable pageable = PageRequest.of(requestDto.getPage() - 1 , requestDto.getSize());
+        Page<ItemResponseDto> pageResult = new PageImpl<>(dtoList,pageable,dtoList.size());
 
-        given(itemService.getCategoryItems(any(FindItemsInMyAreaRequestDto.class), any(Long.class), any(CustomUserDetails.class))).willReturn(pageResult);
+        given(itemService.getCategoryItems(any(FindItemsInMyAreaRequestDto.class),any(Long.class),any(CustomUserDetails.class))).willReturn(pageResult);
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/items/category/{categoryId}", categoryId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestDto))
-                        .header("Authorization", "Bearer (JWT 토큰)"))
-                .andDo(MockMvcRestDocumentationWrapper.document(
-                        "get-items-by-my-areas-and-category",
-                        resource(ResourceSnippetParameters.builder()
-                                .description("우리 동네의 특정 카테고리에 속하는 매물을 조회합니다.")
-                                .summary("동네 특정 카테고리 매물 조회")
-                                .tag("Items")
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
-                                .requestFields(
-                                        fieldWithPath("page").type(JsonFieldType.NUMBER)
-                                                .description("페이지 넘버, 기본값 1, 최소값 1"),
-                                        fieldWithPath("size").type(JsonFieldType.NUMBER)
-                                                .description("페이지 크기, 기본값 10, 최소값 1")
-                                )
-                                .responseFields(
-                                        fieldWithPath("message").type(JsonFieldType.STRING)
-                                                .description("성공 상태 메시지"),
-                                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                .description("성공 시 응답 코드 : 200"),
-                                        fieldWithPath("data").type(JsonFieldType.OBJECT)
-                                                .description("응답 본문"),
-                                        fieldWithPath("data.content").type(JsonFieldType.ARRAY)
-                                                .description("아이템 리스트"),
-                                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER)
-                                                .description("아이템 ID"),
-                                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
-                                                .description("아이템 제목"),
-                                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING)
-                                                .description("아이템 설명"),
-                                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
-                                                .description("아이템 가격"),
-                                        fieldWithPath("data.content[].nickname").type(JsonFieldType.STRING)
-                                                .description("판매자 닉네임"),
-                                        fieldWithPath("data.content[].itemSaleStatus").type(JsonFieldType.STRING)
-                                                .description("아이템 판매 상태"),
-                                        fieldWithPath("data.content[].categoryName").type(JsonFieldType.STRING)
-                                                .description("아이템 카테고리 이름"),
-                                        fieldWithPath("data.content[].status").type(JsonFieldType.STRING)
-                                                .description("아이템 상태 (예: ACTIVE, INACTIVE)"),
-                                        fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
-                                                .description("페이지 관련 정보"),
-                                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지 번호 (0부터 시작)"),
-                                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER)
-                                                .description("페이지 크기"),
-                                        fieldWithPath("data.pageable.sort").type(JsonFieldType.OBJECT)
-                                                .description("정렬 정보"),
-                                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬 정보가 비어 있는지 여부"),
-                                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬되었는지 여부"),
-                                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN)
-                                                .description("정렬되지 않았는지 여부"),
-                                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지의 시작점 오프셋"),
-                                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN)
-                                                .description("페이징 여부"),
-                                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN)
-                                                .description("페이징되지 않은 여부"),
-                                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN)
-                                                .description("마지막 페이지인지 여부"),
-                                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER)
-                                                .description("전체 페이지 수"),
-                                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER)
-                                                .description("전체 아이템 수"),
-                                        fieldWithPath("data.size").type(JsonFieldType.NUMBER)
-                                                .description("페이지 크기"),
-                                        fieldWithPath("data.number").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지 번호"),
-                                        fieldWithPath("data.sort").type(JsonFieldType.OBJECT)
-                                                .description("현재 페이지의 정렬 정보"),
-                                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지의 정렬 정보가 비어 있는지 여부"),
-                                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 정렬되었는지 여부"),
-                                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 정렬되지 않았는지 여부"),
-                                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN)
-                                                .description("첫 번째 페이지인지 여부"),
-                                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER)
-                                                .description("현재 페이지에 있는 아이템 수"),
-                                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
-                                                .description("현재 페이지가 비어 있는지 여부")
-                                )
-                                .requestSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-요청"))
-                                .responseSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-응답"))
-                                .build()
-                        )
-                ));
-        verify(itemService, times(1)).getCategoryItems(any(FindItemsInMyAreaRequestDto.class), any(Long.class), any(CustomUserDetails.class));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto))
+                .header("Authorization", "Bearer (JWT 토큰)"))
+            .andDo(MockMvcRestDocumentationWrapper.document(
+                "get-items-by-my-areas-and-category",
+                resource(ResourceSnippetParameters.builder()
+                    .description("우리 동네의 특정 카테고리에 속하는 매물을 조회합니다.")
+                    .summary("동네 특정 카테고리 매물 조회")
+                    .tag("Items")
+                    .requestHeaders(
+                        headerWithName("Authorization")
+                            .description("Bearer (JWT 토큰)")
+                    )
+                    .requestFields(
+                        fieldWithPath("page").type(JsonFieldType.NUMBER)
+                            .description("페이지 넘버, 기본값 1, 최소값 1"),
+                        fieldWithPath("size").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기, 기본값 10, 최소값 1")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").type(JsonFieldType.STRING)
+                            .description("성공 상태 메시지"),
+                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                            .description("성공 시 응답 코드 : 200"),
+                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                            .description("응답 본문"),
+                        fieldWithPath("data.content").type(JsonFieldType.ARRAY)
+                            .description("아이템 리스트"),
+                        fieldWithPath("data.content[].id").type(JsonFieldType.NUMBER)
+                            .description("아이템 ID"),
+                        fieldWithPath("data.content[].title").type(JsonFieldType.STRING)
+                            .description("아이템 제목"),
+                        fieldWithPath("data.content[].description").type(JsonFieldType.STRING)
+                            .description("아이템 설명"),
+                        fieldWithPath("data.content[].price").type(JsonFieldType.NUMBER)
+                            .description("아이템 가격"),
+                        fieldWithPath("data.content[].nickname").type(JsonFieldType.STRING)
+                            .description("판매자 닉네임"),
+                        fieldWithPath("data.content[].itemSaleStatus").type(JsonFieldType.STRING)
+                            .description("아이템 판매 상태"),
+                        fieldWithPath("data.content[].categoryName").type(JsonFieldType.STRING)
+                            .description("아이템 카테고리 이름"),
+                        fieldWithPath("data.content[].status").type(JsonFieldType.STRING)
+                            .description("아이템 상태 (예: ACTIVE, INACTIVE)"),
+                        fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
+                            .description("페이지 관련 정보"),
+                        fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호 (0부터 시작)"),
+                        fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.pageable.sort").type(JsonFieldType.OBJECT)
+                            .description("정렬 정보"),
+                        fieldWithPath("data.pageable.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.pageable.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되었는지 여부"),
+                        fieldWithPath("data.pageable.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("정렬되지 않았는지 여부"),
+                        fieldWithPath("data.pageable.offset").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지의 시작점 오프셋"),
+                        fieldWithPath("data.pageable.paged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징 여부"),
+                        fieldWithPath("data.pageable.unpaged").type(JsonFieldType.BOOLEAN)
+                            .description("페이징되지 않은 여부"),
+                        fieldWithPath("data.last").type(JsonFieldType.BOOLEAN)
+                            .description("마지막 페이지인지 여부"),
+                        fieldWithPath("data.totalPages").type(JsonFieldType.NUMBER)
+                            .description("전체 페이지 수"),
+                        fieldWithPath("data.totalElements").type(JsonFieldType.NUMBER)
+                            .description("전체 아이템 수"),
+                        fieldWithPath("data.size").type(JsonFieldType.NUMBER)
+                            .description("페이지 크기"),
+                        fieldWithPath("data.number").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지 번호"),
+                        fieldWithPath("data.sort").type(JsonFieldType.OBJECT)
+                            .description("현재 페이지의 정렬 정보"),
+                        fieldWithPath("data.sort.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지의 정렬 정보가 비어 있는지 여부"),
+                        fieldWithPath("data.sort.sorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되었는지 여부"),
+                        fieldWithPath("data.sort.unsorted").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 정렬되지 않았는지 여부"),
+                        fieldWithPath("data.first").type(JsonFieldType.BOOLEAN)
+                            .description("첫 번째 페이지인지 여부"),
+                        fieldWithPath("data.numberOfElements").type(JsonFieldType.NUMBER)
+                            .description("현재 페이지에 있는 아이템 수"),
+                        fieldWithPath("data.empty").type(JsonFieldType.BOOLEAN)
+                            .description("현재 페이지가 비어 있는지 여부")
+                    )
+                    .requestSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-요청"))
+                    .responseSchema(Schema.schema("동네-특정-카테고리-매물-조회-성공-응답"))
+                    .build()
+                )
+            ));
+        verify(itemService,times(1)).getCategoryItems(any(FindItemsInMyAreaRequestDto.class),any(Long.class),any(CustomUserDetails.class));
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalElements").value(dtoList.size()));
+            .andExpect(jsonPath("$.data.totalElements").value(dtoList.size()));
     }
 
     @Test
     @WithMockUser
     void 매물_수정_성공_혜민() throws Exception {
-        ItemResponse itemResponse = new ItemResponse(
-                "만년필",
-                "한번도안썼습니다",
-                3000,
-                "김커피"
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title("만년필")
+            .description("한번도안썼습니다")
+            .price(3000)
+            .nickname("김커피")
+            .build();
         Long itemId = 1L;
 
         given(itemService.updateContents(any(Long.class), any(ItemContentsUpdateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
@@ -606,7 +470,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 mockItem.getStatus()
         );
 
-        given(itemService.getItem(itemId)).willReturn(itemResponseDto);
+        given(itemService.getItem(anyLong(), any(CustomUserDetails.class))).willReturn(itemResponseDto);
 
         // When, Then
         mockMvc.perform(RestDocumentationRequestBuilders.get("/items/{itemId}", itemId)
@@ -642,12 +506,14 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    @WithMockUser
-        // 인증된 사용자로 테스트
+    @WithMockUser // 인증된 사용자로 테스트
     void 나의_모든_매물_조회_성공() throws Exception {
         // Given
         //페이지 직접 만들어주기
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1, 10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();;
         List<ItemResponseDto> dtoList = new ArrayList<>();
         for (int i = 1; i <= 2; i++) {
             ItemResponseDto dto = new ItemResponseDto(
@@ -732,44 +598,45 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     void 매물_등록_성공() throws Exception {
         // Given
         // 결과값 설정
-        ItemResponse itemResponse = new ItemResponse(
-                "가짜11",
-                1000,
-                "오만한천원"
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title("가짜11")
+            .price(1000)
+            .nickname("오만한천원")
+            .build();
         given(itemService.addItem(any(ItemCreateRequest.class), any(CustomUserDetails.class))).willReturn(itemResponse);
 
         // when, then
         mockMvc.perform(RestDocumentationRequestBuilders.post("/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1}")
-                )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
-                .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
-                .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
-                .andDo(document("add-item",
-                        resource(ResourceSnippetParameters.builder()
-                                .description("매물 생성 API")
-                                .summary("로그인한 사용자가 매물을 등록합니다.")
-                                .tag("Items")
-                                .requestFields(
-                                        fieldWithPath("title").description("등록할 제목"),
-                                        fieldWithPath("description").description("등록할 설명"),
-                                        fieldWithPath("price").description("등록할 가격"),
-                                        fieldWithPath("categoryId").description("등록할 카테고리 아이디")
-                                )
-                                .responseFields(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data.title").description("등록된 제목"),
-                                        fieldWithPath("data.price").description("등록된 가격"),
-                                        fieldWithPath("data.nickname").description("등록한 유저 닉네임")
-                                )
-                                .requestSchema(Schema.schema("매물-생성-성공-요청"))
-                                .responseSchema(Schema.schema("매물-생성-성공-응답"))
-                                .build())
-                ));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"가짜11\",\"description\":\"등록할 설명\",\"price\":1000,\"categoryId\":1,\"imageName\":\"https://sprout-market.s3.ap-northeast-2.amazonaws.com/1a70f21b-f.jpg\"}")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
+            .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
+            .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
+            .andDo(document("add-item",
+                resource(ResourceSnippetParameters.builder()
+                    .description("매물 생성 API")
+                    .summary("로그인한 사용자가 매물을 등록합니다.")
+                    .tag("Items")
+                    .requestFields(
+                        fieldWithPath("title").description("등록할 제목"),
+                        fieldWithPath("description").description("등록할 설명"),
+                        fieldWithPath("price").description("등록할 가격"),
+                        fieldWithPath("categoryId").description("등록할 카테고리 아이디"),
+                        fieldWithPath("imageName").description("이미 저장된 매물 이미지 이름")
+                    )
+                    .responseFields(
+                        fieldWithPath("message").description("응답 메시지"),
+                        fieldWithPath("statusCode").description("응답 상태 코드"),
+                        fieldWithPath("data.title").description("등록된 제목"),
+                        fieldWithPath("data.price").description("등록된 가격"),
+                        fieldWithPath("data.nickname").description("등록한 유저 닉네임")
+                    )
+                    .requestSchema(Schema.schema("매물-생성-성공-요청"))
+                    .responseSchema(Schema.schema("매물-생성-성공-응답"))
+                    .build())
+            ));
 
     }
 
@@ -779,12 +646,12 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
         String SsaleStatus = ItemSaleStatus.SOLD.toString();
 
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-                mockItem.getTitle(),
-                mockItem.getPrice(),
-                mockItem.getItemSaleStatus(),
-                mockItem.getSeller().getNickname()
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .itemSaleStatus(mockItem.getItemSaleStatus())
+            .price(mockItem.getPrice())
+            .nickname(mockItem.getSeller().getNickname())
+            .build();
 
         given(itemService.updateSaleStatus(mockItem.getId(), SsaleStatus, mockAuthUser)).willReturn(itemResponse);
 
@@ -827,16 +694,17 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
 
+
     @Test
     @WithMockUser
     void 매물_삭제_성공() throws Exception {
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-                mockItem.getTitle(),
-                Status.DELETED,
-                mockItem.getPrice(),
-                mockItem.getSeller().getNickname()
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .status(Status.DELETED)
+            .price(mockItem.getPrice())
+            .nickname(mockItem.getSeller().getNickname())
+            .build();
 
         given(itemService.softDeleteItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
@@ -871,14 +739,14 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 관리자_신고매물_삭제_성공() throws Exception {
+    void 관리자_신고매물_삭제_성공 () throws Exception {
         // Given
-        ItemResponse itemResponse = new ItemResponse(
-                mockItem.getTitle(),
-                mockItem.getDescription(),
-                mockItem.getPrice(),
-                Status.DELETED
-        );
+        ItemResponse itemResponse = ItemResponse.builder()
+            .title(mockItem.getTitle())
+            .description(mockItem.getDescription())
+            .price(mockItem.getPrice())
+            .status(Status.DELETED)
+            .build();
 
         given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
 
@@ -915,10 +783,13 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     @Test
     @WithMockUser
     void 내_주변_매물_조회_성공() throws Exception {
-        FindItemsInMyAreaRequestDto requestDto = new FindItemsInMyAreaRequestDto(1, 10);
+        FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
+            .page(1)
+            .size(10)
+            .build();;
         //페이지 직접 만들어주기
         List<ItemResponseDto> dtoList = new ArrayList<>();
-        for (int i = 1; i <= 2; i++) {
+        for(int i = 1; i <= 2; i++) {
             ItemResponseDto dto = new ItemResponseDto(
                     (long) i, //
                     "제목" + i,
