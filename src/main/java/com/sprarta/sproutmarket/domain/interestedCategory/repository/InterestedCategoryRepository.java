@@ -22,5 +22,5 @@ public interface InterestedCategoryRepository extends JpaRepository<InterestedCa
 
     // 카테고리에 관심 있는 사용자 목록 조회
     @Query("SELECT ic.user FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
-    List<User> findUsersByCategoryId(Long categoryId);
+    List<User> findUsersByCategoryId(@Param("categoryId") Long categoryId);
 }

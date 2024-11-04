@@ -4,6 +4,7 @@ import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,10 +16,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {

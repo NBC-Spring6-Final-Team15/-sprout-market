@@ -1,18 +1,15 @@
-package com.sprarta.sproutmarket.domain.image.entity;
+package com.sprarta.sproutmarket.domain.image.itemImage.entity;
 
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Image {
+public class ItemImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,7 +21,7 @@ public class Image {
     private String name;
 
     @Builder
-    public Image(String name, Item item){
+    public ItemImage(String name, Item item){
         this.name = name;
         this.item = item;
     }

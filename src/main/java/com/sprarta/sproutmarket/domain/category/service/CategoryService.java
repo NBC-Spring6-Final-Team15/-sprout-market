@@ -19,6 +19,12 @@ import java.util.List;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
+    @Transactional(readOnly = true)
+    public Category findByIdAndStatusIsActive(Long categoryId) {
+        return categoryRepository.findByIdAndStatusIsActive(categoryId)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
+    }
+
     public Category findByIdOrElseThrow(Long id){
         return categoryRepository.findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));

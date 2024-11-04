@@ -13,7 +13,6 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService itemService;
+
 
     /**
      * 중고 매물에 대해서 검색하는 로직
@@ -51,8 +51,9 @@ public class ItemController {
     @PostMapping("/items")
     public ResponseEntity<ApiResponse<ItemResponse>> addItem(@RequestBody ItemCreateRequest itemCreateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.addItem(itemCreateRequest, authUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,itemResponse));
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
+
 
     /**
      * 매물의 판매 상태만을 변경하는 로직
@@ -77,32 +78,6 @@ public class ItemController {
     @PutMapping("/items/{itemId}/contents")
     public ResponseEntity<ApiResponse<ItemResponse>> updateContent(@PathVariable(name = "itemId") Long itemId, @RequestBody ItemContentsUpdateRequest itemContentsUpdateRequest, @AuthenticationPrincipal CustomUserDetails authUser){
         ItemResponse itemResponse = itemService.updateContents(itemId, itemContentsUpdateRequest, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-    }
-
-    /**
-     * 매물에 이미지를 추가하는 로직
-     * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
-     * @param image 업로드할 이미지 파일. 사용자가 업로드한 파일을 MultipartFile 형식으로 받음
-     * @return ApiResponse - 이미지가 수정된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
-     */
-    @PutMapping("/items/{itemId}/image")
-    public ResponseEntity<ApiResponse<ItemResponse>> addItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestPart(value = "image", required = false, name = "image") MultipartFile image){
-        ItemResponse itemResponse = itemService.addImage(itemId, authUser, image);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
-    }
-
-    /**
-     * 매물에 저장된 이미지를 삭제하는 로직
-     * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
-     * @param imageId 삭제할 이미지의 ID
-     * @return ApiResponse - 특정 이미지가 삭제된 아이템에 대한 정보, 메세지, 상태 코드를 포함한 응답 객체
-     */
-    @DeleteMapping("/items/{itemId}/image")
-    public ResponseEntity<ApiResponse<ItemResponse>> removeItemImage(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser, @RequestParam(name = "imageId") Long imageId){
-        ItemResponse itemResponse = itemService.deleteImage(itemId, authUser, imageId);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
