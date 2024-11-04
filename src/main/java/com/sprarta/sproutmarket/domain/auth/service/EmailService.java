@@ -11,6 +11,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class EmailService {
     private final RedisUtil redisUtil;
 
     @Value("${spring.mail.username}")
-    private String SENDER_EMAIL;
+    private String senderEmail;
 
     public void sendEmail(String redisKey, String email) {
         int authNumber = createAuthNumber();
@@ -32,7 +34,7 @@ public class EmailService {
             body += "<h1> " + authNumber + " </h1>";
 
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "utf-8");
-            helper.setFrom(SENDER_EMAIL); // 보내는 이
+            helper.setFrom(senderEmail); // 보내는 이
             helper.setTo(email);          // 받는 이
             helper.setSubject("이메일 인증"); // 이메일 제목
             helper.setText(body, true);
@@ -48,6 +50,6 @@ public class EmailService {
     }
 
     public int createAuthNumber() {
-        return (int)((Math.random() * 900000) + 100000);
+        return 100000 + ThreadLocalRandom.current().nextInt(900000);
     }
 }

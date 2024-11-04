@@ -19,17 +19,6 @@ import java.util.List;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
-    @Transactional(readOnly = true)
-    public Category findByIdAndStatusIsActive(Long categoryId) {
-        return categoryRepository.findByIdAndStatusIsActive(categoryId)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-    }
-
-    public Category findByIdOrElseThrow(Long id){
-        return categoryRepository.findById(id)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-    }
-
     /**
      * 카테고리 추가 메서드
      * @param requestDto : 카테고리 이름을 담은 요청 DTO
@@ -59,9 +48,7 @@ public class CategoryService {
     //카테고리 수정
     @Transactional
     public CategoryResponseDto update(Long categoryId, CategoryRequestDto requestDto) {
-        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
         category.update(requestDto.getCategoryName());
         return new CategoryResponseDto(category.getId(),category.getName());
     }
@@ -72,18 +59,14 @@ public class CategoryService {
      */
     @Transactional
     public void delete(Long categoryId) {
-        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
         category.deactivate();
     }
 
     //카테고리 복원
     @Transactional
     public void activate(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY)
-        );
+        Category category = categoryRepository.findByIdOrElseThrow(categoryId);
         category.activate();
     }
 

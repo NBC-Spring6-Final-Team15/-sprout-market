@@ -5,6 +5,7 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
+import com.sprarta.sproutmarket.domain.areas.service.AdmCachingService;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,6 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     AdministrativeAreaService administrativeAreaService;
+    @MockBean
+    AdmCachingService admCachingService;
 
     @Test
     void 좌표로_행정동_조회_성공() throws Exception {
