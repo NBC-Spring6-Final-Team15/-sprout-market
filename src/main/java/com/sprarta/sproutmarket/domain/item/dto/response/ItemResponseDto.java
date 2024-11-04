@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.item.dto.response;
 
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import lombok.*;
 
@@ -26,5 +27,18 @@ public class ItemResponseDto {
         this.itemSaleStatus = itemSaleStatus;
         this.categoryName = categoryName;
         this.status = status;
+    }
+
+    public static ItemResponseDto from(Item item) {
+        return new ItemResponseDto(
+                item.getId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getPrice(),
+                item.getSeller().getNickname(),
+                item.getItemSaleStatus(),
+                item.getCategory().getName(),
+                item.getStatus()
+        );
     }
 }

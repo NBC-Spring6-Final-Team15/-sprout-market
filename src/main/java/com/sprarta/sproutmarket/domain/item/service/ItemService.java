@@ -3,13 +3,9 @@ package com.sprarta.sproutmarket.domain.item.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
-import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
-import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
-import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
@@ -41,7 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,12 +46,8 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final ItemRepositoryCustom itemRepositoryCustom;
     private final UserRepository userRepository;
-    private final ItemImageRepository itemImageRepository;
     private final CategoryRepository categoryRepository;
-    private final CategoryService categoryService;
     private final AdministrativeAreaService admAreaService;
-    private final S3ImageService s3ImageService;
-    private final ItemImageService itemImageService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
@@ -80,9 +71,8 @@ public class ItemService {
         ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);
-        Page<ItemSearchResponse> result = itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
 
-        return result;
+        return itemRepositoryCustom.searchItems(areaList, itemSearchRequest.getSearchKeyword(), category, itemSaleStatus, pageable);
     }
 
     /**
@@ -103,7 +93,7 @@ public class ItemService {
             ItemSaleStatus.WAITING,
             category,
             Status.ACTIVE
-        );;
+        );
         Item saveItem = itemRepository.save(item);
 
         // itemImageService.uploadItemImage(item.getId(), itemCreateRequest.getImageName(), authUser);
@@ -228,7 +218,7 @@ public class ItemService {
 
         incrementViewCount(itemId, authUser.getId());
 
-        return convertToDto(item);
+        return ItemResponseDto.from(item);
     }
 
     /**
@@ -243,11 +233,8 @@ public class ItemService {
     public Page<ItemResponseDto> getMyItems(int page, int size, CustomUserDetails authUser){
         User user = findUserById(authUser.getId());
 
-        Pageable pageable = PageRequest.of(page - 1, size);
-
-        Page<Item> items = itemRepository.findBySeller(pageable, user);
-
-        return items.map(this::convertToDto);
+        return itemRepository.findBySeller(PageRequest.of(page - 1, size), user)
+                .map(ItemResponseDto::from);
     }
 
     /**
@@ -260,18 +247,14 @@ public class ItemService {
      */
     public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
         User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-        String area = user.getAddress();
         // 카테고리 존재 확인
-        Category category = categoryRepository.findByIdOrElseThrow(categoryId);
+        categoryRepository.findByIdOrElseThrow(categoryId);
 
-        // 반경 5km 행정동 이름 반환
-        List<String> areaList = getAreaListByUserAddress(user.getAddress());
-
-        Pageable pageable = createPageable(requestDto);
-
-        Page<Item> result = itemRepository.findItemByAreaAndCategory(pageable, areaList, category.getId());
-
-        return result.map(this::convertToDto);
+        return itemRepository.findItemByAreaAndCategory(
+                        createPageable(requestDto),
+                        getAreaListByUserAddress(user.getAddress()),
+                        categoryId)
+                .map(ItemResponseDto::from);
     }
 
 
@@ -285,14 +268,13 @@ public class ItemService {
      */
     public Page<ItemResponseDto> findItemsByMyArea (CustomUserDetails authUser, FindItemsInMyAreaRequestDto requestDto) {
         //User.fromAuthUser 쓰면 User 안에 있는 Address를 못 불러와서 이렇게 꺼냈습니다.
-        User currentUser = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-        String myArea = currentUser.getAddress();
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
 
-        List<String> areaList = admAreaService.getAdmNameListByAdmName(myArea);
+        List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
         Pageable pageable = PageRequest.of(requestDto.getPage()-1, requestDto.getSize());
-        Page<Item> result = itemRepository.findByAreaListAndUserArea(pageable,areaList);
 
-        return result.map(this::convertToDto);
+        return itemRepository.findByAreaListAndUserArea(pageable,areaList)
+                .map(ItemResponseDto::from);
     }
 
     public List<ItemResponseDto> getTopItems(CustomUserDetails authUser) {
@@ -328,7 +310,7 @@ public class ItemService {
                         itemWithViewCount.getItem().getCategory().getName(),
                         itemWithViewCount.getItem().getStatus()
                 ))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private void incrementViewCount(Long itemId, Long userId) {
@@ -388,19 +370,6 @@ public class ItemService {
         return itemSearchRequest.isSaleStatus() ? ItemSaleStatus.WAITING : null;
     }
 
-    // Item 객체 생성
-    private Item createItemFromRequest(ItemCreateRequest request, User seller, Category category){
-        return new Item(
-            request.getTitle(),
-            request.getDescription(),
-            request.getPrice(),
-            seller,
-            ItemSaleStatus.WAITING,
-            category,
-            Status.ACTIVE
-        );
-    }
-
     // 알림 전송(매물 등록시 해당 카테고리)
     private void notifyCategorySubscribersForNewItem(Long categoryId, String title){
         notifyUsersAboutNewItem(categoryId, title);
@@ -415,19 +384,6 @@ public class ItemService {
         if (item.getPrice() != newPrice) {
             notifyUsersAboutPriceChange(item.getId(), newPrice);
         }
-    }
-
-    private ItemResponseDto convertToDto(Item item){
-        return new ItemResponseDto(
-            item.getId(),
-            item.getTitle(),
-            item.getDescription(),
-            item.getPrice(),
-            item.getSeller().getNickname(),
-            item.getItemSaleStatus(),
-            item.getCategory().getName(),
-            item.getStatus()
-        );
     }
 
     private List<String> getAreaListByUserAddress(String address){
