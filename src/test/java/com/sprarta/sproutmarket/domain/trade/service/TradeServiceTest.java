@@ -21,9 +21,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,7 +74,7 @@ class TradeServiceTest {
     class TradeCreate {
         @Test
         void 거래_생성_성공() {
-            when(chatRoomRepository.findById(1L)).thenReturn(Optional.of(chatRoom));
+            when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
             when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
             doNothing().when(simpMessagingTemplate).convertAndSend(anyString(),anyString());
 
@@ -94,7 +91,7 @@ class TradeServiceTest {
             ReflectionTestUtils.setField(anyone,"id",3L);
             CustomUserDetails anyoneDetails = new CustomUserDetails(anyone);
 
-            when(chatRoomRepository.findById(1L)).thenReturn(Optional.of(chatRoom));
+            when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
 
             assertThatThrownBy(() -> tradeService.reserveTrade(1L, anyoneDetails))
                     .isInstanceOf(ApiException.class);
@@ -105,7 +102,7 @@ class TradeServiceTest {
         void 거래_생성_실패__예약중인_아이템이_대기중이_아닌_경우_예외_발생() {
             ReflectionTestUtils.setField(item,"itemSaleStatus",ItemSaleStatus.RESERVED);
 
-            when(chatRoomRepository.findById(1L)).thenReturn(Optional.of(chatRoom));
+            when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
 
             assertThatThrownBy(() -> tradeService.reserveTrade(1L, sellerUserDetails))
                     .isInstanceOf(ApiException.class);
@@ -114,10 +111,10 @@ class TradeServiceTest {
 
     @Test
     void 거래_상태_변경_성공() {
-        when(tradeRepository.findById(1L)).thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdOrElseThrow(1L)).thenReturn(trade);
         doNothing().when(simpMessagingTemplate).convertAndSend(anyString(),anyString());
 
-        tradeService.finishTrade(1L, sellerUserDetails);
+        tradeService.finishTrade(1L, sellerUserDetails,TradeStatus.COMPLETED);
 
         assertThat(trade.getTradeStatus()).isEqualTo(TradeStatus.COMPLETED);
         assertThat(trade.getChatRoom().getItem().getItemSaleStatus()).isEqualTo(ItemSaleStatus.SOLD);

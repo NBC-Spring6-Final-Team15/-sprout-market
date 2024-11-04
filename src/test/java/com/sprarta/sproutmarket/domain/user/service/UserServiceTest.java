@@ -4,8 +4,9 @@ import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
-import com.sprarta.sproutmarket.domain.image.service.S3ImageService;
+import com.sprarta.sproutmarket.domain.image.profileImage.entity.ProfileImage;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
@@ -26,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +47,8 @@ class UserServiceTest {
 
     @Mock
     private S3ImageService s3ImageService;
+    @Mock
+    private ProfileImageService profileImageService;
 
     @InjectMocks
     private UserService userService;
@@ -56,6 +58,7 @@ class UserServiceTest {
     private CustomUserDetails authUser;
     private CustomUserDetails authUser2;
     private MockMultipartFile mockImage;
+    private ProfileImage profileImage;
 
     @BeforeEach
     void setUp() {
@@ -68,6 +71,7 @@ class UserServiceTest {
         ReflectionTestUtils.setField(user2, "id", 2L);
         authUser = new CustomUserDetails(user);
         authUser2 = new CustomUserDetails(user2);
+        profileImage = new ProfileImage(user, "https://s3.bucket/profile/test.jpg");
         mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
         user2.deactivate();
     }
@@ -166,6 +170,7 @@ class UserServiceTest {
         // Then
         verify(userRepository, times(1)).findById(1L);
         verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword()); // Check password
+        assertEquals(Status.DELETED, user.getStatus());
     }
 
     @Test
@@ -213,38 +218,6 @@ class UserServiceTest {
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-    }
-
-    @Test
-    void 프로필_이미지_업로드_성공() {
-        // Given
-        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-        when(s3ImageService.upload(mockImage, user.getId(), authUser)).thenReturn("https://s3.bucket/profile/test.jpg");
-
-        // When
-        String resultUrl = userService.updateProfileImage(authUser, mockImage);
-
-        // Then
-        assertEquals("https://s3.bucket/profile/test.jpg", resultUrl);
-        assertEquals("https://s3.bucket/profile/test.jpg", user.getProfileImageUrl());
-        verify(userRepository, times(1)).findById(authUser.getId());
-        verify(s3ImageService, times(1)).upload(mockImage, user.getId(), authUser);
-    }
-
-    @Test
-    void 프로필_이미지_삭제_성공() {
-        // Given
-        when(userRepository.findById(authUser.getId())).thenReturn(Optional.of(user));
-        String profileImageUrl = "https://s3.bucket/profile/profileImage.jpg";
-        user.updateProfileImage(profileImageUrl);  // 초기 상태로 프로필 이미지 설정
-
-        // When
-        userService.deleteProfileImage(authUser);
-
-        // Then
-        verify(s3ImageService, times(1)).deleteImageFromS3(profileImageUrl); // S3에서 이미지 삭제 확인
-        assertNull(user.getProfileImageUrl());  // 프로필 이미지 URL 이 null 로 변경되었는지 확인
-        verify(userRepository, times(1)).findById(authUser.getId());
     }
 
     @Test

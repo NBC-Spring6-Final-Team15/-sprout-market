@@ -40,17 +40,17 @@ public class ItemRepositoryCustomImpl implements ItemRepositoryCustom {
 
 
         List<ItemSearchResponse> items = queryFactory.select(Projections.constructor(ItemSearchResponse.class,
-                        qItem.id,
-                        qItem.title,
-                        qItem.price,
-                        qItem.seller.address,
-                        qItem.images.get(0).name,
-                        qItem.createdAt))
-                .from(qItem)
-                .where(builder)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                qItem.id,
+                qItem.title,
+                qItem.price,
+                qItem.seller.address,
+                qItem.itemImages,
+                qItem.createdAt))
+            .from(qItem)
+            .where(builder)
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         return new PageImpl<>(items, pageable, total);
     }
