@@ -44,16 +44,16 @@ public class ChatRoomService {
             throw new ApiException(ErrorStatus.FORBIDDEN_CHATROOM_CREATE);
         }
 
-        ChatRoom saveChatRoom = chatRoomRepository.save(new ChatRoom(
+        chatRoomRepository.save(new ChatRoom(
                 buyer,
                 item.getSeller(),
                 item
         ));
 
         return new ChatRoomDto(
-                saveChatRoom.getBuyer().getId(),
-                saveChatRoom.getSeller().getId(),
-                saveChatRoom.getItem().getId()
+                buyer.getId(),
+                item.getSeller().getId(),
+                item.getId()
         );
     }
 

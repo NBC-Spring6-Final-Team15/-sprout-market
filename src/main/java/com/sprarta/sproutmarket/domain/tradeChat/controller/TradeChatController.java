@@ -38,8 +38,9 @@ public class TradeChatController {
     }
 
     @GetMapping("/chatRoom/{roomId}/chats")
-    public ResponseEntity<ApiResponse<List<TradeChatDto>>> getChats(@PathVariable("roomId") Long roomId){
-        return ResponseEntity.ok(ApiResponse.onSuccess((tradeChatService.getChats(roomId))));
+    public ResponseEntity<ApiResponse<List<TradeChatDto>>> getChats(
+            @PathVariable("roomId") Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails){
+        return ResponseEntity.ok(ApiResponse.onSuccess((tradeChatService.getChats(roomId, userDetails))));
     }
 
 }

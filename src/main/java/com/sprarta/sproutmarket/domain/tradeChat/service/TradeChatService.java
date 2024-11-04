@@ -31,8 +31,12 @@ public class TradeChatService {
                 tradeChatDto.getRoomId()));
     }
 
-    public List<TradeChatDto> getChats(Long chatroomId) {
-        chatRoomRepository.findByIdOrElseThrow(chatroomId);
+    public List<TradeChatDto> getChats(Long chatroomId, CustomUserDetails authUser) {
+
+        if (!ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(chatroomId).getBuyer().getId(), authUser.getId())
+                && !ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(chatroomId).getSeller().getId(), authUser.getId())) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
+        }
 
         List<TradeChatDto> tradeChatDtoList = new ArrayList<>();
 
