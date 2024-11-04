@@ -38,7 +38,6 @@ public class ItemResponseDto {
                 item.getSeller().getNickname(),
                 item.getItemSaleStatus(),
                 item.getCategory().getName(),
-                item.getStatus()
-        );
+                item.getStatus());
     }
 }
