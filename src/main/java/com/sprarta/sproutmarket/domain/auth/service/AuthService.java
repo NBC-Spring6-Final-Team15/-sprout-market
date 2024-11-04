@@ -107,7 +107,7 @@ public class AuthService {
         );
 
         userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), userRole);
+        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), UserRole.USER);
 
         return new SignupResponse(bearerToken);
     }
@@ -126,7 +126,7 @@ public class AuthService {
         );
 
         userRepository.save(newUser);
-        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), userRole);
+        String bearerToken = jwtUtil.createToken(newUser.getId(), newUser.getEmail(), UserRole.ADMIN);
 
         return new SignupResponse(bearerToken);
     }
