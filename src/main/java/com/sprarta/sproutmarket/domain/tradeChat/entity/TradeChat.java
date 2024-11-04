@@ -16,6 +16,7 @@ public class TradeChat extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long roomId;
 
     @Column(nullable = false)
@@ -31,7 +32,6 @@ public class TradeChat extends Timestamped {
 //    @JoinColumn(nullable = false, name = "chatroom_id")
 //    private ChatRoom chatRoom;
 
-    @Builder
     public TradeChat(String sender,
                      String content,
                      Long roomId) {

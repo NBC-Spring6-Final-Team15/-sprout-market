@@ -71,7 +71,7 @@ class TradeServiceTest {
     }
 
     @Nested
-    class 거래_생성 {
+    class TradeCreate {
         @Test
         void 거래_생성_성공() {
             when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
