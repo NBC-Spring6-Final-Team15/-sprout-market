@@ -1,44 +1,31 @@
 package com.sprarta.sproutmarket.domain.auth.controller;
 
-import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.auth.dto.response.KakaoProfileResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.OAuthTokenResponse;
 import com.sprarta.sproutmarket.domain.auth.service.KakaoService;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-class KakaoControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+@WebMvcTest(KakaoController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class KakaoControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private KakaoService kakaoService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
 
     @Mock
     private HttpSession session;
