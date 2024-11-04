@@ -1,19 +1,12 @@
 package com.sprarta.sproutmarket.domain.item.dto.response;
 
-import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
-import com.sprarta.sproutmarket.domain.user.entity.User;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemResponseDto {
-
     private Long id;
     private String title;
     private String description;
@@ -23,4 +16,15 @@ public class ItemResponseDto {
     private String categoryName;
     private Status status;
 
+    @Builder
+    public ItemResponseDto(Long id, String title, String description, int price, String nickname, ItemSaleStatus itemSaleStatus, String categoryName, Status status) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.price = price;
+        this.nickname = nickname;
+        this.itemSaleStatus = itemSaleStatus;
+        this.categoryName = categoryName;
+        this.status = status;
+    }
 }

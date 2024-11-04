@@ -17,22 +17,28 @@ public class TradeChat extends Timestamped {
     private Long id;
 
     @Column(nullable = false)
-    private String content;
+    private Long roomId;
 
     @Column(nullable = false)
-    private ChatReadStatus chatReadStatus;
+    private String sender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false, name = "chatroom_id")
-    private ChatRoom chatRoom;
+    @Column(nullable = false)
+    private String content;
 
-    @Builder
-    public TradeChat(String content,
-                     ChatReadStatus chatReadStatus,
-                     ChatRoom chatRoom) {
+//    @Column(nullable = false)
+//    private ChatReadStatus chatReadStatus;
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(nullable = false, name = "chatroom_id")
+//    private ChatRoom chatRoom;
+
+    public TradeChat(String sender,
+                     String content,
+                     Long roomId) {
+        this.sender = sender;
         this.content = content;
-        this.chatReadStatus = chatReadStatus;
-        this.chatRoom = chatRoom;
+        this.roomId = roomId;
+//        this.chatReadStatus = chatReadStatus;
     }
 
 }

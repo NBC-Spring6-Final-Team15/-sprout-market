@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SignupRequest {
-
     @NotBlank
     private String username;
 
@@ -26,9 +25,6 @@ public class SignupRequest {
     @NotBlank
     private String phoneNumber;
 
-    private double longitude;
-    private double latitude;
-
     @NotBlank
-    private String userRole;
+    private String address;
 }

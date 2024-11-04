@@ -4,9 +4,7 @@ package com.sprarta.sproutmarket.domain.review.controller;
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.enums.ReviewRating;
@@ -14,25 +12,17 @@ import com.sprarta.sproutmarket.domain.review.service.ReviewService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -49,38 +39,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureRestDocs
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class ReviewControllerTest {
-
-    @Autowired
-    MockMvc mockMvc;
-
+class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     ReviewService reviewService;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @MockBean
-    JwtUtil jwtUtil;
-
-    @MockBean
-    CustomUserDetailService customUserDetailService;
 
     @BeforeEach
     void setUp() {
 
         CustomUserDetails mockAuthUser = new CustomUserDetails(
-                new User(1L, "username",
+                new User("username",
                         "email@example.com",
                         "encodedOldPassword",
                         "nickname",
                         "010-1234-5678",
                         "address", UserRole.USER)
         );
+        ReflectionTestUtils.setField(mockAuthUser, "id", 1L);
 
         // 인증 유저 시큐리티 컨텍스트 홀더에 저장
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -300,17 +275,14 @@ class ReviewControllerTest {
                                 .summary("리뷰 삭제")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("성공 시 응답 : No Content , 예외 시 예외 메시지"),
-                                        fieldWithPath("statusCode").description("성공 상태코드 : 204"),
-                                        fieldWithPath("data").description("성공 시 data : NULL")
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200")
                                 ))
                                 .responseSchema(Schema.schema("리뷰-삭제-성공-응답"))
                                 .build()
                         )
                 ));
-        result.andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.statusCode").value(204));
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusCode").value(200));
     }
-
-
 }

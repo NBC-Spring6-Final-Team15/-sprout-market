@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 @Slf4j
 public class InterestedItemService {
 
@@ -41,14 +41,13 @@ public class InterestedItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
 
-        // 관심 상품 생성
-        InterestedItem interestedItem = InterestedItem.builder()
-                .user(user)  // User 엔티티를 설정
-                .item(item)  // Item 엔티티를 설정
-                .build();
+        // 관심 상품이 이미 존재하는지 확인
+        if (interestedItemRepository.findByUserAndItem(user, item).isPresent()) {
+            throw new ApiException(ErrorStatus.ALREADY_INTERESTED_ITEM);
+        }
 
-        // User 엔티티의 관심 상품 리스트에 추가
-        user.addInterestedItem(interestedItem);
+        // 생성자를 통해 InterestedItem 객체 생성
+        InterestedItem interestedItem = new InterestedItem(user, item);
 
         // 관심 상품을 저장
         interestedItemRepository.save(interestedItem);
@@ -62,9 +61,11 @@ public class InterestedItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_ITEM));
 
-        // 관심 상품 삭제
-        user.removeInterestedItem(item);
-        userRepository.save(user);
+        // 관심 상품 존재 여부 확인 및 삭제
+        InterestedItem interestedItem = interestedItemRepository.findByUserAndItem(user, item)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_INTERESTED_ITEM));
+
+        interestedItemRepository.delete(interestedItem);
     }
 
     /**

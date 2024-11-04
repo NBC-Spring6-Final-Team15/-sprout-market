@@ -68,8 +68,7 @@ public class ReportController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails
     ) {
         reportService.deleteReport(reportId, customUserDetails);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(ApiResponse.createSuccess("No Content",204,null));
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
 

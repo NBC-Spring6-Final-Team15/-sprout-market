@@ -10,7 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
+import java.util.Objects;
 
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -34,6 +37,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         HttpStatus status = HttpStatus.PAYLOAD_TOO_LARGE;
         return getErrorResponse(status, "파일 크기는 5MB를 초과할 수 없습니다.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<String>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String errorMessage = String.format("잘못된 요청값입니다. '%s'는 유효한 %s 타입이 아닙니다.",
+                ex.getValue(), Objects.requireNonNull(ex.getRequiredType()).getSimpleName());
+        return getErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
     public ResponseEntity<ApiResponse<String>> getErrorResponse(HttpStatus status, String message) {
