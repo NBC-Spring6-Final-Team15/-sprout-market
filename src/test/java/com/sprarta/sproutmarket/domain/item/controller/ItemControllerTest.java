@@ -85,7 +85,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
         mockImage = new MockMultipartFile("file", "image.jpg", "image/jpeg", "image content".getBytes());
 
         // 클래스 인스턴스 생성
-        mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        mockUser = new User("김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        ReflectionTestUtils.setField(mockUser, "id", 1L);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
         image = Image.builder()

@@ -51,13 +51,14 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
     void setUp() {
 
         CustomUserDetails mockAuthUser = new CustomUserDetails(
-                new User(1L, "username",
+                new User("username",
                         "email@example.com",
                         "encodedOldPassword",
                         "nickname",
                         "010-1234-5678",
                         "address", UserRole.USER)
         );
+        ReflectionTestUtils.setField(mockAuthUser, "id", 1L);
 
         ReflectionTestUtils.setField(buyer, "id", 1L);
         ReflectionTestUtils.setField(buyer, "nickname", "buyer");

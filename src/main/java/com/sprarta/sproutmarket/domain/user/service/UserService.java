@@ -12,16 +12,16 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -77,8 +77,6 @@ public class UserService {
         String administrativeArea = administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
 
         user.changeAddress(administrativeArea);
-
-        userRepository.save(user);
     }
 
     @Transactional
@@ -92,7 +90,6 @@ public class UserService {
         // 유저 엔티티에 프로필 이미지 URL 업데이트
         user.updateProfileImage(profileImageUrl);
 
-        userRepository.save(user);
         return profileImageUrl;
     }
 
@@ -106,7 +103,6 @@ public class UserService {
             s3ImageService.deleteImageFromS3(currentProfileImageUrl);
         }
 
-        userRepository.save(user);
         user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
     }
 
@@ -121,10 +117,10 @@ public class UserService {
 
     // ACTIVE, DELETED 상태 유저 모두 조회
     @Transactional
-    public List<UserAdminResponse> getAllUsers() {
+    public Page<UserAdminResponse> getAllUsers(Pageable pageable) {
         return userRepository
-                .findAll()
-                .stream().map(UserAdminResponse::new).toList();
+                .findAll(pageable)
+                .map(UserAdminResponse::new);
     }
 }
 
