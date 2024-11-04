@@ -6,10 +6,10 @@ import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
-import com.sprarta.sproutmarket.domain.image.entity.Image;
-import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
+import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
+import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
@@ -40,14 +40,13 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class ItemServiceTest {
@@ -227,7 +226,7 @@ public class ItemServiceTest {
 
         when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
         when(admAreaService.getAdmNameListByAdmName("서울시 관악구 신림동")).thenReturn(areaList);
-        when(categoryRepository.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId())).thenReturn(mockCategory1);
 
         // When
         Page<ItemSearchResponse> result = itemService.searchItems(page, size, itemSearchRequest, authUser);
@@ -235,7 +234,7 @@ public class ItemServiceTest {
         // Then
         verify(userRepository, times(1)).findById(authUser.getId());
         verify(admAreaService, times(1)).getAdmNameListByAdmName("서울시 관악구 신림동");
-        verify(categoryRepository, times(1)).findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
+        verify(categoryRepository, times(1)).findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
         verify(itemRepositoryCustom, times(1)).searchItems(areaList, itemSearchRequest.getSearchKeyword(), mockCategory1, ItemSaleStatus.WAITING, pageable);
     }
 
@@ -251,7 +250,7 @@ public class ItemServiceTest {
             .build();
 
         when(userRepository.findById(any())).thenReturn(Optional.of(mockUser));
-        when(categoryRepository.findByIdAndStatusIsActive(mockCategory1.getId())).thenReturn(mockCategory1);
+        when(categoryRepository.findByIdAndStatusIsActiveOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(itemRepository.save(any(Item.class))).thenReturn(mockItem1);
         when(categoryRepository.findByIdOrElseThrow(mockCategory1.getId())).thenReturn(mockCategory1);
         when(itemImageService.uploadItemImage(any(Long.class), any(String.class), any(CustomUserDetails.class))).thenReturn("test.jpg");
