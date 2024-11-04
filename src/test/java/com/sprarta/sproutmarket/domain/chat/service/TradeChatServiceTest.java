@@ -15,7 +15,6 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
-import org.glassfish.hk2.api.Customize;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -81,15 +80,14 @@ public class TradeChatServiceTest {
         mockCategory = new Category("카테고리");
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
 
-        mockItem1 = Item.builder()
-                .title("상품1")
-                .description("설명1")
-                .price(10000)
-                .itemSaleStatus(ItemSaleStatus.WAITING)
-                .seller(buyer)
-                .category(mockCategory)
-                .status(Status.ACTIVE)
-                .build();
+        mockItem1 = new  Item(
+                "상품1",
+                "설명1",
+                10000,
+                buyer,
+                ItemSaleStatus.WAITING,
+                mockCategory,
+                Status.ACTIVE);
         ReflectionTestUtils.setField(mockItem1, "id", 1L);
 
         mockChatRoom1 = new ChatRoom(

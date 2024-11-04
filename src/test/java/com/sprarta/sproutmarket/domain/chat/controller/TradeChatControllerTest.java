@@ -27,7 +27,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
-import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
@@ -40,9 +39,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.List;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,7 +77,7 @@ public class TradeChatControllerTest {
     public void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
 
-        mockUser = new User(1L, "name", "email@email.com", "ABcd2Fg*", "nick", "01012345678", "address name here", UserRole.USER);
+        mockUser = new User("name", "email@email.com", "ABcd2Fg*", "nick", "01012345678", "address name here", UserRole.USER);
         mockAuthUser = new CustomUserDetails(mockUser);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());

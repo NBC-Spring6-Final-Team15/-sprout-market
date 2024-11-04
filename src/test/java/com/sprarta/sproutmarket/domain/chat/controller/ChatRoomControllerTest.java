@@ -83,7 +83,7 @@ public class ChatRoomControllerTest {
     void setup(RestDocumentationContextProvider restDocumentation) {
         MockitoAnnotations.openMocks(this);
 
-        mockUser = new User(1L, "username", "email@email.com", "ABcd2Fg*", "nickname", "01012345678", "address", UserRole.USER);
+        mockUser = new User("username", "email@email.com", "ABcd2Fg*", "nickname", "01012345678", "address", UserRole.USER);
         mockAuthUser = new CustomUserDetails(mockUser);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
