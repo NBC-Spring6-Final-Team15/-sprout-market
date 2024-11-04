@@ -2,6 +2,8 @@ package com.sprarta.sproutmarket.domain.chat.service;
 
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
@@ -20,9 +22,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -31,13 +35,10 @@ public class ChatRoomServiceTest {
     // 가짜 객체 사용
     @Mock
     private ItemRepository itemRepository;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private ChatRoomRepository chatRoomRepository;
-
     @InjectMocks
     private ChatRoomService chatRoomService;
 
@@ -47,6 +48,8 @@ public class ChatRoomServiceTest {
     private Category mockCategory;
     private Item mockItem1;
     private Item mockItem2;
+    private ChatRoom mockChatRoom1;
+    private ChatRoom mockChatRoom2;
     private CustomUserDetails authUser;
 
     @BeforeEach
@@ -60,7 +63,7 @@ public class ChatRoomServiceTest {
                 "pass1234!",
                 "nick1",
                 "01012341234",
-                "서울시 노원구 공릉동",
+                "address here",
                 UserRole.USER
         );
         ReflectionTestUtils.setField(buyer, "id", 1L);
@@ -71,7 +74,7 @@ public class ChatRoomServiceTest {
                 "pass1234!",
                 "nick2",
                 "01012345678",
-                "서울시 노원구 공릉동",
+                "address here2",
                 UserRole.USER
         );
         ReflectionTestUtils.setField(seller, "id", 2L);
@@ -82,7 +85,7 @@ public class ChatRoomServiceTest {
                 "pass1234!",
                 "nick3",
                 "01087654321",
-                "서울시 노원구 공릉동",
+                "address here3",
                 UserRole.USER
         );
         ReflectionTestUtils.setField(mockUser, "id", 3L);
@@ -114,21 +117,25 @@ public class ChatRoomServiceTest {
                 .build();
         ReflectionTestUtils.setField(mockItem2, "id", 2L);
 
+        mockChatRoom1 = new ChatRoom(
+                buyer,
+                seller,
+                mockItem1
+        );
+        ReflectionTestUtils.setField(mockChatRoom1, "id", 1L);
+
+        mockChatRoom2 = new ChatRoom(
+                buyer,
+                seller,
+                mockItem2
+        );
+        ReflectionTestUtils.setField(mockChatRoom2, "id", 2L);
+
         // CustomUserDetails(사용자 정보) 모킹 => 로그인된 사용자의 정보 모킹
         authUser = mock(CustomUserDetails.class);
-        when(authUser.getId()).thenReturn(buyer.getId()); // authUser의 ID를 mockUser1의 ID로 설정
+        when(authUser.getId()).thenReturn(buyer.getId()); // authUser의 ID를 buyer의 ID로 설정
         when(authUser.getEmail()).thenReturn("email1@email.com");
-        when(authUser.getRole()).thenReturn(UserRole.USER);
 
-        // itemRepository.save() 호출 시 mockItem2를 반환하도록 설정
-        when(itemRepository.save(any(Item.class))).thenReturn(mockItem2);
-
-        // userRepository.findById() 호출 시 mockUser를 반환하도록 설정
-        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
-
-        // itemRepository.findById() 호출 시 mockItem1과 mockItem2를 반환하도록 설정
-        when(itemRepository.findById(mockItem1.getId())).thenReturn(Optional.of(mockItem1));
-        when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
     }
 
 
@@ -136,53 +143,125 @@ public class ChatRoomServiceTest {
     void 채팅방_생성_성공() {
 
         // Given
-
-
         // 구매자가 상품2에 채팅방 생성
         when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
-        when(itemRepository.findById(mockItem2.getId())).thenReturn(Optional.of(mockItem2));
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
         when(chatRoomRepository.findByItemAndBuyer(mockItem2, buyer)).thenReturn(Optional.empty());
-        when(chatRoomRepository.save(any(ChatRoom.class))).thenAnswer(invocation -> invocation.getArguments()[0]);
 
+        // When
         ChatRoomDto chatRoomDto = chatRoomService.createChatRoom(mockItem2.getId(), authUser);
 
+        // Then
         assertEquals(buyer.getId(), chatRoomDto.getBuyerId());
         assertEquals(seller.getId(), chatRoomDto.getSellerId());
         assertEquals(mockItem2.getId(), chatRoomDto.getItemId());
-
         verify(chatRoomRepository).save(any(ChatRoom.class));
 
     }
 
     @Test
-    void 채팅방_이미_생성() {
+    void 채팅방_생성_실패__이미_생성된_채팅방() {
+
+        // Given
+        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
+        when(chatRoomRepository.findByItemAndBuyer(mockItem2, buyer)).thenReturn(Optional.of(new ChatRoom(buyer, seller, mockItem2)));
+
+        // When & Then
+        ApiException exception = assertThrows(ApiException.class, () ->
+                chatRoomService.createChatRoom(mockItem2.getId(), authUser));
+        assertEquals(ErrorStatus.CONFLICT_CHATROOM, exception.getErrorCode());
+        verify(chatRoomRepository, never()).save(any(ChatRoom.class));
 
     }
 
     @Test
-    void 자신의_상품에_생성() {
+    void 채팅방_생성_실패__자신의_상품에_생성() {
+
+        // Given
+        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
+        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
+        when(chatRoomRepository.findByItemAndBuyer(mockItem1, buyer)).thenReturn(Optional.empty());
+
+        // When & Then
+        ApiException exception = assertThrows(ApiException.class, () ->
+                chatRoomService.createChatRoom(mockItem1.getId(), authUser));
+        assertEquals(ErrorStatus.FORBIDDEN_CHATROOM_CREATE, exception.getErrorCode());
+        verify(chatRoomRepository, never()).save(any(ChatRoom.class));
 
     }
 
     @Test
     void 채팅방_조회_성공() {
 
+        // Given
+        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
+        when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom2.getId())).thenReturn(mockChatRoom2);
+
+        // When
+        ChatRoomDto chatRoomDto = chatRoomService.getChatRoom(mockChatRoom2.getId(), authUser);
+
+        // Then
+        assertEquals(buyer.getId(), chatRoomDto.getBuyerId());
+        assertEquals(seller.getId(), chatRoomDto.getSellerId());
+        assertEquals(mockItem2.getId(), chatRoomDto.getItemId());
+
     }
 
     @Test
     void 채팅방_목록_조회_성공() {
+
+        // Given
+        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
+        when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
+        when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom1.getId())).thenReturn(mockChatRoom1);
+        when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom2.getId())).thenReturn(mockChatRoom2);
+        when(chatRoomRepository.findAllByUserId(buyer.getId())).thenReturn(List.of(mockChatRoom1, mockChatRoom2));
+
+        // When
+        List<ChatRoomDto> chatRooms = chatRoomService.getChatRooms(authUser);
+
+        // Then
+        assertEquals(2, chatRooms.size());
 
     }
 
     @Test
     void 채팅방_삭제_성공() {
 
+        // Given
+        when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
+        when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom2.getId())).thenReturn(mockChatRoom2);
+
+        // When
+        chatRoomService.deleteChatRoom(mockChatRoom2.getId(), authUser);
+
+        // Then
+        verify(chatRoomRepository).delete(mockChatRoom2);
+
     }
 
     @Test
-    void 채팅방_소속_아님() {
+    void 채팅방_삭제_실패__채팅방_소속_아님() {
+
+        // Given
+        when(userRepository.findById(mockUser.getId())).thenReturn(Optional.of(mockUser));
+        when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
+        when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom2.getId())).thenReturn(mockChatRoom2);
+
+        authUser = mock(CustomUserDetails.class);
+        when(authUser.getId()).thenReturn(mockUser.getId());
+        when(authUser.getEmail()).thenReturn("email3@email.com");
+
+        // When & Then
+        ApiException exception = assertThrows(ApiException.class, () ->
+                chatRoomService.deleteChatRoom(mockChatRoom2.getId(), authUser));
+        assertEquals(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM, exception.getErrorCode());
+        verify(chatRoomRepository, never()).delete(mockChatRoom2);
 
     }
-
 
 }
