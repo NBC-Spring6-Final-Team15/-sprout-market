@@ -20,14 +20,14 @@ public class ProfileImageController {
     @PostMapping("/image")
     public ResponseEntity<ApiResponse<ProfileImageResponse>> profileImageUpload(@RequestBody ImageNameRequest request,
                                                                                 @AuthenticationPrincipal CustomUserDetails authUser){
-        ProfileImageResponse profileImageResponse = profileImageService.uploadProfileImage(request.getImageName(), authUser);
+        ProfileImageResponse profileImageResponse = profileImageService.uploadProfileImage(request, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(profileImageResponse));
     }
 
     @DeleteMapping("/image")
     public ResponseEntity<ApiResponse<String>> profileImageDelete(@RequestBody ImageNameRequest request,
                                                                @AuthenticationPrincipal CustomUserDetails authUser){
-        profileImageService.deleteProfileImage(request.getImageName(), authUser);
+        profileImageService.deleteProfileImage(request, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 }

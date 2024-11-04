@@ -1,5 +1,7 @@
 package com.sprarta.sproutmarket.domain.user.repository;
 
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +22,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.email = :email AND u.status = 'ACTIVE'")
     Optional<User> findByEmailAndStatusIsActive(@Param("email") String email);
+
+    default User findUserById(Long id){
+        return findById(id)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+    }
 }
