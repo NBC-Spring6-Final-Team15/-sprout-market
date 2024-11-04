@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.areas.controller;
 
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
+import com.sprarta.sproutmarket.domain.areas.service.AdmCachingService;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
@@ -17,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdministrativeAreaController {
     private final AdministrativeAreaService administrativeAreaService;
+    private final AdmCachingService admCachingService;
 
     /**
      * geoJson 파일을 데이터베이스에 삽입하는 작업입니다.
@@ -45,7 +47,6 @@ public class AdministrativeAreaController {
                                 getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude())));
     }
 
-
     /**
      * 어떤 특정 행정동 문자열을 불러와서 주변 반경의 행정동 리스트를 반환합니다.
      * @param admNm : 행정동 문자열 (예시 : 경상남도 산청군 생초면)
@@ -55,5 +56,14 @@ public class AdministrativeAreaController {
     public ResponseEntity<ApiResponse<List<String>>> getAreas(@RequestParam String admNm) {
         List<String> areas = administrativeAreaService.getAdmNameListByAdmName(admNm);
         return ResponseEntity.ok(ApiResponse.onSuccess(areas));
+    }
+
+    /**
+     * 특정 행정동 기준 5km 떨어진 행정구역 리스트 조회하는 쿼리를 캐싱합니다.
+     */
+    @GetMapping("/test/cache")
+    public ResponseEntity<ApiResponse<Void>> cachingAllAdms() {
+        admCachingService.cachingAllAdms();
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 }

@@ -7,7 +7,6 @@ import com.sprarta.sproutmarket.domain.category.service.CategoryService;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.image.itemImage.service.ItemImageService;
 import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
@@ -41,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,7 +76,7 @@ public class ItemService {
         User user = findUserById(authUser.getId());
         // 반경 5km 행정동 이름 반환
         List<String> areaList = admAreaService.getAdmNameListByAdmName(user.getAddress());
-        Category category = categoryService.findByIdAndStatusIsActive(itemSearchRequest.getCategoryId());
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemSearchRequest.getCategoryId());
         ItemSaleStatus itemSaleStatus = setSaleStatus(itemSearchRequest);
 
         Pageable pageable = PageRequest.of(page-1, size);
@@ -94,7 +94,7 @@ public class ItemService {
     @Transactional
     public ItemResponse addItem(ItemCreateRequest itemCreateRequest, CustomUserDetails authUser){
         User user = findUserById(authUser.getId());
-        Category category = categoryService.findByIdAndStatusIsActive(itemCreateRequest.getCategoryId());
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(itemCreateRequest.getCategoryId());
         Item item = new Item(
             itemCreateRequest.getTitle(),
             itemCreateRequest.getDescription(),
@@ -223,10 +223,10 @@ public class ItemService {
      * @param itemId Item's ID
      * @return ItemResponseDto - Item에 있는 모든 정보값을 포함한 응답 객체
      */
-    public ItemResponseDto getItem(Long itemId){
+    public ItemResponseDto getItem(Long itemId, CustomUserDetails authUser){
         Item item = findItemById(itemId);
 
-        incrementViewCount(itemId);
+        incrementViewCount(itemId, authUser.getId());
 
         return convertToDto(item);
     }
@@ -259,8 +259,10 @@ public class ItemService {
      *      *          매물들의 상세 정보와 페이지 정보를 포함하고 있음
      */
     public Page<ItemResponseDto> getCategoryItems(FindItemsInMyAreaRequestDto requestDto, Long categoryId, CustomUserDetails authUser){
-        User user = findUserById(authUser.getId());
-        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
+        User user = userRepository.findById(authUser.getId()).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+        String area = user.getAddress();
+        // 카테고리 존재 확인
+        Category category = categoryRepository.findByIdOrElseThrow(categoryId);
 
         // 반경 5km 행정동 이름 반환
         List<String> areaList = getAreaListByUserAddress(user.getAddress());
@@ -311,7 +313,7 @@ public class ItemService {
                     return new ItemWithViewCount(item, finalViewCount);
                 })
                 .sorted(Comparator.comparingLong(ItemWithViewCount::getViewCount).reversed()) // 조회수 내림차순 정렬
-                .limit(5) // 상위 3개 선택
+                .limit(5) // 상위 5개 선택
                 .toList();
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
@@ -329,9 +331,20 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
-    private void incrementViewCount(Long itemId) {
+    private void incrementViewCount(Long itemId, Long userId) {
         String redisKey = "ViewCount:ItemId:" + itemId;
-        viewCountRedisTemplate.opsForValue().increment(redisKey);
+        String userKey = "UserView:ItemId:" + itemId + ":UserId:" + userId;
+
+        // 사용자가 이미 조회했는지 확인
+        Boolean hasViewed = viewCountRedisTemplate.hasKey(userKey);
+
+        // 사용자가 조회하지 않은 경우
+        if (hasViewed == null || !hasViewed) {
+            // 조회수 증가
+            viewCountRedisTemplate.opsForValue().increment(redisKey);
+            // 사용자의 조회 기록을 1시간 후 만료되도록 설정
+            viewCountRedisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
+        }
     }
 
     /**

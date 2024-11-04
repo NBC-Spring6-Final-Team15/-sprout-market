@@ -1,8 +1,14 @@
 package com.sprarta.sproutmarket.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprarta.sproutmarket.domain.common.ApiResponse;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +23,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,10 +48,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // JWT 토큰 추출 및 검증
         String jwt = jwtUtil.substringToken(authorizationHeader);
-        Claims claims = jwtUtil.extractClaims(jwt);
+        Claims claims = null;
 
-        if (claims == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
+        try{
+            claims = jwtUtil.extractClaims(jwt);
+        } catch(Exception ex) {
+            JwtExceptionHandler.handleJwtException(response, ex);
             return;
         }
 

@@ -85,7 +85,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
         mockImage = new MockMultipartFile("file", "itemImage.jpg", "image/jpeg", "itemImage content".getBytes());
 
         // 클래스 인스턴스 생성
-        mockUser = new User(1L, "김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        mockUser = new User("김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        ReflectionTestUtils.setField(mockUser, "id", 1L);
         // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
         itemImage = ItemImage.builder()
@@ -469,7 +470,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 mockItem.getStatus()
         );
 
-        given(itemService.getItem(itemId)).willReturn(itemResponseDto);
+        given(itemService.getItem(anyLong(), any(CustomUserDetails.class))).willReturn(itemResponseDto);
 
         // When, Then
         mockMvc.perform(RestDocumentationRequestBuilders.get("/items/{itemId}", itemId)

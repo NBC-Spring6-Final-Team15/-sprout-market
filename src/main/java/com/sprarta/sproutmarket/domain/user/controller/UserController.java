@@ -10,6 +10,8 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -74,7 +76,7 @@ public class UserController {
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<ApiResponse<List<UserAdminResponse>>> getUsers() {
-        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getAllUsers()));
+    public ResponseEntity<ApiResponse<Page<UserAdminResponse>>> getUsers(Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.onSuccess(userService.getAllUsers(pageable)));
     }
 }

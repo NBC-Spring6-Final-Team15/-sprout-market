@@ -3,12 +3,14 @@ package com.sprarta.sproutmarket.domain.trade.controller;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.Schema;
 import com.epages.restdocs.apispec.SimpleType;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.trade.dto.TradeResponseDto;
 import com.sprarta.sproutmarket.domain.trade.entity.Trade;
+import com.sprarta.sproutmarket.domain.trade.enums.TradeStatus;
 import com.sprarta.sproutmarket.domain.trade.service.TradeService;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
@@ -28,6 +30,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -51,13 +54,14 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
     void setUp() {
 
         CustomUserDetails mockAuthUser = new CustomUserDetails(
-                new User(1L, "username",
+                new User("username",
                         "email@example.com",
                         "encodedOldPassword",
                         "nickname",
                         "010-1234-5678",
                         "address", UserRole.USER)
         );
+        ReflectionTestUtils.setField(mockAuthUser, "id", 1L);
 
         ReflectionTestUtils.setField(buyer, "id", 1L);
         ReflectionTestUtils.setField(buyer, "nickname", "buyer");
@@ -126,18 +130,15 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     void 거래_완료_성공() throws Exception {
-        TradeResponseDto tradeResponseDto = TradeResponseDto.from(trade);
-
-        when(tradeService.finishTrade(any(Long.class), any(CustomUserDetails.class)))
-                .thenReturn(tradeResponseDto);
+        doNothing().when(tradeService).finishTrade(any(Long.class), any(CustomUserDetails.class),any(TradeStatus.class));
 
         // when
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.patch("/trades/{tradeId}", 1L)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.patch("/trades/{tradeId}?tradeStatus=COMPLETED", 1L)
                         .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "complete-trade",
                         resource(ResourceSnippetParameters.builder()
-                                .description("거래를 완료 상태로 변경합니다.")
+                                .description("거래를 완료/취소 상태로 변경합니다.")
                                 .pathParameters(
                                         parameterWithName("tradeId").description("거래 ID")
                                                 .type(SimpleType.NUMBER)
@@ -146,24 +147,17 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
                                         headerWithName("Authorization")
                                                 .description("Bearer (JWT 토큰)")
                                 )
-                                .summary("거래 상태 완료로 변경")
-                                .tag("Trade")
-                                .responseFields(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
-                                        fieldWithPath("data").description("응답 본문"),
-                                        fieldWithPath("data.id").description("거래 ID"),
-                                        fieldWithPath("data.itemTitle").description("아이템 이름"),
-                                        fieldWithPath("data.sellerName").description("판매자 이름"),
-                                        fieldWithPath("data.buyerName").description("구매자 이름"),
-                                        fieldWithPath("data.tradeStatus").description("거래 상태")
+                                .queryParameters(
+                                        parameterWithName("tradeStatus").description("COMPLETE or CANCELLED")
                                 )
+                                .summary("거래 상태 완료/취소로 변경")
+                                .tag("Trade")
+                                .responseSchema(Schema.schema("거래_상태_변경_성공_응답"))
                                 .build()
                         )
                 ));
 
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(tradeResponseDto.getId()));
+        result.andExpect(status().isOk());
 
     }
 }

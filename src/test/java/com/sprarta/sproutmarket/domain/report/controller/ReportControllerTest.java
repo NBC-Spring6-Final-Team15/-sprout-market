@@ -22,6 +22,7 @@ import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -50,7 +51,8 @@ class ReportControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @BeforeEach
     void setUp() {
-        User mockUser = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        User mockUser = new User("username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(mockUser, "id", 1L);
         CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
 
         // 인증 유저 스프링 컨텍스트 홀더에 저장

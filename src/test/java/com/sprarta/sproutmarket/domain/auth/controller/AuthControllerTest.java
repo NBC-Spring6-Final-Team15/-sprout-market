@@ -4,6 +4,7 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.KakaoSignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -34,7 +35,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
         AdminSignupRequest adminSignupRequest = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
-                123456,
                 "adminPassword",
                 "adminNickname",
                 "010-1234-5678",
@@ -56,7 +56,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .requestFields(
                                         fieldWithPath("username").description("관리자 이름"),
                                         fieldWithPath("email").description("관리자 이메일"),
-                                        fieldWithPath("authNumber").description("이메일 인증번호"),
                                         fieldWithPath("password").description("관리자 비밀번호"),
                                         fieldWithPath("nickname").description("관리자 닉네임"),
                                         fieldWithPath("phoneNumber").description("관리자 전화번호"),
@@ -105,7 +104,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
         SignupRequest signupRequest = new SignupRequest(
                 "username",
                 "user@example.com",
-                123456,
                 "userPassword",
                 "userNickname",
                 "010-1234-5678",
@@ -127,7 +125,6 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .requestFields(
                                         fieldWithPath("username").description("사용자 이름"),
                                         fieldWithPath("email").description("사용자 이메일"),
-                                        fieldWithPath("authNumber").description("이메일 인증번호"),
                                         fieldWithPath("password").description("사용자 비밀번호"),
                                         fieldWithPath("nickname").description("사용자 닉네임"),
                                         fieldWithPath("phoneNumber").description("사용자 전화번호"),
@@ -167,6 +164,42 @@ class AuthControllerTest extends CommonMockMvcControllerTestSetUp {
                                 )
                                 .requestSchema(Schema.schema("사용자-로그인-성공-요청"))
                                 .responseSchema(Schema.schema("사용자-로그인-성공-응답"))
+                                .build())
+                ));
+    }
+
+    @Test
+    void kakaoSignupSuccess() throws Exception {
+        KakaoSignupRequest kakaoSignupRequest = new KakaoSignupRequest(
+                "kakaoUsername",
+                "kakaoPassword",
+                "010-9876-5432",
+                "서울특별시 강남구"
+        );
+        SignupResponse signupResponse = new SignupResponse("jwt-token");
+
+        when(authService.kakaoSignup(any(KakaoSignupRequest.class), any())).thenReturn(signupResponse);
+
+        mockMvc.perform(post("/auth/kakao-signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(kakaoSignupRequest)))
+                .andExpect(status().isOk())
+                .andDo(document("auth-kakao-signup-success",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("카카오 회원가입 API")
+                                .summary("카카오 계정으로 새로운 사용자를 등록합니다.")
+                                .tag("Auth")
+                                .requestFields(
+                                        fieldWithPath("username").description("카카오 사용자 이름"),
+                                        fieldWithPath("password").description("카카오 사용자 비밀번호"),
+                                        fieldWithPath("phoneNumber").description("카카오 사용자 전화번호"),
+                                        fieldWithPath("address").description("카카오 사용자 주소")
+                                )
+                                .responseFields(
+                                        fieldWithPath("bearerToken").description("JWT 토큰")
+                                )
+                                .requestSchema(Schema.schema("카카오-회원가입-성공-요청"))
+                                .responseSchema(Schema.schema("카카오-회원가입-성공-응답"))
                                 .build())
                 ));
     }

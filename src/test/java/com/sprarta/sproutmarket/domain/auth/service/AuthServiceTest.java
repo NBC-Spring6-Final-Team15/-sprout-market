@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.auth.service;
 import com.sprarta.sproutmarket.config.JwtUtil;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
+import com.sprarta.sproutmarket.domain.auth.dto.request.KakaoSignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
@@ -13,6 +14,7 @@ import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -45,6 +47,9 @@ class AuthServiceTest {
     @Mock
     private RedisUtil redisUtil;
 
+    @Mock
+    private HttpSession session;
+
     @InjectMocks
     private AuthService authService;
 
@@ -63,7 +68,6 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
-                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
@@ -104,7 +108,6 @@ class AuthServiceTest {
         AdminSignupRequest request = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
-                123456,
                 "adminPassword",
                 "adminNickname",
                 "010-1234-5678",
@@ -142,7 +145,6 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
-                123456,
                 "password",
                 "nickname",
                 "010-1234-5678",
@@ -170,7 +172,7 @@ class AuthServiceTest {
                 UserRole.USER
         );
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()))
                 .thenReturn("jwt-token");
@@ -197,7 +199,7 @@ class AuthServiceTest {
         SigninRequest request = new SigninRequest("email@example.com", "password");
         User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
 
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
@@ -214,5 +216,36 @@ class AuthServiceTest {
 
         ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
+    }
+
+    @Test
+    void kakaoSignup_Success() {
+        KakaoSignupRequest request = new KakaoSignupRequest("username", "password", "nickname", "address");
+
+        // 세션에서 카카오 로그인 정보 설정
+        when(session.getAttribute("email")).thenReturn("kakao@example.com");
+        when(session.getAttribute("nickname")).thenReturn("kakaoNickname");
+        when(session.getAttribute("profileImageUrl")).thenReturn("profile.jpg");
+        when(userRepository.existsByEmail("kakao@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
+
+        SignupResponse response = authService.kakaoSignup(request, session);
+
+        assertNotNull(response);
+        verify(userRepository, times(1)).existsByEmail("kakao@example.com");
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void kakaoSignup_Failure_EmailAlreadyExists() {
+        KakaoSignupRequest request = new KakaoSignupRequest("username", "password", "nickname", "address");
+
+        when(session.getAttribute("email")).thenReturn("kakao@example.com");
+        when(userRepository.existsByEmail("kakao@example.com")).thenReturn(true);
+
+        ApiException exception = assertThrows(ApiException.class, () -> authService.kakaoSignup(request, session));
+        assertEquals(ErrorStatus.BAD_REQUEST_EMAIL, exception.getErrorCode());
+        verify(userRepository, times(1)).existsByEmail("kakao@example.com");
+        verify(userRepository, times(0)).save(any(User.class));
     }
 }

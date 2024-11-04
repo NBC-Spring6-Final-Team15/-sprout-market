@@ -20,8 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,8 +65,10 @@ class UserServiceTest {
         MockitoAnnotations.openMocks(this);
 
         // Mock user data
-        user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
-        user2 = new User(2L, "username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        user = new User("username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        user2 = new User("username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user2, "id", 2L);
         authUser = new CustomUserDetails(user);
         authUser2 = new CustomUserDetails(user2);
         profileImage = new ProfileImage(user, "https://s3.bucket/profile/test.jpg");
@@ -198,7 +205,6 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(1L);
         verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(longitude, latitude);
         assertEquals(newAddress, user.getAddress());
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
@@ -212,7 +218,6 @@ class UserServiceTest {
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-        verify(userRepository, times(0)).save(any(User.class));
     }
 
     @Test
@@ -231,17 +236,17 @@ class UserServiceTest {
     @Test
     void 모든_상태_유저_모두_조회_성공() {
         // given
-        List<User> users = List.of(user, user2);
+        Page<User> users = new PageImpl<>(List.of(user, user2));
 
-        when(userRepository.findAll()).thenReturn(users);
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(users);
 
         // when
-        List<UserAdminResponse> result = userService.getAllUsers();
+        Page<UserAdminResponse> result = userService.getAllUsers(PageRequest.of(0, 10));
 
         // then
-        assertEquals(2, result.size());
-        assertEquals("username", result.get(0).getUsername());
-        assertEquals("username", result.get(1).getUsername());
-        verify(userRepository, times(1)).findAll();
+        assertEquals(2, result.getTotalElements());
+        assertEquals("username", result.getContent().get(0).getUsername());
+        assertEquals("username", result.getContent().get(1).getUsername());
+        verify(userRepository, times(1)).findAll(any(Pageable.class));
     }
 }
