@@ -3,6 +3,7 @@ package com.sprarta.sproutmarket.domain.interestedCategory.controller;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.config.JwtUtil;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
@@ -27,6 +28,7 @@ import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -41,33 +43,18 @@ import static org.springframework.restdocs.request.RequestDocumentation.paramete
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(InterestedCategoryController.class)
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-@AutoConfigureRestDocs(outputDir = "build/generated-snippets")
-@ExtendWith({MockitoExtension.class, RestDocumentationExtension.class})
-public class InterestedCategoryControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
+class InterestedCategoryControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     private InterestedCategoryService interestedCategoryService;
 
     @MockBean
-    private JwtUtil jwtUtil;
-
-    @MockBean
-    private CustomUserDetailService customUserDetailService;
-
-    @MockBean
     private UserService userService;
-
-    @MockBean
-    private CustomUserDetails mockAuthUser;
 
     @BeforeEach
     void setUp() {
-        User mockUser = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        User mockUser = new User("username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(mockUser, "id", 1L);
         CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
 
         // Set the authenticated user in the SecurityContext
@@ -96,8 +83,7 @@ public class InterestedCategoryControllerTest {
                                 )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("관심-카테고리-추가-성공-응답"))
                                 .build())
@@ -121,8 +107,7 @@ public class InterestedCategoryControllerTest {
                                 )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data").description("응답 데이터").optional()
+                                        fieldWithPath("statusCode").description("응답 상태 코드")
                                 ))
                                 .responseSchema(Schema.schema("관심-카테고리-삭제-성공-응답"))
                                 .build())

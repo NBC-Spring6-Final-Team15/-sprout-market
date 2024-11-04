@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.category.controller;
 
+import com.sprarta.sproutmarket.domain.category.dto.CategoryAdminResponseDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryResponseDto;
 import com.sprarta.sproutmarket.domain.category.service.CategoryService;
@@ -27,17 +28,18 @@ public class CategoryController {
      */
     @PostMapping("/admin/categories")
     public ResponseEntity<ApiResponse<CategoryResponseDto>> create(@RequestBody @Valid CategoryRequestDto requestDto) {
-        CategoryResponseDto responseDto = categoryService.create(requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,responseDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ApiResponse.createSuccess("Created",201,categoryService.create(requestDto)));
     }
 
     /**
-     * 카테고리 전체 조회
+     * 활성화된 카테고리 전체 조회
      * @return CategoryResponseDto 를 담은 리스트
      */
     @GetMapping("/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponseDto>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.getActiveCategories()));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(categoryService.getActiveCategories()));
     }
 
     /**
@@ -49,7 +51,8 @@ public class CategoryController {
     @PatchMapping("/admin/categories/{categoryId}")
     public ResponseEntity<ApiResponse<CategoryResponseDto>> update(@RequestBody @Valid CategoryRequestDto requestDto,
                                                                    @PathVariable Long categoryId) {
-        return ResponseEntity.ok(ApiResponse.onSuccess(categoryService.update(categoryId, requestDto)));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(categoryService.update(categoryId, requestDto)));
     }
 
     /**
@@ -60,6 +63,29 @@ public class CategoryController {
     @DeleteMapping("/admin/categories/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long categoryId) {
         categoryService.delete(categoryId);
-        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(null));
+    }
+
+    /**
+     * 삭제된 카테고리 복원
+     * @param categoryId 복원하고자 하는 카테고리 ID
+     * @return data: null인 응답 반환
+     */
+    @PatchMapping("/admin/categories/deleted/{categoryId}")
+    public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long categoryId) {
+        categoryService.activate(categoryId);
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(null));
+    }
+
+    /**
+     * 삭제된 카테고리를 포함해서 전부 조회(어드민 전용)
+     * @return : 삭제 상태까지 포함한 응답 Dto 리스트
+     */
+    @GetMapping("/admin/categories")
+    public ResponseEntity<ApiResponse<List<CategoryAdminResponseDto>>> getCategories() {
+        return ResponseEntity.ok(
+                ApiResponse.onSuccess(categoryService.getAllCategories()));
     }
 }

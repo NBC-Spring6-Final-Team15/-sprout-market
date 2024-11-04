@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.category.service;
 
+import com.sprarta.sproutmarket.domain.category.dto.CategoryAdminResponseDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryRequestDto;
 import com.sprarta.sproutmarket.domain.category.dto.CategoryResponseDto;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
@@ -17,11 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryService {
     private final CategoryRepository categoryRepository;
-
-    public Category findByIdOrElseThrow(Long id){
-        return categoryRepository.findById(id)
-            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-    }
 
     /**
      * 카테고리 추가 메서드
@@ -44,22 +40,15 @@ public class CategoryService {
     //활성 상태인 카테고리 전체 조회
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getActiveCategories() {
-        List<Category> categories = categoryRepository.findAllByStatus(Status.ACTIVE);
-
-        return categories.stream().map(CategoryResponseDto::new).toList();
+        return categoryRepository
+                .findAllByStatus(Status.ACTIVE)
+                .stream().map(CategoryResponseDto::new).toList();
     }
 
     //카테고리 수정
     @Transactional
     public CategoryResponseDto update(Long categoryId, CategoryRequestDto requestDto) {
-        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-
-        //수정될 이름과 현재 이름이 이미 같은지 확인
-        if(category.getName().equals(requestDto.getCategoryName())) {
-            throw new ApiException(ErrorStatus.BAD_REQUEST_SAME_NAME);
-        }
-
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
         category.update(requestDto.getCategoryName());
         return new CategoryResponseDto(category.getId(),category.getName());
     }
@@ -70,14 +59,22 @@ public class CategoryService {
      */
     @Transactional
     public void delete(Long categoryId) {
-        Category category = categoryRepository.findByIdAndStatusIsActive(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
-
+        Category category = categoryRepository.findByIdAndStatusIsActiveOrElseThrow(categoryId);
         category.deactivate();
     }
 
     //카테고리 복원
+    @Transactional
+    public void activate(Long categoryId) {
+        Category category = categoryRepository.findByIdOrElseThrow(categoryId);
+        category.activate();
+    }
 
-    //삭제된 카테고리만 조회
-
+    //삭제된 카테고리를 포함해서 조회(어드민 전용)
+    @Transactional(readOnly = true)
+    public List<CategoryAdminResponseDto> getAllCategories() {
+        return categoryRepository
+                .findAll()
+                .stream().map(CategoryAdminResponseDto::new).toList();
+    }
 }

@@ -146,3 +146,6 @@ gradle-app.setting
 .env
 
 application-local.properties
+
+# Ignore QueryDSL generated Q-classes in specific directory
+src/main/generated/**/Q*.java

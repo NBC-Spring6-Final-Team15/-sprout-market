@@ -3,9 +3,8 @@ package com.sprarta.sproutmarket.domain.review.controller;
 
 import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.config.SecurityConfig;
+import com.epages.restdocs.apispec.Schema;
+import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewRequestDto;
 import com.sprarta.sproutmarket.domain.review.dto.ReviewResponseDto;
 import com.sprarta.sproutmarket.domain.review.enums.ReviewRating;
@@ -13,25 +12,17 @@ import com.sprarta.sproutmarket.domain.review.service.ReviewService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
-import com.sprarta.sproutmarket.domain.user.service.CustomUserDetailService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -48,38 +39,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewController.class)
-@Import(SecurityConfig.class)
-@AutoConfigureRestDocs
-@MockBean(JpaMetamodelMappingContext.class)
 @AutoConfigureMockMvc(addFilters = false)
-class ReviewControllerTest {
-
-    @Autowired
-    MockMvc mockMvc;
-
+class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     ReviewService reviewService;
-
-    @Autowired
-    ObjectMapper objectMapper;
-
-    @MockBean
-    JwtUtil jwtUtil;
-
-    @MockBean
-    CustomUserDetailService customUserDetailService;
 
     @BeforeEach
     void setUp() {
 
         CustomUserDetails mockAuthUser = new CustomUserDetails(
-                new User(1L, "username",
+                new User("username",
                         "email@example.com",
                         "encodedOldPassword",
                         "nickname",
                         "010-1234-5678",
                         "address", UserRole.USER)
         );
+        ReflectionTestUtils.setField(mockAuthUser, "id", 1L);
 
         // 인증 유저 시큐리티 컨텍스트 홀더에 저장
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -97,7 +73,7 @@ class ReviewControllerTest {
                 .thenReturn(reviewResponseDto);
 
         // when, then
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/{tradeId}", tradeId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/reviews/trades/{tradeId}", tradeId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reviewRequestDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
@@ -120,20 +96,19 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 시 응답 : Created , 예외 시 예외 메시지"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 201"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
                                         fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("리뷰-생성-성공-요청"))
+                                .responseSchema(Schema.schema("리뷰-생성-성공-응답"))
                                 .build()
                         )
                 ));
-        result.andExpect(status().isOk())
+        result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.comment").value(reviewRequestDto.getComment()))
                 .andExpect(jsonPath("$.data.reviewRating").value("GOOD"));
     }
@@ -163,22 +138,14 @@ class ReviewControllerTest {
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message")
-                                                .description("응답 메시지"),
-                                        fieldWithPath("statusCode")
-                                                .description("HTTP 상태 코드"),
-                                        fieldWithPath("data.id")
-                                                .description("리뷰 ID"),
-                                        fieldWithPath("data.tradeId")
-                                                .description("관련 거래 ID"),
-                                        fieldWithPath("data.comment")
-                                                .description("리뷰 내용"),
-                                        fieldWithPath("data.reviewRating")
-                                                .description("리뷰 평점")
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
+                                        fieldWithPath("data.id").description("리뷰 ID"),
+                                        fieldWithPath("data.tradeId").description("관련 거래 ID"),
+                                        fieldWithPath("data.comment").description("리뷰 내용"),
+                                        fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-조회-성공-응답"))
                                 .build()
                         )
                 ));
@@ -217,17 +184,15 @@ class ReviewControllerTest {
                                 .summary("리뷰 전체 조회")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data[]").description("리뷰 목록"),
                                         fieldWithPath("data[].id").description("리뷰 ID"),
                                         fieldWithPath("data[].tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data[].comment").description("리뷰 내용"),
                                         fieldWithPath("data[].reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-전체조회-성공-응답"))
                                 .build()
                         )
                 ));
@@ -269,16 +234,15 @@ class ReviewControllerTest {
                                         fieldWithPath("reviewRating").description("리뷰 평점")
                                 ))
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
                                         fieldWithPath("data.id").description("리뷰 ID"),
                                         fieldWithPath("data.tradeId").description("관련 거래 ID"),
                                         fieldWithPath("data.comment").description("리뷰 내용"),
                                         fieldWithPath("data.reviewRating").description("리뷰 평점")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .requestSchema(Schema.schema("리뷰-수정-성공-요청"))
+                                .responseSchema(Schema.schema("리뷰-수정-성공-응답"))
                                 .build()
                         )
                 ));
@@ -311,19 +275,14 @@ class ReviewControllerTest {
                                 .summary("리뷰 삭제")
                                 .tag("Review")
                                 .responseFields(List.of(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("HTTP 상태 코드"),
-                                        fieldWithPath("data").description("리뷰 삭제에 대한 데이터 (null)")
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200")
                                 ))
-                                .responseHeaders(
-                                        headerWithName("Content-Type").description("응답의 Content-Type")
-                                )
+                                .responseSchema(Schema.schema("리뷰-삭제-성공-응답"))
                                 .build()
                         )
                 ));
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.statusCode").value(200));
     }
-
-
 }

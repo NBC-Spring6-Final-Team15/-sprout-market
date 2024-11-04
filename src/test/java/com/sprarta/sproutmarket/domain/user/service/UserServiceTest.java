@@ -1,10 +1,15 @@
 package com.sprarta.sproutmarket.domain.user.service;
 
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
+import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.profileImage.entity.ProfileImage;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -15,8 +20,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,19 +45,35 @@ class UserServiceTest {
     @Mock
     private AdministrativeAreaService administrativeAreaService;
 
+    @Mock
+    private S3ImageService s3ImageService;
+    @Mock
+    private ProfileImageService profileImageService;
+
     @InjectMocks
     private UserService userService;
 
     private User user;
+    private User user2;
     private CustomUserDetails authUser;
+    private CustomUserDetails authUser2;
+    private MockMultipartFile mockImage;
+    private ProfileImage profileImage;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
         // Mock user data
-        user = new User(1L, "username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        user = new User("username", "email@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        user2 = new User("username", "adminEmail@example.com", "encodedOldPassword", "nickname", "010-1234-5678", "address", UserRole.USER);
+        ReflectionTestUtils.setField(user2, "id", 2L);
         authUser = new CustomUserDetails(user);
+        authUser2 = new CustomUserDetails(user2);
+        profileImage = new ProfileImage(user, "https://s3.bucket/profile/test.jpg");
+        mockImage = new MockMultipartFile("image", "test.jpg", "image/jpeg", "test image content".getBytes());
+        user2.deactivate();
     }
 
     @Test
@@ -142,7 +170,7 @@ class UserServiceTest {
         // Then
         verify(userRepository, times(1)).findById(1L);
         verify(passwordEncoder, times(1)).matches("encodedOldPassword", user.getPassword()); // Check password
-        verify(userRepository, times(1)).delete(user); // Verify user deletion
+        assertEquals(Status.DELETED, user.getStatus());
     }
 
     @Test
@@ -177,7 +205,6 @@ class UserServiceTest {
         verify(userRepository, times(1)).findById(1L);
         verify(administrativeAreaService, times(1)).getAdministrativeAreaByCoordinates(longitude, latitude);
         assertEquals(newAddress, user.getAddress());
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
@@ -191,6 +218,35 @@ class UserServiceTest {
         // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> userService.updateUserAddress(1L, longitude, latitude));
         assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-        verify(userRepository, times(0)).save(any(User.class));
+    }
+
+    @Test
+    void 탈퇴_유저_복원_성공() {
+        // given
+        when(userRepository.findById(authUser2.getId())).thenReturn(Optional.of(user2));
+
+        // when
+        userService.activateUser(user2.getId());
+
+        // then
+        assertEquals(Status.ACTIVE, user2.getStatus());
+        verify(userRepository, times(1)).findById(user2.getId());
+    }
+
+    @Test
+    void 모든_상태_유저_모두_조회_성공() {
+        // given
+        Page<User> users = new PageImpl<>(List.of(user, user2));
+
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(users);
+
+        // when
+        Page<UserAdminResponse> result = userService.getAllUsers(PageRequest.of(0, 10));
+
+        // then
+        assertEquals(2, result.getTotalElements());
+        assertEquals("username", result.getContent().get(0).getUsername());
+        assertEquals("username", result.getContent().get(1).getUsername());
+        verify(userRepository, times(1)).findAll(any(Pageable.class));
     }
 }

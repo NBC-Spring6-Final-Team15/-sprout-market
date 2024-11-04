@@ -11,6 +11,7 @@ import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.geojson.LngLatAlt;
 import org.locationtech.jts.geom.*;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -49,13 +50,12 @@ public class AdministrativeAreaService {
             String admCd = feature.getProperties().get("adm_cd").toString();
 
             // Geometry 를 JTS 의 MultiPolygon 으로 변환
-            org.geojson.MultiPolygon geoJsonMultiPolygon = (org.geojson.MultiPolygon) feature.getGeometry();
-            MultiPolygon jtsMultiPolygon = convertToJtsMultiPolygon(geoJsonMultiPolygon);
+            MultiPolygon jtsMultiPolygon = convertToJtsMultiPolygon((org.geojson.MultiPolygon) feature.getGeometry());
+
+            Point centroid = jtsMultiPolygon.getCentroid();
 
             // SRID 설정 (경도,위도 정보로 DB 조회할 수 있게 설정하는 ID)
-            jtsMultiPolygon.setSRID(4326);
-            Point centroid = jtsMultiPolygon.getCentroid();
-            centroid.setSRID(4326);
+            setSRID(jtsMultiPolygon, centroid);
 
             //엔티티 생성
             AdministrativeArea area = AdministrativeArea.builder()
@@ -75,6 +75,11 @@ public class AdministrativeAreaService {
 
         //데이터 저장
         administrativeAreaRepository.saveAll(areaList);
+    }
+
+    private void setSRID(MultiPolygon jtsMultiPolygon, Point centroid) {
+        jtsMultiPolygon.setSRID(4326);
+        centroid.setSRID(4326);
     }
 
     /**
@@ -143,6 +148,7 @@ public class AdministrativeAreaService {
      * @param admNm : 행정동 이름 (예시 : 부산광역시 남구 대연1동)
      * @return : 주변 5km 행정동 이름 AdmNameDto 리스트 (예시 admName : 부산광역시 남구 용당동 << 들어있는 리스트)
      */
+    @Cacheable(value = "admNameCache", key = "#admNm")
     public List<String> getAdmNameListByAdmName(String admNm) {
         AdministrativeArea area = administrativeAreaRepository.findByAdmNm(admNm).orElseThrow(
                 () -> new ApiException(ErrorStatus.NOT_FOUND_ADMINISTRATIVE_AREA)

@@ -5,6 +5,7 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.areas.dto.AdministrativeAreaRequestDto;
+import com.sprarta.sproutmarket.domain.areas.service.AdmCachingService;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,15 +14,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
-import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
-import static org.mockito.ArgumentMatchers.anyString;
+import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -33,40 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp {
     @MockBean
     AdministrativeAreaService administrativeAreaService;
-
-    @Test
-    @WithMockUser
-    void addGeoJson() throws Exception {
-        String returnString = "DB에 성공적으로 geojson 파일이 삽입됐습니다.";
-        doNothing().when(administrativeAreaService).insertGeoJsonData(anyString());
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/addGeoJson")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(
-                        MockMvcRestDocumentationWrapper.document(
-                                "add-geojson",
-                                resource(ResourceSnippetParameters.builder()
-                                        .description("GeoJson 파일을 DB에 추가합니다.")
-                                        .summary("GeoJson 추가 API")
-                                        .tag("AdministrativeArea")
-                                        .responseFields(List.of(
-                                                fieldWithPath("message").type(JsonFieldType.STRING)
-                                                        .description("상태 메시지"),
-                                                fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                                                        .description("상태 코드"),
-                                                fieldWithPath("data").type(JsonFieldType.STRING)
-                                                        .description("성공했다는 메시지")
-                                        ))
-                                        .responseSchema(Schema.schema("geojson-DB-추가-성공-응답"))
-                                        .build())
-                        )
-                );
-
-        verify(administrativeAreaService, times(1)).insertGeoJsonData(anyString());
-        result.andExpect(status().isCreated());
-        result.andExpect(jsonPath("data").value(returnString));
-        result.andExpect(jsonPath("statusCode").value(201));
-        result.andExpect(jsonPath("message").value("Created"));
-    }
+    @MockBean
+    AdmCachingService admCachingService;
 
     @Test
     void 좌표로_행정동_조회_성공() throws Exception {
@@ -77,7 +43,8 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                 .getAdministrativeAreaByCoordinates(requestDto.getLongitude(), requestDto.getLatitude()))
                 .thenReturn(returnString);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/test/getHJD")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/auth/areas")
+                        .header("Authorization", "Bearer (JWT 토큰)")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andDo(
@@ -87,6 +54,10 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                                         .description("double 타입의 위도, 경도를 받아서 특정 행정구역을 리턴합니다.")
                                         .summary("행정구역 반환 API")
                                         .tag("AdministrativeArea")
+                                        .requestHeaders(
+                                                headerWithName("Authorization")
+                                                        .description("Bearer (JWT 토큰)")
+                                        )
                                         .requestFields(List.of(
                                                 fieldWithPath("longitude").type(JsonFieldType.NUMBER)
                                                         .description("위도"),
@@ -123,7 +94,8 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
         listResult.add(admNameDto1);
         listResult.add(admNameDto2);
         given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/getAreas")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/areas")
+                        .header("Authorization", "Bearer (JWT 토큰)")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                                 "get-admNm-List",
@@ -131,6 +103,10 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
                                         .description("특정 행정동을 받아서 주변 5km의 행정동 이름을 담은 리스트를 반환")
                                         .summary("주변 행정동 리스트 반환")
                                         .tag("AdministrativeArea")
+                                        .requestHeaders(
+                                                headerWithName("Authorization")
+                                                        .description("Bearer (JWT 토큰)")
+                                        )
                                         .queryParameters(
                                                 parameterWithName("admNm")
                                                         .description("행정동 이름")

@@ -13,8 +13,14 @@ import java.util.Optional;
 
 @Repository
 public interface InterestedCategoryRepository extends JpaRepository<InterestedCategory, Long> {
+
+    // 특정 사용자와 카테고리의 관심 정보가 존재하는지 확인
     boolean existsByUserAndCategory(User user, Category category);
+
+    // 특정 사용자와 카테고리로 관심 카테고리 찾기
+    Optional<InterestedCategory> findByUserAndCategory(User user, Category category);
+
+    // 카테고리에 관심 있는 사용자 목록 조회
     @Query("SELECT ic.user FROM InterestedCategory ic WHERE ic.category.id = :categoryId")
     List<User> findUsersByCategoryId(@Param("categoryId") Long categoryId);
-    Optional<InterestedCategory> findByUserAndCategory(User user, Category category);
 }

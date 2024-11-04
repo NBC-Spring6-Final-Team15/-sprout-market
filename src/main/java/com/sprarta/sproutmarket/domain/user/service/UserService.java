@@ -3,25 +3,32 @@ package com.sprarta.sproutmarket.domain.user.service;
 import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
+import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserChangePasswordRequest;
 import com.sprarta.sproutmarket.domain.user.dto.request.UserDeleteRequest;
+import com.sprarta.sproutmarket.domain.user.dto.response.UserAdminResponse;
 import com.sprarta.sproutmarket.domain.user.dto.response.UserResponse;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdministrativeAreaService administrativeAreaService;
+    private final ProfileImageService profileImageService;
 
     public UserResponse getUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
@@ -62,7 +69,6 @@ public class UserService {
 
         // 유저 비활성화 및 삭제
         user.deactivate();
-        userRepository.delete(user);
     }
 
     @Transactional
@@ -72,8 +78,52 @@ public class UserService {
         String administrativeArea = administrativeAreaService.getAdministrativeAreaByCoordinates(longitude, latitude);
 
         user.changeAddress(administrativeArea);
+    }
 
-        userRepository.save(user);
+//    @Transactional
+//    public String updateProfileImage(CustomUserDetails authUser, String profileImageName) {
+//        User user = userRepository.findById(authUser.getId())
+//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+//
+//        // 프로필 이미지 S3 업로드
+//        String profileImageUrl = profileImageService.uploadProfileImage(profileImageName, authUser);
+//
+//        // 유저 엔티티에 프로필 이미지 URL 업데이트
+//        user.updateProfileImage(profileImageUrl);
+//
+//        userRepository.save(user);
+//        return profileImageUrl;
+//    }
+//
+//    @Transactional
+//    public void deleteProfileImage(CustomUserDetails authUser) {
+//        User user = userRepository.findById(authUser.getId())
+//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+//
+//        String currentProfileImageUrl = user.getProfileImageUrl();
+//        if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
+//            //s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
+//        }
+//
+//        userRepository.save(user);
+//        user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
+//    }
+
+    // 탈퇴된 유저 복원
+    @Transactional
+    public void activateUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
+
+        user.activate();
+    }
+
+    // ACTIVE, DELETED 상태 유저 모두 조회
+    @Transactional
+    public Page<UserAdminResponse> getAllUsers(Pageable pageable) {
+        return userRepository
+                .findAll(pageable)
+                .map(UserAdminResponse::new);
     }
 }
 

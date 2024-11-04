@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.catalina.filters.CorsFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,7 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity(prePostEnabled = true) // 최신 방식의 메서드 수준 권한 제어
+@EnableMethodSecurity // 최신 방식의 메서드 수준 권한 제어
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -44,15 +43,18 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**",
-                                "/test/**",
+                                "/login/**",
                                 "/error/**",
-                                "/notifications/**").permitAll()
+                                "/notifications/**",
+                                "/actuator/**").permitAll()
                         .requestMatchers("/ws/**").permitAll() // WebSocket 접근 허용
                         //Swagger 관련 오픈
                         .requestMatchers("/docs/**",
                                 "/v3/api-docs/swagger-config").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/","/signup", "/signin").permitAll()
+                        .requestMatchers("/adminUser/**", "/js/**").permitAll()
+                        .requestMatchers("/admin/**","/test/**").hasRole("ADMIN")
+                        .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat").permitAll()
+                        .requestMatchers("/kakao_login_medium_wide.png", "/kakao_login_medium_narrow.png", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();
