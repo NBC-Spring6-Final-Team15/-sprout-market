@@ -59,27 +59,17 @@ public class User extends Timestamped {
         this.userRole = userRole;
     }
 
-    public User(Long id, String username, String email, String password, String nickname, String phoneNumber, String address, UserRole userRole) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.userRole = userRole;
-    }
-
-    // 카카오 회원가입에 필요한 생성자
-    public User(String username, String email, String nickname, String password, String phoneNumber, String address, String profileImageUrl, UserRole userRole) {
-        this.username = username;
-        this.email = email;
-        this.nickname = nickname;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.profileImageUrl = profileImageUrl;
-        this.userRole = userRole;
+    public static User forKakao(String username, String email, String nickname, String password, String phoneNumber, String address, String profileImageUrl, UserRole userRole) {
+        User user = new User();
+        user.username = username;
+        user.email = email;
+        user.nickname = nickname;
+        user.password = password;
+        user.phoneNumber = phoneNumber;
+        user.address = address;
+        user.profileImageUrl = profileImageUrl;
+        user.userRole = userRole;
+        return user;
     }
 
     public User(Long id, String email, UserRole userRole) {

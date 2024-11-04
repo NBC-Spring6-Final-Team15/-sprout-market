@@ -14,17 +14,18 @@ import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    boolean existsByName(@NotBlank String categoryName);
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Category c WHERE c.name = :categoryName")
+    boolean existsByName(@NotBlank @Param("categoryName") String categoryName);
 
-    List<Category> findAllByStatus(Status status);
+    @Query("SELECT c FROM Category c WHERE c.status = :status")
+    List<Category> findAllByStatus(@Param("status") Status status);
 
-    @Query("SELECT c FROM Category c where c.id = :categoryId AND c.status = 'ACTIVE'")
+    @Query("SELECT c FROM Category c WHERE c.id = :categoryId AND c.status = 'ACTIVE'")
     Optional<Category> findByIdAndStatusIsActive(@Param("categoryId") Long categoryId);
 
-    default Category findByIdAndStatusIsActiveOrElseThrow(Long categoryId) {
-        return findByIdAndStatusIsActive(categoryId).orElseThrow(
-                () -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY)
-        );
+    default Category findByIdAndStatusIsActiveOrElseThrow(Long categoryId){
+        return findByIdAndStatusIsActive(categoryId)
+            .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_CATEGORY));
     }
 
     default Category findByIdOrElseThrow(Long categoryId) {

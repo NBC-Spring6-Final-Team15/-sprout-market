@@ -25,7 +25,7 @@ public class AdministrativeAreaController {
      * 처음에 DB 세팅을 할 때, 해당 테이블에 수정이 일어나서 정합성이 깨졌을 때, 행정구역이 변해서 새로운 파일로 DB에 넣어야 할 때 필요합니다.
      */
     @PostMapping("/test/geojson")
-    public ResponseEntity<ApiResponse<String>> addGeoJson(@RequestParam String filepath) {
+    public ResponseEntity<ApiResponse<String>> addGeoJson(@RequestParam("filepath") String filepath) {
         try {
             administrativeAreaService.insertGeoJsonData(filepath);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201,"DB에 성공적으로 geojson 파일이 삽입됐습니다."));

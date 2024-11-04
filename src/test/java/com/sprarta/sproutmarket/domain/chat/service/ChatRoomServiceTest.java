@@ -92,26 +92,27 @@ public class ChatRoomServiceTest {
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
 
         // 가짜 상품 생성
-        mockItem1 = Item.builder()
-                .title("상품1")
-                .description("설명1")
-                .price(10000)
-                .itemSaleStatus(ItemSaleStatus.WAITING)
-                .seller(buyer)
-                .category(mockCategory)
-                .status(Status.ACTIVE)
-                .build();
+        mockItem1 = new Item(
+            "상품1",
+            "설명1",
+            10000,
+            buyer,
+            ItemSaleStatus.WAITING,
+            mockCategory,
+            Status.ACTIVE
+        );
+
         ReflectionTestUtils.setField(mockItem1, "id", 1L);
 
-        mockItem2 = Item.builder()
-                .title("상품2")
-                .description("설명2")
-                .price(5000)
-                .itemSaleStatus(ItemSaleStatus.WAITING)
-                .seller(seller)
-                .category(mockCategory)
-                .status(Status.ACTIVE)
-                .build();
+        mockItem2 = new Item(
+            "상품2",
+            "설명2",
+            5000,
+            seller,
+            ItemSaleStatus.WAITING,
+            mockCategory,
+            Status.ACTIVE
+        );
         ReflectionTestUtils.setField(mockItem2, "id", 2L);
 
         // CustomUserDetails(사용자 정보) 모킹 => 로그인된 사용자의 정보 모킹

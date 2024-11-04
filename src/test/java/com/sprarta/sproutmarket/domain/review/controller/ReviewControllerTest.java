@@ -22,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
@@ -47,13 +48,14 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
     void setUp() {
 
         CustomUserDetails mockAuthUser = new CustomUserDetails(
-                new User(1L, "username",
+                new User("username",
                         "email@example.com",
                         "encodedOldPassword",
                         "nickname",
                         "010-1234-5678",
                         "address", UserRole.USER)
         );
+        ReflectionTestUtils.setField(mockAuthUser, "id", 1L);
 
         // 인증 유저 시큐리티 컨텍스트 홀더에 저장
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
