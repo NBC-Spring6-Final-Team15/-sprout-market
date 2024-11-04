@@ -111,8 +111,8 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 아이템의 상세 정보를 포함한 응답 객체
      */
     @GetMapping("/items/{itemId}")
-    public ResponseEntity<ApiResponse<ItemResponseDto>> findItem(@PathVariable(name = "itemId") Long itemId){
-        ItemResponseDto itemResponseDto = itemService.getItem(itemId);
+    public ResponseEntity<ApiResponse<ItemResponseDto>> findItem(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+        ItemResponseDto itemResponseDto = itemService.getItem(itemId, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponseDto));
     }
 
