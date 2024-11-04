@@ -100,9 +100,7 @@ public class ChatRoomServiceTest {
             "설명1",
             10000,
             buyer,
-            ItemSaleStatus.WAITING,
-            mockCategory,
-            Status.ACTIVE
+            mockCategory
         );
 
         ReflectionTestUtils.setField(mockItem1, "id", 1L);
@@ -112,9 +110,7 @@ public class ChatRoomServiceTest {
             "설명2",
             5000,
             seller,
-            ItemSaleStatus.WAITING,
-            mockCategory,
-            Status.ACTIVE
+            mockCategory
         );
         ReflectionTestUtils.setField(mockItem2, "id", 2L);
 
