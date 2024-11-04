@@ -1,13 +1,13 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.google.gson.Gson;
-import com.sprarta.sproutmarket.domain.auth.dto.response.KakaoProfileResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.OAuthTokenResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
 class KakaoServiceTest {
 
     @Mock
@@ -34,7 +35,9 @@ class KakaoServiceTest {
 
     @Test
     void getAccessToken_Success() {
+        @SuppressWarnings("unchecked")
         ResponseEntity<String> mockResponse = mock(ResponseEntity.class);
+
         when(mockResponse.getStatusCode()).thenReturn(HttpStatus.OK);
         when(mockResponse.getBody()).thenReturn("{\"access_token\":\"test_token\"}");
 
