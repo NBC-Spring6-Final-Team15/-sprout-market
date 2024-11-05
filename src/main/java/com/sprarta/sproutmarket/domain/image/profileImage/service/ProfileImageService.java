@@ -26,7 +26,7 @@ public class ProfileImageService {
     // 프로필 사진 추가
     @Transactional
     public ProfileImageResponse uploadProfileImage(ImageNameRequest imageName, CustomUserDetails authUser){
-        User user = userRepository.findUserById(authUser.getId());
+        User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
 
         ProfileImage image = new ProfileImage(
             user,
@@ -40,7 +40,7 @@ public class ProfileImageService {
     // 프로필 사진 삭제
     @Transactional
     public void deleteProfileImage(ImageNameRequest imageName, CustomUserDetails authUser){
-        User user = userRepository.findUserById(authUser.getId());
+        User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
         profileImageRepository.findByUserOrElseThrow(user);
         s3ImageService.deleteImage(imageName.getImageName(), authUser);
         profileImageRepository.deleteByName(imageName.getImageName());

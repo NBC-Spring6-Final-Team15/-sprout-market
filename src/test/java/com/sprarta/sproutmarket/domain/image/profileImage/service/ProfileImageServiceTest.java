@@ -54,7 +54,7 @@ class ProfileImageServiceTest {
         // Given
         ImageNameRequest request = new ImageNameRequest("profileImage.jpg");
         ProfileImage image = new ProfileImage(mockUser, "profileImage.jpg");
-        when(userRepository.findUserById(mockUser.getId())).thenReturn(mockUser);
+        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
         when(profileImageRepository.save(any(ProfileImage.class))).thenReturn(image);
 
         // when
@@ -63,7 +63,7 @@ class ProfileImageServiceTest {
         // then
         assertNotNull(response);
         assertEquals("profileImage.jpg", response.getName());
-        verify(userRepository).findUserById(mockUser.getId());
+        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
         verify(profileImageRepository).save(any(ProfileImage.class));
     }
 
@@ -72,7 +72,7 @@ class ProfileImageServiceTest {
     void deleteProfileImage_success() {
         // given
         ImageNameRequest request = new ImageNameRequest("profileImage.jpg");
-        when(userRepository.findUserById(mockUser.getId())).thenReturn(mockUser);
+        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
         when(profileImageRepository.findByUserOrElseThrow(mockUser)).thenReturn(new ProfileImage(mockUser, "profileImage.jpg"));
         doNothing().when(s3ImageService).deleteImage(anyString(), eq(mockAuthUser));
         doNothing().when(profileImageRepository).deleteByName(anyString());
@@ -81,7 +81,7 @@ class ProfileImageServiceTest {
         profileImageService.deleteProfileImage(request, mockAuthUser);
 
         // then
-        verify(userRepository).findUserById(mockUser.getId());
+        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
         verify(profileImageRepository).findByUserOrElseThrow(mockUser);
         verify(s3ImageService).deleteImage("profileImage.jpg", mockAuthUser);
         verify(profileImageRepository).deleteByName("profileImage.jpg");
