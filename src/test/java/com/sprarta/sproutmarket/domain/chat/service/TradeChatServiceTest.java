@@ -129,7 +129,8 @@ public class TradeChatServiceTest {
         TradeChatDto tradeChatDto = new TradeChatDto(
                 mockChatRoom1.getId(),
                 buyer.getNickname(),
-                "content"
+                "content",
+                1L
         );
 
         tradeChatService.saveChat(tradeChatDto);

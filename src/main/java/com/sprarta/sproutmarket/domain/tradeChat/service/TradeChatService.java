@@ -45,7 +45,8 @@ public class TradeChatService {
             TradeChatDto tradeChatDto = new TradeChatDto(
                     tradeChat.getRoomId(),
                     tradeChat.getSender(),
-                    tradeChat.getContent()
+                    tradeChat.getContent(),
+                    tradeChat.getReadCount()
             );
             tradeChatDtoList.add(tradeChatDto);
         }
