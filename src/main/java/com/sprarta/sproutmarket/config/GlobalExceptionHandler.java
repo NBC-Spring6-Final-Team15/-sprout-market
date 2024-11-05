@@ -3,8 +3,7 @@ package com.sprarta.sproutmarket.config;
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
 import com.sprarta.sproutmarket.domain.common.dto.response.ReasonDto;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,8 +14,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Objects;
 
+@Slf4j
 @RestControllerAdvice
-@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     //공통 예외 처리
@@ -24,6 +23,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleApiException(ApiException ex) {
         ReasonDto status = ex.getErrorCode().getReasonHttpStatus();
         return getErrorResponse(status.getHttpStatus(), status.getMessage());
+    }
+
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<ApiResponse<String>> handleThrowable(Throwable ex) {
+        log.error(String.format("장애 발생 : %s", ex.getMessage()), ex);
+        return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "잠시 후 다시 시도해주십시오.");
     }
 
     //Valid 예외 처리
