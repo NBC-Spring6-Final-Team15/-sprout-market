@@ -72,7 +72,6 @@
             overflow-y: auto;
             font-size: 0.9em;
         }
-
     </style>
 </head>
 <body>
@@ -81,19 +80,21 @@
     <form id="signinForm">
         <input type="email" id="email" placeholder="Email" required>
         <input type="password" id="password" placeholder="Password" required>
+        <label>
+            <input type="checkbox" id="adminCheck"> Admin Login
+        </label>
         <button type="submit">Sign In</button>
     </form>
 
     <!-- 여기서 메시지가 표시됨 -->
     <div id="messages"></div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <script>
-    let stompClient = null; // 전역 변수로 설정하여 중복 연결 방지
+    let stompClient = null;
 
     function parseJwt(token) {
         try {
@@ -107,7 +108,7 @@
             }).join(''));
 
             const parsedPayload = JSON.parse(jsonPayload);
-            console.log('Parsed JWT payload:', parsedPayload);  // 페이로드 출력
+            console.log('Parsed JWT payload:', parsedPayload);
 
             return parsedPayload;
         } catch (error) {
@@ -116,7 +117,6 @@
         }
     }
 
-    // JWT 토큰에서 userId 추출
     document.getElementById('signinForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -125,7 +125,11 @@
             password: document.getElementById('password').value
         };
 
-        fetch('/auth/signin', {
+        // adminCheck가 체크된 경우 경로를 /adminUser/signin으로 설정
+        const isAdmin = document.getElementById('adminCheck').checked;
+        const signinUrl = isAdmin ? '/adminUser/signin' : '/auth/signin';
+
+        fetch(signinUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -142,15 +146,13 @@
                     return;
                 }
 
-                // 'Bearer' 접두어가 있는지 확인 후 제거
                 const pureToken = token.startsWith('Bearer ') ? token.slice(7) : token;
 
                 console.log('JWT Token:', pureToken);
                 localStorage.setItem('token', pureToken);
 
-                // JWT 토큰에서 userId 추출 (sub 사용)
                 const decodedToken = parseJwt(pureToken);
-                const userId = decodedToken.sub;  // 'sub'을 userId로 사용
+                const userId = decodedToken.sub;
                 console.log('Decoded userId (sub):', userId);
 
                 if (!userId) {
@@ -166,7 +168,6 @@
             });
     });
 
-    // WebSocket 연결 함수
     function connectWebSocket(userId) {
         if (stompClient && stompClient.connected) {
             stompClient.disconnect(() => console.log("Disconnected existing WebSocket"));
