@@ -22,5 +22,8 @@ public class HomeController {
 
     @GetMapping("/additional-info")
     public String additionalInfo() {return "additional-info";}
+
+    @GetMapping("/admin-signup")
+    public String adminSignup() {return "admin-signup";}
 }
 

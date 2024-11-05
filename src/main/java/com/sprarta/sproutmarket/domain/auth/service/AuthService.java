@@ -38,7 +38,6 @@ public class AuthService {
 
     @Transactional
     public SignupResponse adminSignup(AdminSignupRequest request) {
-
         if (!request.getAdminKey().equals(adminKey)) {
             throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
         }
@@ -113,6 +112,11 @@ public class AuthService {
     }
 
     private SignupResponse createAdminUser(AdminSignupRequest request) {
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
+
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         User newUser = new User(
@@ -169,5 +173,11 @@ public class AuthService {
         }
 
         redisUtil.delete(redisKey);
+    }
+
+    public UserRole findUserRoleByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_AUTH_USER));
+        return user.getUserRole();  // User 엔티티의 역할 반환
     }
 }

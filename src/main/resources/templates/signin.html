@@ -62,7 +62,6 @@
             text-decoration: underline;
         }
 
-        /* 메시지 표시를 위한 스타일 */
         #messages {
             margin-top: 20px;
             background-color: #f8f9fa;
@@ -72,7 +71,6 @@
             overflow-y: auto;
             font-size: 0.9em;
         }
-
     </style>
 </head>
 <body>
@@ -83,82 +81,82 @@
         <input type="password" id="password" placeholder="Password" required>
         <button type="submit">Sign In</button>
     </form>
-
-    <!-- 여기서 메시지가 표시됨 -->
     <div id="messages"></div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <script>
-    let stompClient = null; // 전역 변수로 설정하여 중복 연결 방지
+    let stompClient = null;
 
     function parseJwt(token) {
         try {
             const base64Url = token.split('.')[1];
-            if (!base64Url) {
-                throw new Error('Invalid token');
-            }
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
-
-            const parsedPayload = JSON.parse(jsonPayload);
-            console.log('Parsed JWT payload:', parsedPayload);  // 페이로드 출력
-
-            return parsedPayload;
+            return JSON.parse(jsonPayload);
         } catch (error) {
             console.error('Error parsing JWT:', error.message);
             throw new Error('Failed to parse token');
         }
     }
 
-    // JWT 토큰에서 userId 추출
     document.getElementById('signinForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
-        const data = {
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value
-        };
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-        fetch('/auth/signin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
+        // 역할 확인을 위한 API 호출 (이메일을 통해 역할 조회)
+        fetch(`/auth/checkRole?email=${email}`)
             .then(response => response.json())
             .then(data => {
-                console.log('Received bearerToken:', data.bearerToken);
+                const userRole = data.userRole;
 
+                // 역할에 따라 로그인 경로 설정
+                const signinUrl = userRole === 'ADMIN' ? '/adminUser/signin' : '/auth/signin';
+
+                // 로그인 요청
+                return fetch(signinUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+            })
+            .then(response => response.json())
+            .then(data => {
                 const token = data.bearerToken;
+
                 if (!token) {
                     alert('Token is not available');
                     return;
                 }
 
-                // 'Bearer' 접두어가 있는지 확인 후 제거
-                const pureToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+                localStorage.setItem('token', token);
 
-                console.log('JWT Token:', pureToken);
-                localStorage.setItem('token', pureToken);
+                // JWT 파싱하여 userRole 확인
+                const decodedToken = parseJwt(token);
+                const userRole = decodedToken.userRole;
+                const userId = decodedToken.sub;
+                console.log('Role:', userRole);
+                console.log('Bearer Token: ', token);
 
-                // JWT 토큰에서 userId 추출 (sub 사용)
-                const decodedToken = parseJwt(pureToken);
-                const userId = decodedToken.sub;  // 'sub'을 userId로 사용
-                console.log('Decoded userId (sub):', userId);
-
-                if (!userId) {
-                    alert('User ID not found in token');
-                    return;
+                // 역할에 따라 다른 서비스 페이지로 리디렉션
+                if (userRole === 'ADMIN') {
+                    alert('Admin Sign In Successful');
+                    // window.location.href = "/admin/dashboard"; // 관리자를 위한 페이지
+                } else {
+                    alert('User Sign In Successful');
+                    // window.location.href = "/user/dashboard"; // 일반 사용자를 위한 페이지
                 }
 
-                connectWebSocket(userId);
+                // WebSocket 연결
+                connectWebSocket(userId, userRole);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -166,8 +164,7 @@
             });
     });
 
-    // WebSocket 연결 함수
-    function connectWebSocket(userId) {
+    function connectWebSocket(userId, userRole) {
         if (stompClient && stompClient.connected) {
             stompClient.disconnect(() => console.log("Disconnected existing WebSocket"));
         }
@@ -178,8 +175,8 @@
         stompClient.connect({}, function(frame) {
             console.log('Connected: ' + frame);
 
-            const subscriptionPath = '/sub/user/' + userId + '/notifications';
-            stompClient.subscribe(subscriptionPath, function(message) {
+            const subscriptionPath = userRole === 'ADMIN' ? '/sub/admin/' : '/sub/user/';
+            stompClient.subscribe(subscriptionPath + userId + '/notifications', function(message) {
                 displayMessage(message.body);
             });
         });
