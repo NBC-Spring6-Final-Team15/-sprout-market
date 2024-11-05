@@ -94,7 +94,7 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
         listResult.add(admNameDto1);
         listResult.add(admNameDto2);
         given(administrativeAreaService.getAdmNameListByAdmName(paramAdmNm)).willReturn(listResult);
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/test/areas")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/admin/areas")
                         .header("Authorization", "Bearer (JWT 토큰)")
                         .queryParam("admNm", paramAdmNm))
                 .andDo(MockMvcRestDocumentationWrapper.document(

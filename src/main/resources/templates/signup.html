@@ -116,21 +116,29 @@
             address: document.getElementById('address').value
         };
         if (verifyCodeButton.dataset.verified === "true" && getLocationButton.dataset.verified === "true") {
-            fetch('/auth/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-                .then(response => response.json())
+                fetch('/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.message || 'Signup failed');
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     console.log('Success:', data);
                     alert('Signup successful');
+                    window.location.href = "/signin"; // 회원가입 후 로그인 페이지로 이동
                 })
                 .catch((error) => {
                     console.error('Error:', error);
-                    alert('Signup failed');
+                    alert(error.message);  // 서버의 오류 메시지 표시
                 });
         } else {
             alert('주소 인증, 이메일 인증을 전부 완료해주십시오.');

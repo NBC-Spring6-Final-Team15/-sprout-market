@@ -8,6 +8,7 @@ import com.sprarta.sproutmarket.domain.item.dto.request.ItemSearchRequest;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponse;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemResponseDto;
 import com.sprarta.sproutmarket.domain.item.dto.response.ItemSearchResponse;
+import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.service.ItemService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -16,14 +17,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 public class ItemController {
     private final ItemService itemService;
-
 
     /**
      * 중고 매물에 대해서 검색하는 로직
@@ -38,8 +38,7 @@ public class ItemController {
                                                                              @RequestParam(name = "size", defaultValue = "10") int size,
                                                                              @RequestBody ItemSearchRequest itemSearchRequest,
                                                                              @AuthenticationPrincipal CustomUserDetails authUser){
-        Page<ItemSearchResponse> itemResponse = itemService.searchItems(page, size, itemSearchRequest, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+        return ResponseEntity.ok(ApiResponse.onSuccess(itemService.searchItems(page, size, itemSearchRequest, authUser)));
     }
 
     /**
@@ -54,7 +53,6 @@ public class ItemController {
         return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
     }
 
-
     /**
      * 매물의 판매 상태만을 변경하는 로직
      * @param itemId Item's ID
@@ -63,9 +61,9 @@ public class ItemController {
      * @return ApiResponse - 판매상태가 수정된 아이템에 대한 메세지, 상태 코드를 포함한 응답 객체
      */
     @PutMapping("/items/{itemId}/sale-status")
-    public ResponseEntity<ApiResponse<ItemResponse>> updateItemSaleStatus(@PathVariable(name = "itemId") Long itemId, @RequestParam String saleStatus, @AuthenticationPrincipal CustomUserDetails authUser){
-        ItemResponse itemResponse = itemService.updateSaleStatus(itemId, saleStatus, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+    public ResponseEntity<ApiResponse<Void>> updateItemSaleStatus(@PathVariable(name = "itemId") Long itemId, @RequestParam ItemSaleStatus saleStatus, @AuthenticationPrincipal CustomUserDetails authUser){
+        itemService.updateSaleStatus(itemId, saleStatus, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**
@@ -88,21 +86,20 @@ public class ItemController {
      * @return ApiResponse - 메세지, 상태 코드, 삭제한 아이템에 대한 정보를 포함한 응답 객체
      */
     @DeleteMapping("/items/{itemId}")
-    public ResponseEntity<ApiResponse<ItemResponse>> softRemoveItem(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
-        ItemResponse itemResponse = itemService.softDeleteItem(itemId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+    public ResponseEntity<ApiResponse<Void>> softRemoveItem(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
+        itemService.softDeleteItem(itemId, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**
      * 관리자가 신고된 매물을 (논리적)삭제하는 로직
      * @param itemId Item's ID
-     * @param authUser 매물 내용 수정을 요청한 사용자
      * @return ApiResponse - 메세지, 상태 코드, 삭제된 아이템에 대한 정보를 포함한 응답 객체
      */
     @DeleteMapping("/admin/items/{itemId}")
-    public ResponseEntity<ApiResponse<ItemResponse>> softRemoveReportedItem(@PathVariable(name = "itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser){
-        ItemResponse itemResponse = itemService.softDeleteReportedItem(itemId, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(itemResponse));
+    public ResponseEntity<ApiResponse<ItemResponse>> softRemoveReportedItem(@PathVariable(name = "itemId") Long itemId){
+        itemService.softDeleteReportedItem(itemId);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     /**

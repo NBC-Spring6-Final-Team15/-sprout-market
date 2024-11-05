@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Signup</title>
+    <title>Admin Signup</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -70,28 +70,21 @@
         }
 
     </style>
-    <script src="/js/GetLocation.js"></script>
     <script src="/js/EmailVerification.js"></script>
 </head>
 <body>
 <div class="container">
-    <h2>Complete Signup</h2>
-    <form id="signupForm">
+    <h2>Admin Signup</h2>
+    <form id="adminSignupForm">
         <input type="text" id="username" placeholder="Username" required>
-
-        <!-- Display Kakao-provided information as readonly -->
-        <input type="email" id="email" placeholder="Email" th:value="${session.email}" readonly>
-        <input type="text" id="nickname" placeholder="Nickname" th:value="${session.nickname}" readonly>
-
-        <!-- Additional fields to be filled by the user -->
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="authCode" data-verified="false" placeholder="인증번호" readonly>
+        <button type="button" id="sendEmail">인증 번호 발송</button>
+        <button type="button" id="verifyCode">인증 번호 확인</button>
         <input type="password" id="password" placeholder="Password" required>
+        <input type="text" id="nickname" placeholder="Nickname" required>
         <input type="text" id="phoneNumber" placeholder="Phone Number" required>
-        <input type="text" id="address" placeholder="위치 인증 버튼을 눌러주십시오." readonly>
-
-        <!-- Location verification button -->
-        <button type="button" id="getLocation" data-verified="false">현재 위치 인증</button>
-
-        <br/>
+        <input type="text" id="adminKey" placeholder="Admin Key" required>
         <button type="submit">Sign Up</button>
     </form>
     <div class="link">
@@ -100,20 +93,21 @@
 </div>
 
 <script>
-    document.getElementById('signupForm').addEventListener('submit', function (event) {
+    document.getElementById('adminSignupForm').addEventListener('submit', function (event) {
         event.preventDefault();
-
-        const getLocationButton = document.getElementById("getLocation");
+        const verifyCodeButton = document.getElementById("verifyCode");
 
         const data = {
             username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
             password: document.getElementById('password').value,
+            nickname: document.getElementById('nickname').value,
             phoneNumber: document.getElementById('phoneNumber').value,
-            address: document.getElementById('address').value
+            adminKey: document.getElementById('adminKey').value
         };
 
-        if (getLocationButton.dataset.verified === "true") {
-            fetch('/auth/kakao-signup', {
+        if (verifyCodeButton.dataset.verified === "true") {
+            fetch('/adminUser/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -130,7 +124,7 @@
                 })
                 .then(data => {
                     console.log('Success:', data);
-                    alert('Signup successful');
+                    alert('Admin signup successful');
                     window.location.href = "/signin"; // 회원가입 후 로그인 페이지로 이동
                 })
                 .catch((error) => {
@@ -138,14 +132,8 @@
                     alert(error.message);
                 });
         } else {
-            alert('주소 인증을 완료해주십시오.');
+            alert('이메일 인증, 관리자 키 인증을 전부 완료해주십시오.');
         }
-    });
-
-    // 위치 인증 예제 함수
-    document.getElementById('getLocation').addEventListener('click', function () {
-        document.getElementById('address').value = '인증된 주소';
-        this.dataset.verified = "true";
     });
 </script>
 </body>
