@@ -174,4 +174,10 @@ public class AuthService {
 
         redisUtil.delete(redisKey);
     }
+
+    public UserRole findUserRoleByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_AUTH_USER));
+        return user.getUserRole();  // User 엔티티의 역할 반환
+    }
 }
