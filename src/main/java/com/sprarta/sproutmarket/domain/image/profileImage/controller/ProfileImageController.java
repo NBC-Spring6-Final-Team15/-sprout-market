@@ -1,7 +1,7 @@
 package com.sprarta.sproutmarket.domain.image.profileImage.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
-import com.sprarta.sproutmarket.domain.image.profileImage.dto.ProfileImageResponse;
+import com.sprarta.sproutmarket.domain.image.dto.ImageResponse;
 import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
 import com.sprarta.sproutmarket.domain.item.dto.request.ImageNameRequest;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
@@ -18,10 +18,10 @@ public class ProfileImageController {
 
     // 프로필 이미지 업로드
     @PostMapping("/image")
-    public ResponseEntity<ApiResponse<ProfileImageResponse>> profileImageUpload(@RequestBody ImageNameRequest request,
-                                                                                @AuthenticationPrincipal CustomUserDetails authUser){
-        ProfileImageResponse profileImageResponse = profileImageService.uploadProfileImage(request, authUser);
-        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageResponse));
+    public ResponseEntity<ApiResponse<ImageResponse>> profileImageUpload(@RequestBody ImageNameRequest request,
+                                                                         @AuthenticationPrincipal CustomUserDetails authUser){
+        ImageResponse imageResponse = profileImageService.uploadProfileImage(request, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(imageResponse));
     }
 
     @DeleteMapping("/image")

@@ -1,9 +1,6 @@
 package com.sprarta.sproutmarket.domain.image.profileImage.service;
 
-import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
-import com.sprarta.sproutmarket.domain.common.exception.ApiException;
-import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
-import com.sprarta.sproutmarket.domain.image.profileImage.dto.ProfileImageResponse;
+import com.sprarta.sproutmarket.domain.image.dto.ImageResponse;
 import com.sprarta.sproutmarket.domain.image.profileImage.entity.ProfileImage;
 import com.sprarta.sproutmarket.domain.image.profileImage.repository.ProfileImageRepository;
 import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
@@ -25,7 +22,7 @@ public class ProfileImageService {
 
     // 프로필 사진 추가
     @Transactional
-    public ProfileImageResponse uploadProfileImage(ImageNameRequest imageName, CustomUserDetails authUser){
+    public ImageResponse uploadProfileImage(ImageNameRequest imageName, CustomUserDetails authUser){
         User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
 
         ProfileImage image = new ProfileImage(
@@ -33,8 +30,8 @@ public class ProfileImageService {
             imageName.getImageName()
         );
         profileImageRepository.save(image);
-        ProfileImageResponse profileImageResponse = new ProfileImageResponse(image.getName());
-        return profileImageResponse;
+        ImageResponse imageResponse = new ImageResponse(image.getName());
+        return imageResponse;
     }
 
     // 프로필 사진 삭제

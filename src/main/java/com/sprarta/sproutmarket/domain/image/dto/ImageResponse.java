@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.image.profileImage.dto;
+package com.sprarta.sproutmarket.domain.image.dto;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -6,10 +6,10 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ProfileImageResponse {
+public class ImageResponse {
     private String name;
 
-    public ProfileImageResponse(String name) {
+    public ImageResponse(String name) {
         this.name = name;
     }
 }
