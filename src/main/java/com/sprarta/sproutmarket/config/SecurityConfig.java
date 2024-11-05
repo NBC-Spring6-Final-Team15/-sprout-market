@@ -53,16 +53,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/adminUser/**", "/js/**").permitAll()
                         .requestMatchers("/admin/**","/test/**").hasRole("ADMIN")
-                        .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat").permitAll()
+                        .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat", "/admin-signup").permitAll()
                         .requestMatchers("/kakao_login_medium_wide.png", "/kakao_login_medium_narrow.png", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();
-    }
-
-    @Bean
-    public CorsFilter corsFilter() {
-        return new CorsFilter();
     }
 
     @Bean
