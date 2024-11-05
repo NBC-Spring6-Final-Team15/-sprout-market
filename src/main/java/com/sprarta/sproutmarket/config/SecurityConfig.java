@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/docs/**",
                                 "/v3/api-docs/swagger-config").permitAll()
                         .requestMatchers("/adminUser/**", "/js/**").permitAll()
-                        .requestMatchers("/admin/**","/test/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/", "/signup", "/signin", "/additional-info", "/chat").permitAll()
                         .requestMatchers("/kakao_login_medium_wide.png", "/kakao_login_medium_narrow.png", "/favicon.ico").permitAll()
                         .anyRequest().authenticated()

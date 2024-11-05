@@ -1,6 +1,9 @@
 package com.sprarta.sproutmarket.domain.user.repository;
 
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
+import org.geolatte.geom.M;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +23,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u where u.email = :email AND u.status = 'ACTIVE'")
     Optional<User> findByEmailAndStatusIsActive(@Param("email") String email);
+
+    @Query("SELECT u FROM User u WHERE u.id = :userId AND u.status = 'ACTIVE'")
+    Optional<User> findByIdAndStatusIsActive(@Param("userId") Long userId);
+
+    default User findByIdAndStatusIsActiveOrElseThrow(Long userId) {
+        return findByIdAndStatusIsActive(userId).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_USER)
+        );
+    }
 }
