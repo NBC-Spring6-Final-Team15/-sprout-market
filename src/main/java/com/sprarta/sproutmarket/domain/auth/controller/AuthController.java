@@ -4,12 +4,15 @@ import com.sprarta.sproutmarket.domain.auth.dto.request.*;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
 import com.sprarta.sproutmarket.domain.auth.service.AuthService;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +42,15 @@ public class AuthController {
     @PostMapping("/auth/kakao-signup")
     public SignupResponse kakaoSignup(@Valid @RequestBody KakaoSignupRequest request, HttpSession session) {
         return authService.kakaoSignup(request, session);
+    }
+
+    // 로그인 시, user/admin 확인을 위한 코드
+    @GetMapping("/auth/checkRole")
+    public ResponseEntity<Map<String, String>> checkRole(@RequestParam String email) {
+        UserRole role = authService.findUserRoleByEmail(email);
+        Map<String, String> response = new HashMap<>();
+        response.put("userRole", role.name());
+        return ResponseEntity.ok(response);
     }
 
     /**
