@@ -58,7 +58,7 @@ public class TradeChatService {
     @Transactional
     public void decreaseReadCount(Long roomId, String sender) {
         for (TradeChat tradeChat : tradeChatRepository.findAllByRoomId(roomId)) {
-            if (!ObjectUtils.nullSafeEquals(tradeChat.getSender(), sender) && tradeChat.getReadCount() > 0) {
+            if (!ObjectUtils.nullSafeEquals(tradeChat.getSender(), sender.replaceAll("\"", "")) && tradeChat.getReadCount() > 0) {
                 tradeChat.decreaseReadCount();
             }
         }
