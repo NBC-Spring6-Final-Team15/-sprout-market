@@ -144,7 +144,7 @@ public class TradeChatServiceTest {
         when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
         when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
         when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom1.getId())).thenReturn(mockChatRoom1);
-        when(tradeChatRepository.findAllByroomId(mockChatRoom1.getId())).thenReturn(List.of(mockChat1, mockChat2, mockChat3));
+        when(tradeChatRepository.findAllByRoomId(mockChatRoom1.getId())).thenReturn(List.of(mockChat1, mockChat2, mockChat3));
 
         List<TradeChatDto> chats = tradeChatService.getChats(mockChatRoom1.getId(), authUser);
 

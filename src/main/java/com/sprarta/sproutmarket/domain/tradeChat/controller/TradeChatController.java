@@ -1,19 +1,13 @@
 package com.sprarta.sproutmarket.domain.tradeChat.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
-import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
-import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatDto;
-import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
-import com.sprarta.sproutmarket.domain.tradeChat.entity.TradeChat;
-import com.sprarta.sproutmarket.domain.tradeChat.repository.TradeChatRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.service.TradeChatService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -37,7 +31,7 @@ public class TradeChatController {
         tradeChatService.saveChat(tradeChatDto);
     }
 
-    @GetMapping("/chatRoom/{roomId}/chats")
+    @GetMapping("/chatRooms/{roomId}/chats")
     public ResponseEntity<ApiResponse<List<TradeChatDto>>> getChats(
             @PathVariable("roomId") Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails){
         return ResponseEntity.ok(ApiResponse.onSuccess((tradeChatService.getChats(roomId, userDetails))));
