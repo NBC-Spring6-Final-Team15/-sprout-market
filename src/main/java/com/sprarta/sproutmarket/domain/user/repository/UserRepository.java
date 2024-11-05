@@ -23,6 +23,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.email = :email AND u.status = 'ACTIVE'")
     Optional<User> findByEmailAndStatusIsActive(@Param("email") String email);
 
+    @Query("SELECT u FROM User u WHERE u.id = :userId AND u.status = 'ACTIVE'")
+    Optional<User> findByIdAndStatusIsActive(@Param("userId") Long userId);
+
+    default User findByIdAndStatusIsActiveOrElseThrow(Long userId) {
+        return findByIdAndStatusIsActive(userId).orElseThrow(
+                () -> new ApiException(ErrorStatus.NOT_FOUND_USER)
+        );
+    }
+
     default User findUserById(Long id){
         return findById(id)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));

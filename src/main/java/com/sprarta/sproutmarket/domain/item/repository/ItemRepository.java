@@ -21,10 +21,10 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     }
 
     @Query("SELECT i FROM Item i WHERE i.id = :id AND i.seller.id = :userId")
-    Optional<Item> findByIdAndSeller(@Param("id") Long id, @Param("userId") Long userId);
+    Optional<Item> findByIdAndSellerId(@Param("id") Long id, @Param("userId") Long userId);
 
-    default Item findByIdAndSellerIdOrElseThrow(Long itemId, User seller) {
-        return findByIdAndSeller(itemId, seller.getId())
+    default Item findByIdAndSellerIdOrElseThrow(Long itemId, Long sellerId) {
+        return findByIdAndSellerId(itemId, sellerId)
             .orElseThrow(() -> new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_ITEM));
     }
 
@@ -42,4 +42,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.category.id = :categoryId AND i.status = 'ACTIVE'")
     Page<Item> findItemByAreaAndCategory(Pageable pageable, @Param("areaList") List<String> areaList, @Param("categoryId") Long categoryId);
+
+    boolean existsByIdAndSellerId(Long itemId, Long userId);
 }
