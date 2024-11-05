@@ -10,14 +10,12 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RequiredArgsConstructor
-@Controller
+@RestController
 public class TradeChatController {
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -29,6 +27,13 @@ public class TradeChatController {
         messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
 
         tradeChatService.saveChat(tradeChatDto);
+    }
+
+    @PostMapping("/chat/{roomId}/decreaseReadCount")
+    public ResponseEntity<ApiResponse<Void>> decreaseReadCount(
+            @PathVariable("roomId") Long roomId, @RequestBody String sender) {
+        tradeChatService.decreaseReadCount(roomId, sender);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @GetMapping("/chatRooms/{roomId}/chats")
