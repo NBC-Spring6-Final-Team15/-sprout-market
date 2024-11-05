@@ -144,6 +144,7 @@
                 const userRole = decodedToken.userRole;
                 const userId = decodedToken.sub;
                 console.log('Role:', userRole);
+                console.log('Bearer Token: ', token);
 
                 // 역할에 따라 다른 서비스 페이지로 리디렉션
                 if (userRole === 'ADMIN') {
