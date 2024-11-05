@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -30,14 +33,23 @@ public class AuthService {
     private final RedisUtil redisUtil;
 
     private static final String AUTH_EMAIL_KEY = "AuthEmail:";
+    private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
+        if (!isPasswordValid(request.getPassword())) {
+            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
+        }
+
         return createUser(request);
     }
 
     @Transactional
     public SignupResponse adminSignup(AdminSignupRequest request) {
+        if (!isPasswordValid(request.getPassword())) {
+            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
+        }
+
         if (!request.getAdminKey().equals(adminKey)) {
             throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
         }
@@ -179,5 +191,9 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_AUTH_USER));
         return user.getUserRole();  // User 엔티티의 역할 반환
+    }
+
+    private boolean isPasswordValid(String password) {
+        return StringUtils.hasText(password) && Pattern.matches(PASSWORD_PATTERN, password);
     }
 }
