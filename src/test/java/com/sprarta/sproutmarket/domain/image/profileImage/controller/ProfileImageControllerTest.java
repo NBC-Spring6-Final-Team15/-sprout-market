@@ -4,7 +4,7 @@ import com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper;
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
-import com.sprarta.sproutmarket.domain.image.profileImage.dto.ProfileImageResponse;
+import com.sprarta.sproutmarket.domain.image.dto.ImageResponse;
 import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
 import com.sprarta.sproutmarket.domain.item.dto.request.ImageNameRequest;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
@@ -69,7 +69,7 @@ class ProfileImageControllerTest extends CommonMockMvcControllerTestSetUp {
     @WithMockUser
     @DisplayName("프로필 이미지 등록 성공")
     void profileImage_upload_success() throws Exception {
-        ProfileImageResponse mockResponse = new ProfileImageResponse("image.jpg");
+        ImageResponse mockResponse = new ImageResponse("image.jpg");
         given(profileImageService.uploadProfileImage(any(ImageNameRequest.class), any(CustomUserDetails.class)))
             .willReturn(mockResponse);
 
