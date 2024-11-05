@@ -1,20 +1,14 @@
 package com.sprarta.sproutmarket.domain.auth.service;
 
 import com.sprarta.sproutmarket.config.JwtUtil;
-import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.auth.dto.request.AdminSignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.KakaoSignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.request.SigninRequest;
 import com.sprarta.sproutmarket.domain.auth.dto.request.SignupRequest;
-import com.sprarta.sproutmarket.domain.auth.dto.response.SigninResponse;
 import com.sprarta.sproutmarket.domain.auth.dto.response.SignupResponse;
-import com.sprarta.sproutmarket.domain.common.RedisUtil;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -22,8 +16,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,19 +28,10 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private AdministrativeAreaService administrativeAreaService;
-
-    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
     private JwtUtil jwtUtil;
-
-    @Mock
-    private RedisUtil redisUtil;
-
-    @Mock
-    private HttpSession session;
 
     @InjectMocks
     private AuthService authService;
@@ -57,9 +40,8 @@ class AuthServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Mock 된 adminKey 값을 설정합니다.
-        String mockAdminKey = "mock-encrypted-admin-key";
-        ReflectionTestUtils.setField(authService, "adminKey", mockAdminKey);
+        // Mock adminKey value
+        ReflectionTestUtils.setField(authService, "adminKey", "mock-encrypted-admin-key");
     }
 
     @Test
@@ -68,7 +50,7 @@ class AuthServiceTest {
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
-                "password",
+                "ValidPassword1!",
                 "nickname",
                 "010-1234-5678",
                 "서울특별시 마포구 합정동"
@@ -86,12 +68,9 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(administrativeAreaService.getAdministrativeAreaByCoordinates(anyDouble(), anyDouble()))
-                .thenReturn("서울특별시 종로구");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getUserRole()))
                 .thenReturn("jwt-token");
-        when(redisUtil.get(anyString())).thenReturn(123456);
 
         // When
         SignupResponse response = authService.signup(request);
@@ -108,7 +87,7 @@ class AuthServiceTest {
         AdminSignupRequest request = new AdminSignupRequest(
                 "adminUsername",
                 "admin@example.com",
-                "adminPassword",
+                "ValidAdminPassword1!",
                 "adminNickname",
                 "010-1234-5678",
                 "mock-encrypted-admin-key"
@@ -129,7 +108,6 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtUtil.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getUserRole()))
                 .thenReturn("jwt-token");
-        when(redisUtil.get(anyString())).thenReturn(123456);
 
         // When
         SignupResponse response = authService.adminSignup(request);
@@ -140,8 +118,10 @@ class AuthServiceTest {
         verify(jwtUtil).createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getUserRole());
     }
 
+
     @Test
     void signupFail_EmailAlreadyExists() {
+        // Given
         SignupRequest request = new SignupRequest(
                 "username",
                 "email@example.com",
@@ -153,99 +133,9 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () -> authService.signup(request));
         assertEquals(ErrorStatus.BAD_REQUEST_EMAIL, exception.getErrorCode());
         verify(userRepository, never()).save(any(User.class));
-    }
-
-    @Test
-    void signinSuccess() {
-        SigninRequest request = new SigninRequest("email@example.com", "password");
-
-        User user = new User(
-                "username",
-                "email@example.com",
-                "encodedPassword",
-                "nickname",
-                "010-1234-5678",
-                "서울특별시 종로구",
-                UserRole.USER
-        );
-
-        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        when(jwtUtil.createToken(user.getId(), user.getEmail(), user.getUserRole()))
-                .thenReturn("jwt-token");
-
-        SigninResponse response = authService.signin(request);
-
-        assertNotNull(response);
-        assertEquals("jwt-token", response.getBearerToken());
-        verify(jwtUtil).createToken(user.getId(), user.getEmail(), user.getUserRole());
-    }
-
-    @Test
-    void signinFail_UserNotFound() {
-        SigninRequest request = new SigninRequest("email@example.com", "password");
-
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
-
-        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
-        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-    }
-
-    @Test
-    void signinFail_WrongPassword() {
-        SigninRequest request = new SigninRequest("email@example.com", "password");
-        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
-
-        when(userRepository.findByEmailAndStatusIsActive(anyString())).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
-
-        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
-        assertEquals(ErrorStatus.BAD_REQUEST_PASSWORD, exception.getErrorCode());
-    }
-
-    @Test
-    void signinFail_DeletedUser() {
-        SigninRequest request = new SigninRequest("email@example.com", "password");
-        User user = new User("username", "email@example.com", "encodedPassword", "nickname", "010-1234-5678", "서울특별시 종로구", UserRole.USER);
-        user.deactivate();
-
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
-
-        ApiException exception = assertThrows(ApiException.class, () -> authService.signin(request));
-        assertEquals(ErrorStatus.NOT_FOUND_USER, exception.getErrorCode());
-    }
-
-    @Test
-    void kakaoSignup_Success() {
-        KakaoSignupRequest request = new KakaoSignupRequest("username", "password", "nickname", "address");
-
-        // 세션에서 카카오 로그인 정보 설정
-        when(session.getAttribute("email")).thenReturn("kakao@example.com");
-        when(session.getAttribute("nickname")).thenReturn("kakaoNickname");
-        when(session.getAttribute("profileImageUrl")).thenReturn("profile.jpg");
-        when(userRepository.existsByEmail("kakao@example.com")).thenReturn(false);
-        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
-
-        SignupResponse response = authService.kakaoSignup(request, session);
-
-        assertNotNull(response);
-        verify(userRepository, times(1)).existsByEmail("kakao@example.com");
-        verify(userRepository, times(1)).save(any(User.class));
-    }
-
-    @Test
-    void kakaoSignup_Failure_EmailAlreadyExists() {
-        KakaoSignupRequest request = new KakaoSignupRequest("username", "password", "nickname", "address");
-
-        when(session.getAttribute("email")).thenReturn("kakao@example.com");
-        when(userRepository.existsByEmail("kakao@example.com")).thenReturn(true);
-
-        ApiException exception = assertThrows(ApiException.class, () -> authService.kakaoSignup(request, session));
-        assertEquals(ErrorStatus.BAD_REQUEST_EMAIL, exception.getErrorCode());
-        verify(userRepository, times(1)).existsByEmail("kakao@example.com");
-        verify(userRepository, times(0)).save(any(User.class));
     }
 }

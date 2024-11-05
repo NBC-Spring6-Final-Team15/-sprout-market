@@ -36,26 +36,10 @@ public class AuthService {
     private static final String PASSWORD_PATTERN = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
 
     @Transactional
-    public SignupResponse signup(SignupRequest request) {
-        if (!isPasswordValid(request.getPassword())) {
-            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
-        }
-
-        return createUser(request);
-    }
+    public SignupResponse signup(SignupRequest request) { return createUser(request); }
 
     @Transactional
-    public SignupResponse adminSignup(AdminSignupRequest request) {
-        if (!isPasswordValid(request.getPassword())) {
-            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
-        }
-
-        if (!request.getAdminKey().equals(adminKey)) {
-            throw new ApiException(ErrorStatus.INVALID_ADMIN_KEY);
-        }
-
-        return createAdminUser(request);
-    }
+    public SignupResponse adminSignup(AdminSignupRequest request) { return createAdminUser(request); }
 
     public SigninResponse signin(SigninRequest request) {
         return authenticateUser(request, UserRole.USER);
@@ -101,8 +85,14 @@ public class AuthService {
     }
 
     private SignupResponse createUser(SignupRequest request) {
+        // 이메일 중복 검사
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
+
+        // 비밀번호 유효성 검사
+        if (!isPasswordValid(request.getPassword())) {
+            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -124,9 +114,14 @@ public class AuthService {
     }
 
     private SignupResponse createAdminUser(AdminSignupRequest request) {
-
+        // 이메일 중복 검사
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorStatus.BAD_REQUEST_EMAIL);
+        }
+
+        // 비밀번호 유효성 검사
+        if (!isPasswordValid(request.getPassword())) {
+            throw new ApiException(ErrorStatus.INVALID_PASSWORD_FORM);
         }
 
         String encodedPassword = passwordEncoder.encode(request.getPassword());
