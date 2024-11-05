@@ -26,6 +26,7 @@ import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -110,7 +111,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_검색_성공 () throws Exception {
+    @DisplayName("매물 검색 성공")
+    void searchItems_success () throws Exception {
         ItemSearchRequest requestDto = ItemSearchRequest.builder()
             .searchKeyword("1")
             .categoryId(1L)
@@ -242,7 +244,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 내_주변_특정카테고리_매물_조회_성공() throws Exception {
+    @DisplayName("특정 카테고리에 속하는 주변 매물 전체 조회 성공")
+    void getCategoryItems_success() throws Exception {
         Long categoryId = 1L;
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
             .page(1)
@@ -370,7 +373,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_수정_성공_혜민() throws Exception {
+    @DisplayName("매물 내용 수정 성공")
+    void updateContents_success() throws Exception {
         ItemResponse itemResponse = ItemResponse.builder()
             .title("만년필")
             .description("한번도안썼습니다")
@@ -439,8 +443,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-        // 인증된 사용자로 테스트
-    void 매물_단건_상세_조회_성공() throws Exception {
+    @DisplayName("매물 단건 상세 조회 성공")
+    void getItem_success() throws Exception {
         // Given
         Long itemId = mockItem.getId();
         ItemResponseDto itemResponseDto = new ItemResponseDto(
@@ -490,8 +494,9 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    @WithMockUser // 인증된 사용자로 테스트
-    void 나의_모든_매물_조회_성공() throws Exception {
+    @WithMockUser
+    @DisplayName("로그인한 사용자의 모든 매물 조회 성공")
+    void getMyItems_success() throws Exception {
         // Given
         //페이지 직접 만들어주기
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
@@ -579,7 +584,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_등록_성공() throws Exception {
+    @DisplayName("매물 등록 성공")
+    void addItem_success() throws Exception {
         // Given
         // 결과값 설정
         ItemResponse itemResponse = ItemResponse.builder()
@@ -626,7 +632,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_판매상태_변경_성공() throws Exception {
+    @DisplayName("매물 판매상태 변경 성공")
+    void updateSaleStatus_success() throws Exception {
 
         // Given
         doNothing().when(itemService).updateSaleStatus(mockItem.getId(), ItemSaleStatus.SOLD, mockAuthUser);
@@ -661,7 +668,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_삭제_성공() throws Exception {
+    @DisplayName("사용자가 자신의 매물 삭제 성공")
+    void softDeleteItem_success() throws Exception {
         // Given
         doNothing().when(itemService).softDeleteItem(mockItem.getId(), mockAuthUser);
 
@@ -685,7 +693,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 관리자_신고매물_삭제_성공 () throws Exception {
+    @DisplayName("관리자가 신고 매물 삭제 성공")
+    void softDeleteReportedItem_success () throws Exception {
         // Given
         doNothing().when(itemService).softDeleteReportedItem(mockItem.getId());
 
@@ -709,7 +718,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 내_주변_매물_조회_성공() throws Exception {
+    @DisplayName("주변 매물 조회 성공")
+    void findItemsByMyArea_success() throws Exception {
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
             .page(1)
             .size(10)
@@ -836,7 +846,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    void 주변_인기_매물_조회_성공() throws Exception {
+    @DisplayName("주변 인기 매물 조회 성공")
+    void getTopItems_success() throws Exception {
         // given
         ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
         ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);

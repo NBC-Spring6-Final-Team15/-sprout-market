@@ -24,6 +24,7 @@ import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -175,7 +176,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 매물_단건_상세_조회_성공() {
+    @DisplayName("매물 단건 상세 조회 성공")
+    void getItem_success() {
         Long itemId = 1L;
         // Given
         when(itemRepository.findByIdOrElseThrow(itemId)).thenReturn(mockItem1);
@@ -198,7 +200,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 매물_검색_성공() {
+    @DisplayName("매물 검색 성공")
+    void searchItems_success() {
         // Given
         int page = 1;
         int size = 10;
@@ -226,7 +229,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 매물_생성_성공() {
+    @DisplayName("매물 생성 성공")
+    void addItem_success() {
         // Given
         ItemCreateRequest itemCreateRequest = ItemCreateRequest.builder()
                 .title("가짜 매물1")
@@ -250,7 +254,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 매물_판매상태_변경_성공() {
+    @DisplayName("매물 판매상태 변경 성공")
+    void updateSaleStatus_success() {
         // Given
         when(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem2.getId(), mockUser.getId())).thenReturn(mockItem2);
 
@@ -262,7 +267,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 매물_내용_변경_성공() {
+    @DisplayName("매물 내용 변경 성공")
+    void updateContents_success() {
         // Given
         ItemContentsUpdateRequest contentsUpdateRequest = ItemContentsUpdateRequest.builder()
                 .title("변경된 제목")
@@ -284,7 +290,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 사용자_자신_매물_논리적_삭제_성공() {
+    @DisplayName("사용자의 매물 (논리적)삭제 성공")
+    void softDeleteItem_success() {
         // Given
         when(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem1.getId(), mockUser.getId())).thenReturn(mockItem1);
 
@@ -297,7 +304,8 @@ class ItemServiceTest {
 
 
     @Test
-    void 관리자_신고매물_논리적_삭제_성공() {
+    @DisplayName("관리자의 신고받은 매물 (논리적)삭제 성공")
+    void softDeleteReportedItem_success() {
         // Given
         when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
 
@@ -309,7 +317,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 자신매물_전체_조회_성공() {
+    @DisplayName("자신의 매물 전체 조회 성공")
+    void getMyItems_success() {
         // Given
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
@@ -326,7 +335,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 근처_매물_중_특정카테고리_전체_조회_성공() {
+    @DisplayName("주변 매물 중 특정 카테고리에 속하는 매물 전체 조회 성공")
+    void getCategoryItems_success() {
         // Given
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
@@ -345,7 +355,8 @@ class ItemServiceTest {
     }
 
     @Test
-    void 로그인한_사용자_주변_매물_전체_조회_성공() {
+    @DisplayName("주변 매물 전체 조회 성공")
+    void findItemsByMyArea_success() {
         // Given
         PageRequest pageable = PageRequest.of(0, 10);
         Page<Item> pageResult = new PageImpl<>(List.of(mockItem1), pageable, 1);
