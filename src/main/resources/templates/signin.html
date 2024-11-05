@@ -128,7 +128,14 @@
                     body: JSON.stringify({ email, password })
                 });
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Signup failed');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 const token = data.bearerToken;
 
@@ -160,7 +167,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Sign In failed');
+                alert(error.message);
             });
     });
 
