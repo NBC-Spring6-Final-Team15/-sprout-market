@@ -8,4 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ImageNameRequest {
     private String imageName;
+    public ImageNameRequest(String imageName){
+        this.imageName = imageName;
+    }
 }

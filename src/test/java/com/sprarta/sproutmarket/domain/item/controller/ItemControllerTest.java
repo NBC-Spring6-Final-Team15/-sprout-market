@@ -6,7 +6,6 @@ import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -27,6 +26,7 @@ import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.service.UserService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -37,7 +37,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,7 +44,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,7 +54,6 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.multipart;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -74,26 +71,16 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     private Item mockItem;
     private Category mockCategory;
-    private ItemImage itemImage;
-    private User mockUser;
-    private MockMultipartFile mockImage;
 
     @BeforeEach
         // 테스트 전 수행
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockImage = new MockMultipartFile("file", "itemImage.jpg", "image/jpeg", "itemImage content".getBytes());
 
         // 클래스 인스턴스 생성
-        mockUser = new User("김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
+        User mockUser = new User("김지민", "mock@mock.com", "encodedOldPassword", "오만한천원", "010-1234-5678", "서울특별시 관악구 신림동", UserRole.USER);
         ReflectionTestUtils.setField(mockUser, "id", 1L);
-        // CustomUserDetails mockAuthUser = new CustomUserDetails(mockUser);
         mockAuthUser = new CustomUserDetails(mockUser);
-        itemImage = ItemImage.builder()
-            .id(1L)
-            .item(mockItem)
-            .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
-            .build();
 
         // 객체 생성
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -107,17 +94,15 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
             "가짜 아이템",
             "가짜 설명",
             10000,
-            mockUser,
-            ItemSaleStatus.WAITING,
-            mockCategory,
-            Status.ACTIVE
+                mockUser,
+            mockCategory
         );
 
         ReflectionTestUtils.setField(mockItem, "id", 1L);
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
 
         // 아이템을 반환하도록 Mock 설정
-        given(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem.getId(), mockUser)).willReturn(mockItem);
+        given(itemRepository.findByIdAndSellerIdOrElseThrow(mockItem.getId(), mockUser.getId())).willReturn(mockItem);
         // UserService Mock 설정
         when(userService.getUser(anyLong())).thenReturn(new UserResponse(mockUser.getId(), mockUser.getEmail()));
         doNothing().when(userService).changePassword(any(CustomUserDetails.class), any(UserChangePasswordRequest.class));
@@ -126,7 +111,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_검색_성공 () throws Exception {
+    @DisplayName("매물 검색 성공")
+    void searchItems_success () throws Exception {
         ItemSearchRequest requestDto = ItemSearchRequest.builder()
             .searchKeyword("1")
             .categoryId(1L)
@@ -258,7 +244,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 내_주변_특정카테고리_매물_조회_성공() throws Exception {
+    @DisplayName("특정 카테고리에 속하는 주변 매물 전체 조회 성공")
+    void getCategoryItems_success() throws Exception {
         Long categoryId = 1L;
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
             .page(1)
@@ -386,7 +373,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_수정_성공_혜민() throws Exception {
+    @DisplayName("매물 내용 수정 성공")
+    void updateContents_success() throws Exception {
         ItemResponse itemResponse = ItemResponse.builder()
             .title("만년필")
             .description("한번도안썼습니다")
@@ -455,8 +443,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-        // 인증된 사용자로 테스트
-    void 매물_단건_상세_조회_성공() throws Exception {
+    @DisplayName("매물 단건 상세 조회 성공")
+    void getItem_success() throws Exception {
         // Given
         Long itemId = mockItem.getId();
         ItemResponseDto itemResponseDto = new ItemResponseDto(
@@ -506,8 +494,9 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    @WithMockUser // 인증된 사용자로 테스트
-    void 나의_모든_매물_조회_성공() throws Exception {
+    @WithMockUser
+    @DisplayName("로그인한 사용자의 모든 매물 조회 성공")
+    void getMyItems_success() throws Exception {
         // Given
         //페이지 직접 만들어주기
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
@@ -595,7 +584,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_등록_성공() throws Exception {
+    @DisplayName("매물 등록 성공")
+    void addItem_success() throws Exception {
         // Given
         // 결과값 설정
         ItemResponse itemResponse = ItemResponse.builder()
@@ -642,33 +632,22 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_판매상태_변경_성공() throws Exception {
-        String SsaleStatus = ItemSaleStatus.SOLD.toString();
+    @DisplayName("매물 판매상태 변경 성공")
+    void updateSaleStatus_success() throws Exception {
 
         // Given
-        ItemResponse itemResponse = ItemResponse.builder()
-            .title(mockItem.getTitle())
-            .itemSaleStatus(mockItem.getItemSaleStatus())
-            .price(mockItem.getPrice())
-            .nickname(mockItem.getSeller().getNickname())
-            .build();
-
-        given(itemService.updateSaleStatus(mockItem.getId(), SsaleStatus, mockAuthUser)).willReturn(itemResponse);
+        doNothing().when(itemService).updateSaleStatus(mockItem.getId(), ItemSaleStatus.SOLD, mockAuthUser);
 
 
         // when, then
         mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/sale-status", mockItem.getId())
-                        .param("saleStatus", SsaleStatus)
+                        .param("saleStatus", "SOLD")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"itemSaleStatus\":\"" + SsaleStatus + "\"}")
+                        .content("{\"itemSaleStatus\":\"" + ItemSaleStatus.SOLD + "\"}")
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
                 .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
-                .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
-                .andExpect(jsonPath("$.data.itemSaleStatus").value(itemResponse.getItemSaleStatus().toString()))
-                .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
                 .andDo(document("update-item-sale-status",
                         resource(ResourceSnippetParameters.builder()
                                 .description("매물 판매 상태 수정 API")
@@ -678,14 +657,6 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .queryParameters(parameterWithName("saleStatus").description("판매 상태 수정 내용"))
                                 .requestFields(
                                         fieldWithPath("itemSaleStatus").description("판매 상태 수정 내용")
-                                )
-                                .responseFields(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data.title").description("판매상태를 수정한 매물의 제목"),
-                                        fieldWithPath("data.price").description("판매상태를 수정한 매물의 가격"),
-                                        fieldWithPath("data.itemSaleStatus").description("수정된 판매상태"),
-                                        fieldWithPath("data.nickname").description("수정을 한 유저 닉네임")
                                 )
                                 .requestSchema(Schema.schema("매물-상태수정-성공-요청"))
                                 .responseSchema(Schema.schema("매물-상태수정-성공-응답"))
@@ -697,16 +668,10 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 매물_삭제_성공() throws Exception {
+    @DisplayName("사용자가 자신의 매물 삭제 성공")
+    void softDeleteItem_success() throws Exception {
         // Given
-        ItemResponse itemResponse = ItemResponse.builder()
-            .title(mockItem.getTitle())
-            .status(Status.DELETED)
-            .price(mockItem.getPrice())
-            .nickname(mockItem.getSeller().getNickname())
-            .build();
-
-        given(itemService.softDeleteItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
+        doNothing().when(itemService).softDeleteItem(mockItem.getId(), mockAuthUser);
 
         // When, Then
         mockMvc.perform(RestDocumentationRequestBuilders.delete("/items/{itemId}", mockItem.getId())
@@ -715,23 +680,12 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
                 .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
-                .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))  // 응답 검증
-                .andExpect(jsonPath("$.data.nickname").value(itemResponse.getNickname()))
                 .andDo(document("soft-delete-my-item",
                         resource(ResourceSnippetParameters.builder()
                                 .description("매물 삭제 API")
                                 .summary("로그인한 사용자가 매물을 삭제합니다.")
                                 .tag("Items")
                                 .pathParameters(parameterWithName("itemId").description("삭제할 매물 ID"))
-                                .responseFields(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data.title").description("삭제된 매물의 제목"),
-                                        fieldWithPath("data.price").description("삭제된 매물의 가격"),
-                                        fieldWithPath("data.status").description("삭제된 매물의 상태"),
-                                        fieldWithPath("data.nickname").description("삭제를 한 유저의 닉네임")
-                                )
                                 .responseSchema(Schema.schema("매물-삭제-성공-응답"))
                                 .build())
                 ));
@@ -739,16 +693,10 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 관리자_신고매물_삭제_성공 () throws Exception {
+    @DisplayName("관리자가 신고 매물 삭제 성공")
+    void softDeleteReportedItem_success () throws Exception {
         // Given
-        ItemResponse itemResponse = ItemResponse.builder()
-            .title(mockItem.getTitle())
-            .description(mockItem.getDescription())
-            .price(mockItem.getPrice())
-            .status(Status.DELETED)
-            .build();
-
-        given(itemService.softDeleteReportedItem(mockItem.getId(), mockAuthUser)).willReturn(itemResponse);
+        doNothing().when(itemService).softDeleteReportedItem(mockItem.getId());
 
         // When, Then
         mockMvc.perform(RestDocumentationRequestBuilders.delete("/admin/items/{itemId}", mockItem.getId())
@@ -757,24 +705,12 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Ok"))  // 응답 메시지 검증
                 .andExpect(jsonPath("$.statusCode").value(200)) // 응답 상태 코드 검증
-                .andExpect(jsonPath("$.data.title").value(itemResponse.getTitle()))  // 응답 검증
-                .andExpect(jsonPath("$.data.description").value(itemResponse.getDescription()))  // 응답 검증
-                .andExpect(jsonPath("$.data.price").value(itemResponse.getPrice()))  // 응답 검증
-                .andExpect(jsonPath("$.data.status").value(itemResponse.getStatus().toString()))
                 .andDo(document("soft-delete-report-item",
                         resource(ResourceSnippetParameters.builder()
                                 .description("신고된 매물 삭제 API")
                                 .summary("관리자가 신고된 매물을 삭제합니다.")
                                 .tag("Items")
                                 .pathParameters(parameterWithName("itemId").description("삭제할 매물 ID"))
-                                .responseFields(
-                                        fieldWithPath("message").description("응답 메시지"),
-                                        fieldWithPath("statusCode").description("응답 상태 코드"),
-                                        fieldWithPath("data.title").description("삭제된 매물의 제목"),
-                                        fieldWithPath("data.description").description("삭제된 매물의 설명"),
-                                        fieldWithPath("data.price").description("삭제된 매물의 가격"),
-                                        fieldWithPath("data.status").description("삭제된 매물의 상태")
-                                )
                                 .responseSchema(Schema.schema("신고매물-삭제-성공-응답"))
                                 .build())
                 ));
@@ -782,7 +718,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     @Test
     @WithMockUser
-    void 내_주변_매물_조회_성공() throws Exception {
+    @DisplayName("주변 매물 조회 성공")
+    void findItemsByMyArea_success() throws Exception {
         FindItemsInMyAreaRequestDto requestDto = FindItemsInMyAreaRequestDto.builder()
             .page(1)
             .size(10)
@@ -909,7 +846,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     }
 
     @Test
-    void 주변_인기_매물_조회_성공() throws Exception {
+    @DisplayName("주변 인기 매물 조회 성공")
+    void getTopItems_success() throws Exception {
         // given
         ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
         ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);

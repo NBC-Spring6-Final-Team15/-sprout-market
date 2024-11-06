@@ -31,7 +31,7 @@ public class Item extends Timestamped {
     private User seller;
     // 판매 상태
     @Enumerated(EnumType.STRING)
-    private ItemSaleStatus itemSaleStatus;
+    private ItemSaleStatus itemSaleStatus = ItemSaleStatus.WAITING;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -41,16 +41,14 @@ public class Item extends Timestamped {
     private List<ItemImage> itemImages = new ArrayList<>();
     // 삭제 상태
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.ACTIVE;
 
-    public Item(String title, String description, int price, User seller, ItemSaleStatus itemSaleStatus, Category category, Status status) {
+    public Item(String title, String description, int price, User seller, Category category) {
         this.title = title;
         this.description = description;
         this.price = price;
         this.seller = seller;
-        this.itemSaleStatus = itemSaleStatus;
         this.category = category;
-        this.status = status;
     }
 
     public void changeSaleStatus(ItemSaleStatus itemSaleStatus) {

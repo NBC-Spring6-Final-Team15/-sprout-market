@@ -33,8 +33,8 @@ public class S3ImageService {
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;  // 최대용량: 5MB
 
     public String checkUser(Long itemId, MultipartFile image, CustomUserDetails authUser){
-        User user = findUserById(authUser.getId());
-        verifyItemOwnership(itemId, user);
+        User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
+        itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user.getId());
         return uploadImage(image, authUser);
     }
 
@@ -81,9 +81,5 @@ public class S3ImageService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-    }
-
-    private Item verifyItemOwnership(Long itemId, User user){
-        return itemRepository.findByIdAndSellerIdOrElseThrow(itemId, user);
     }
 }

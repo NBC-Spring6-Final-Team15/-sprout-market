@@ -80,35 +80,6 @@ public class UserService {
         user.changeAddress(administrativeArea);
     }
 
-//    @Transactional
-//    public String updateProfileImage(CustomUserDetails authUser, String profileImageName) {
-//        User user = userRepository.findById(authUser.getId())
-//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-//
-//        // 프로필 이미지 S3 업로드
-//        String profileImageUrl = profileImageService.uploadProfileImage(profileImageName, authUser);
-//
-//        // 유저 엔티티에 프로필 이미지 URL 업데이트
-//        user.updateProfileImage(profileImageUrl);
-//
-//        userRepository.save(user);
-//        return profileImageUrl;
-//    }
-//
-//    @Transactional
-//    public void deleteProfileImage(CustomUserDetails authUser) {
-//        User user = userRepository.findById(authUser.getId())
-//                .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_USER));
-//
-//        String currentProfileImageUrl = user.getProfileImageUrl();
-//        if (currentProfileImageUrl != null && !currentProfileImageUrl.isEmpty()) {
-//            //s3ImageServiceImpl.deleteImage(currentProfileImageUrl);
-//        }
-//
-//        userRepository.save(user);
-//        user.updateProfileImage(null);  // 프로필 이미지 URL 을 null 로 업데이트
-//    }
-
     // 탈퇴된 유저 복원
     @Transactional
     public void activateUser(Long userId) {

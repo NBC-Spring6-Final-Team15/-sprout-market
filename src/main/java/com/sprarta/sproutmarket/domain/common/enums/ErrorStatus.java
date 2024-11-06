@@ -44,7 +44,8 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, 404, "존재하지 않는 사용자입니다."),
     BAD_REQUEST_PASSWORD(HttpStatus.BAD_REQUEST, 400, "잘못된 비밀번호입니다."),
     BAD_REQUEST_NEW_PASSWORD(HttpStatus.BAD_REQUEST, 400, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
-    INVALID_ADMIN_KEY(HttpStatus.FORBIDDEN, 403,  "admin key 값이 일치하지 않습니다."),
+    INVALID_ADMIN_KEY(HttpStatus.FORBIDDEN, 403,  "관리자 키 값이 일치하지 않습니다."),
+    INVALID_PASSWORD_FORM(HttpStatus.BAD_REQUEST, 400, "비밀번호는 최소 8자 이상이며, 대문자, 소문자, 숫자, 특수 문자를 포함해야 합니다."),
 
     //이메일 인증 관련 예외
     FAIL_EMAIL_SENDING(HttpStatus.INTERNAL_SERVER_ERROR, 500, "이메일 전송에 실패했습니다."),
