@@ -53,6 +53,9 @@ http://43.203.87.214:8081/
 ## ✨ 시스템 아키텍처 
 <img src="https://cdn.discordapp.com/attachments/1262935762484068405/1302864536868487220/w2000.png?ex=6729aaa7&is=67285927&hm=be604baf02c07d1384566e8f1025f7ea4fdcccb7c05ff2cca99c49c2d7e96cf2&">
 
+## 자료 출처 
+행정구역 geoJson :  https://github.com/vuski/admdongkor
+
 
 
 
