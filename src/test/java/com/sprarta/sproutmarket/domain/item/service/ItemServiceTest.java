@@ -23,12 +23,14 @@ import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -56,6 +58,10 @@ class ItemServiceTest {
     private ItemRepositoryCustom itemRepositoryCustom;
     @Mock
     private CategoryRepository categoryRepository;
+    @Mock
+    private EntityManager entityManager;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
     @Mock
     private ItemImageService itemImageService;
     @Mock
