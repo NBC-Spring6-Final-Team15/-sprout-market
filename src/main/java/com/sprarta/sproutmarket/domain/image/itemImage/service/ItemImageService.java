@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,18 +29,22 @@ public class ItemImageService {
     private final S3ImageService s3ImageService;
 
     @Transactional
-    public ImageResponse uploadItemImage(Long itemId, ImageNameRequest request, CustomUserDetails authUser) {
+    public List<ImageResponse> uploadItemImages(Long itemId, List<ImageNameRequest> requests, CustomUserDetails authUser) {
         Item item = verifyItemOwnership(itemId, User.fromAuthUser(authUser).getId());
 
-        // 데이터베이스에 이미지 정보 저장
-        ItemImage itemImage = ItemImage.builder()
-            .name(request.getImageName())
-            .item(item) // ItemRepository에서 Item 조회
-            .build();
+        List<ImageResponse> imageResponses = new ArrayList<>();
+        for (ImageNameRequest request : requests) {
+            // 각 이미지 정보를 저장
+            ItemImage itemImage = ItemImage.builder()
+                    .name(request.getImageName())
+                    .item(item)
+                    .build();
 
-        ItemImage image = itemImageRepository.save(itemImage); // 이미지 정보 저장
+            ItemImage image = itemImageRepository.save(itemImage);
 
-        return new ImageResponse(image.getName()); // 업로드된 이미지 URL 반환
+            imageResponses.add(new ImageResponse(image.getName()));
+        }
+        return imageResponses;
     }
 
 
