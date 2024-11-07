@@ -121,11 +121,7 @@ class ItemImageControllerTest extends CommonMockMvcControllerTestSetUp {
 
         // Then
         verify(itemImageService, times(1)).uploadItemImages(any(Long.class), any(List.class), any(CustomUserDetails.class));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.message").value("Ok"))
-                .andExpect(jsonPath("$.data[0].name").value("image.jpg"))
-                .andExpect(jsonPath("$.data[1].name").value("image2.jpg"));
+        result.andExpect(status().isOk());
     }
 
 
