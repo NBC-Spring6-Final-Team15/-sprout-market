@@ -23,6 +23,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -77,19 +79,30 @@ class ItemImageServiceTest {
     void uploadItemImage_success() {
         // Given
         Long itemId = 1L;
-        ImageNameRequest request = new ImageNameRequest("itemImage.jpg");
-        ItemImage image = new ItemImage(request.getImageName(), mockItem);
+        List<ImageNameRequest> requests = List.of(
+                new ImageNameRequest("itemImage.jpg"),
+                new ImageNameRequest("itemImage2.jpg")
+        );
+
+        ItemImage image = new ItemImage(requests.get(0).getImageName(), mockItem);
+        ItemImage image2 = new ItemImage(requests.get(1).getImageName(), mockItem);
         when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId())).thenReturn(mockItem);
-        when(itemImageRepository.save(any(ItemImage.class))).thenReturn(image);
-
+        when(itemImageRepository.save(any(ItemImage.class)))
+                .thenAnswer(invocation -> {
+                    ItemImage itemImage = invocation.getArgument(0);
+                    return itemImage.getName().equals("itemImage.jpg") ? image : image2;
+                });
         // when
-        ImageResponse response = itemImageService.uploadItemImage(itemId, request, mockAuthUser);
+        List<ImageResponse> response = itemImageService.uploadItemImages(itemId, requests, mockAuthUser);
 
-        // then
+        // Then
         assertNotNull(response);
-        assertEquals("itemImage.jpg", response.getName());
-        verify(itemRepository).findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId());
-        verify(itemImageRepository).save(any(ItemImage.class));
+        assertEquals(2, response.size());
+        assertEquals("itemImage.jpg", response.get(0).getName());
+        assertEquals("itemImage2.jpg", response.get(1).getName());
+
+        verify(itemRepository, times(1)).findByIdAndSellerIdOrElseThrow(itemId, mockAuthUser.getId());
+        verify(itemImageRepository, times(2)).save(any(ItemImage.class));
     }
 
     @Test

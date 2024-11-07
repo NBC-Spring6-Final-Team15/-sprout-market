@@ -26,6 +26,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -70,47 +73,61 @@ class ItemImageControllerTest extends CommonMockMvcControllerTestSetUp {
     @WithMockUser
     @DisplayName("매물 이미지 등록 성공")
     void itemImage_upload_success() throws Exception {
-        ImageResponse mockResponse = new ImageResponse("image.jpg");
-        given(itemImageService.uploadItemImage(any(Long.class), any(ImageNameRequest.class), any(CustomUserDetails.class)))
-            .willReturn(mockResponse);
+        // Given
+        List<ImageResponse> imageResponses = new ArrayList<>(List.of(
+                new ImageResponse("image.jpg"),
+                new ImageResponse("image2.jpg")
+        ));
 
+        given(itemImageService.uploadItemImages(any(Long.class), any(List.class), any(CustomUserDetails.class)))
+                .willReturn(imageResponses);
+
+        // When
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/{itemId}/images", 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"imageName\":\"image.jpg\"}")
-                .header("Authorization", "Bearer (JWT 토큰)")
-            )
-            .andDo(MockMvcRestDocumentationWrapper.document(
-                "item-image-upload",
-                resource(ResourceSnippetParameters.builder()
-                    .description("매물 이미지 등록")
-                    .summary("메물 이미지 등록 API")
-                    .tag("item-image")
-                    .requestHeaders(
-                        headerWithName("Authorization").description("Bearer (JWT 토큰)")
-                    )
-                    .requestFields(
-                        fieldWithPath("imageName").type(JsonFieldType.STRING)
-                            .description("프로필 이미지의 public 주소")
-                    )
-                    .responseFields(
-                        fieldWithPath("message").type(JsonFieldType.STRING)
-                            .description("성공 상태 메시지"),
-                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
-                            .description("성공 시 응답 코드 : 200"),
-                        fieldWithPath("data").type(JsonFieldType.OBJECT)
-                            .description("응답 본문").optional(),
-                        fieldWithPath("data.name").type(JsonFieldType.STRING)
-                            .description("저장된 이미지 이름")
-                    )
-                    .requestSchema(Schema.schema("매물-이미지-등록-성공-요청"))
-                    .responseSchema(Schema.schema("매물-이미지-등록-성공-응답"))
-                    .build()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[{\"imageName\":\"image.jpg\"}, {\"imageName\":\"image2.jpg\"}]")
+                        .header("Authorization", "Bearer (JWT 토큰)")
                 )
-            ));
-        verify(itemImageService,times(1)).uploadItemImage(any(Long.class), any(ImageNameRequest.class),any(CustomUserDetails.class));
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "item-image-upload",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("매물 이미지 등록")
+                                .summary("매물 이미지 등록 API")
+                                .tag("item-image")
+                                .requestHeaders(
+                                        headerWithName("Authorization").description("Bearer (JWT 토큰)")
+                                )
+                                .requestFields(
+                                        fieldWithPath("[].imageName").type(JsonFieldType.STRING)
+                                                .description("이미지의 public 주소")
+                                )
+                                .responseFields(
+                                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                                .description("성공 상태 메시지"),
+                                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                                .description("성공 시 응답 코드 : 200"),
+                                        fieldWithPath("data").type(JsonFieldType.ARRAY)
+                                                .description("응답 본문").optional(),
+                                        fieldWithPath("data[0].name").type(JsonFieldType.STRING)
+                                                .description("저장된 첫 번째 이미지 이름"),
+                                        fieldWithPath("data[1].name").type(JsonFieldType.STRING)
+                                                .description("저장된 두 번째 이미지 이름")
+                                )
+                                .requestSchema(Schema.schema("매물-이미지-등록-성공-요청"))
+                                .responseSchema(Schema.schema("매물-이미지-등록-성공-응답"))
+                                .build()
+                        )
+                ));
+
+        // Then
+        verify(itemImageService, times(1)).uploadItemImages(any(Long.class), any(List.class), any(CustomUserDetails.class));
         result.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.name").value("image.jpg"));
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.message").value("Ok"))
+                .andExpect(jsonPath("$.data[0].name").value("image.jpg"))
+                .andExpect(jsonPath("$.data[1].name").value("image2.jpg"));
     }
+
 
     @Test
     @WithMockUser
