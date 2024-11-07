@@ -3,10 +3,12 @@ package com.sprarta.sproutmarket.domain.user.repository;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -31,4 +33,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 () -> new ApiException(ErrorStatus.NOT_FOUND_USER)
         );
     }
+
+    List<User> findAllByUserRole(UserRole userRole);
 }
