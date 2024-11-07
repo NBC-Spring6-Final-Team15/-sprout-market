@@ -117,7 +117,9 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("data.itemTitle").description("아이템 이름"),
                                         fieldWithPath("data.sellerName").description("판매자 이름"),
                                         fieldWithPath("data.buyerName").description("구매자 이름"),
-                                        fieldWithPath("data.tradeStatus").description("거래 상태")
+                                        fieldWithPath("data.tradeStatus").description("거래 상태"),
+                                        fieldWithPath("data.buyerId").description("구매자 ID"),
+                                        fieldWithPath("data.sellerId").description("판매자 ID")
                                 )
                                 .build()
                         )
@@ -125,7 +127,10 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
 
         result.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.id").value(responseDto.getId()))
-                .andExpect(jsonPath("$.data.itemTitle").value(responseDto.getItemTitle()));
+                .andExpect(jsonPath("$.data.itemTitle").value(responseDto.getItemTitle()))
+                .andExpect(jsonPath("$.data.buyerId").value(responseDto.getBuyerId()))
+                .andExpect(jsonPath("$.data.sellerId").value(responseDto.getSellerId()));
+
     }
 
     @Test
