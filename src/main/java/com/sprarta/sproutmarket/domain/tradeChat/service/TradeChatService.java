@@ -8,7 +8,6 @@ import com.sprarta.sproutmarket.domain.tradeChat.entity.TradeChat;
 import com.sprarta.sproutmarket.domain.tradeChat.repository.ChatRoomRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.repository.TradeChatRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
-import com.sprarta.sproutmarket.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,25 +30,38 @@ public class TradeChatService {
                 tradeChatDto.getRoomId()));
     }
 
-    public List<TradeChatDto> getChats(Long chatroomId, CustomUserDetails authUser) {
+    public List<TradeChatDto> getChats(Long roomId, CustomUserDetails authUser) {
 
-        if (!ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(chatroomId).getBuyer().getId(), authUser.getId())
-                && !ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(chatroomId).getSeller().getId(), authUser.getId())) {
+        ChatRoom chatRoom = chatRoomRepository.findByIdOrElseThrow(roomId);
+
+        if (!ObjectUtils.nullSafeEquals(chatRoom.getBuyer().getId(), authUser.getId())
+                && !ObjectUtils.nullSafeEquals(chatRoom.getSeller().getId(), authUser.getId())) {
             throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
         }
 
         List<TradeChatDto> tradeChatDtoList = new ArrayList<>();
 
-        for (TradeChat tradeChat : tradeChatRepository.findAllByroomId(chatroomId)) {
+        for (TradeChat tradeChat : tradeChatRepository.findAllByRoomId(roomId)) {
             TradeChatDto tradeChatDto = new TradeChatDto(
                     tradeChat.getRoomId(),
                     tradeChat.getSender(),
-                    tradeChat.getContent()
+                    tradeChat.getContent(),
+                    tradeChat.getReadCount()
             );
             tradeChatDtoList.add(tradeChatDto);
         }
 
         return tradeChatDtoList;
+    }
+
+    // 채팅방 id 소속 채팅의 카운트 감소 , 사용자의 id를 받아 작성자와 일치하지 않을 경우, 0보다 클 경우 감소
+    @Transactional
+    public void decreaseReadCount(Long roomId, String sender) {
+        for (TradeChat tradeChat : tradeChatRepository.findAllByRoomId(roomId)) {
+            if (!ObjectUtils.nullSafeEquals(tradeChat.getSender(), sender.replaceAll("\"", "")) && tradeChat.getReadCount() > 0) {
+                tradeChat.decreaseReadCount();
+            }
+        }
     }
 
 }
