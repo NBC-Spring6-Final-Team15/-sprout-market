@@ -5,6 +5,8 @@ import com.sprarta.sproutmarket.domain.tradeChat.dto.ChatRoomDto;
 import com.sprarta.sproutmarket.domain.tradeChat.service.ChatRoomService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,10 +37,11 @@ public class ChatRoomController {
 
     // 사용자의 채팅방 목록 조회
     @GetMapping("/chatrooms")
-    public ResponseEntity<ApiResponse<List<ChatRoomDto>>> getAllChatRooms(
-            @AuthenticationPrincipal CustomUserDetails authUser) {
+    public ResponseEntity<ApiResponse<Page<ChatRoomDto>>> getAllChatRooms(
+            @AuthenticationPrincipal CustomUserDetails authUser,
+            Pageable pageable) {
         return ResponseEntity.ok
-                (ApiResponse.onSuccess(chatRoomService.getChatRooms(authUser)));
+                (ApiResponse.onSuccess(chatRoomService.getChatRooms(authUser, pageable)));
     }
 
     // 채팅방 삭제
