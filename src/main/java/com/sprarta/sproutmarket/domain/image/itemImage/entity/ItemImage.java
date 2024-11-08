@@ -2,13 +2,13 @@ package com.sprarta.sproutmarket.domain.image.itemImage.entity;
 
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class ItemImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +20,6 @@ public class ItemImage {
 
     private String name;
 
-    @Builder
     public ItemImage(String name, Item item){
         this.name = name;
         this.item = item;
