@@ -89,6 +89,9 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_CHAT(HttpStatus.NOT_FOUND, 404, "해당 채팅을 찾을 수 없습니다."),
     FORBIDDEN_NOT_OWNED_CHAT(HttpStatus.FORBIDDEN, 403, "해당 채팅은 로그인한 사용자의 채팅이 아닙니다."),
 
+    // coupon 예외
+    CONFLICT_COUPON(HttpStatus.CONFLICT, 409, "쿠폰 발급이 마감됐습니다."),
+    NOT_FOUND_COUPON(HttpStatus.NOT_FOUND,404,"쿠폰을 찾을 수 없습니다."),
 
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
