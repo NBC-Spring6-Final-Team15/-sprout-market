@@ -20,6 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -209,19 +213,23 @@ public class ChatRoomServiceTest {
     @Test
     void 채팅방_목록_조회_성공() {
 
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ChatRoom> chatRoomPage = new PageImpl<>(List.of(mockChatRoom1, mockChatRoom2), pageable, 2);
+
         // Given
         when(userRepository.findById(buyer.getId())).thenReturn(Optional.of(buyer));
         when(itemRepository.findByIdOrElseThrow(mockItem1.getId())).thenReturn(mockItem1);
         when(itemRepository.findByIdOrElseThrow(mockItem2.getId())).thenReturn(mockItem2);
         when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom1.getId())).thenReturn(mockChatRoom1);
         when(chatRoomRepository.findByIdOrElseThrow(mockChatRoom2.getId())).thenReturn(mockChatRoom2);
-        when(chatRoomRepository.findAllByUserId(buyer.getId())).thenReturn(List.of(mockChatRoom1, mockChatRoom2));
+        when(chatRoomRepository.findAllByUserId(buyer.getId(), pageable)).thenReturn(chatRoomPage);
 
         // When
-        List<ChatRoomDto> chatRooms = chatRoomService.getChatRooms(authUser);
+        Page<ChatRoomDto> chatRooms = chatRoomService.getChatRooms(authUser, pageable);
 
         // Then
-        assertEquals(2, chatRooms.size());
+        assertEquals(2, chatRooms.getContent().size()); // 페이지의 콘텐츠 크기 확인
+        assertEquals(1, chatRooms.getTotalPages()); // 총 페이지 수 확인
 
     }
 
