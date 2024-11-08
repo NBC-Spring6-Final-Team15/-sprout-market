@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 public class RedisUtil {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Long> CouponRedisTemplate;
+    private static final String COUPON_COUNT_KEY = "coupon_count";
 
     public Object get(String key) {
         return redisTemplate.opsForValue().get(key);
@@ -20,24 +22,22 @@ public class RedisUtil {
         redisTemplate.delete(key);
     }
 
-    public void withdraw(String key, Object object) {
-        redisTemplate.opsForValue().set(key, object);
-    }
-
     public void authEmail(String key, Object object) {
         redisTemplate.opsForValue().set(key, object, 180, TimeUnit.SECONDS);
     }
 
-    public void contentsDelete(String key, Object object) {
-        redisTemplate.opsForValue().set(key, object, 60, TimeUnit.MINUTES);
+    public Long incrementCouponCount() {
+        return CouponRedisTemplate.opsForValue().increment(COUPON_COUNT_KEY);
     }
 
-    public void setLogOut(String key, Object object, Long millisecond) {
-        redisTemplate.opsForValue().set(key, object, millisecond, TimeUnit.MILLISECONDS);
+    public Long getCouponCount() {
+        Long count = CouponRedisTemplate.opsForValue().get(COUPON_COUNT_KEY);
+        return count != null ? count : 0L;
     }
 
-    public boolean hasKeyLogOut(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    public void resetCouponCount() {
+        CouponRedisTemplate.opsForValue().set(COUPON_COUNT_KEY, 0L);
     }
+
 
 }
