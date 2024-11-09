@@ -34,10 +34,10 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
         "WHERE i.seller = :seller AND i.status = 'ACTIVE' ")
     Page<Item> findBySeller(Pageable pageable, @Param("seller") User seller);
 
-    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.status = 'ACTIVE' ")
+    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.status = 'ACTIVE' ORDER BY i.timeForOrder DESC")
     Page<Item> findByAreaListAndUserArea(Pageable pageable, @Param("areaList") List<String> areaList);
 
-    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.status = 'ACTIVE' ")
+    @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.status = 'ACTIVE'")
     List<Item> findByUserArea(@Param("areaList") List<String> areaList);
 
     @Query("SELECT i FROM Item i JOIN FETCH i.seller WHERE i.seller.address IN :areaList AND i.category.id = :categoryId AND i.status = 'ACTIVE'")

@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,8 @@ public class Item extends Timestamped {
     // 삭제 상태
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
+    // 조회 순서를 위한 시간
+    private LocalDateTime timeForOrder;
 
     public Item(String title, String description, int price, User seller, Category category) {
         this.title = title;
@@ -49,6 +52,7 @@ public class Item extends Timestamped {
         this.price = price;
         this.seller = seller;
         this.category = category;
+        this.timeForOrder = LocalDateTime.now();
     }
 
     public void changeSaleStatus(ItemSaleStatus itemSaleStatus) {
@@ -64,4 +68,9 @@ public class Item extends Timestamped {
     public void solfDelete(Status deleted) {
         this.status = deleted;
     }
+
+    public void boostItem() {
+        this.timeForOrder = LocalDateTime.now();
+    }
+
 }
