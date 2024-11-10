@@ -148,6 +148,9 @@ dependencies {
 
     // 이미지 압축 라이브러리
     implementation 'net.coobird:thumbnailator:0.4.14'
+
+    // redisson
+    implementation 'org.redisson:redisson:3.19.0'
 }
 
 tasks.named('test') {

@@ -26,7 +26,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, Long> viewCountRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Long> RedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
 
         redisTemplate.setConnectionFactory(connectionFactory);
