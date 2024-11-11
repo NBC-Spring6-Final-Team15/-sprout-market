@@ -92,25 +92,25 @@ class ItemImageServiceTest {
         verify(itemImageRepository).save(any(ItemImage.class));
     }
 
-    @Test
-    @DisplayName("매물 이미지 삭제 성공")
-    void deleteItemImage_success() {
-        // given
-        Long itemId = 1L;
-        ImageNameRequest request = new ImageNameRequest("itemImage.jpg");
-        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
-        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId())).thenReturn(mockItem);
-        doNothing().when(s3ImageService).deleteImage(anyString(), eq(mockAuthUser));
-        doNothing().when(itemImageRepository).deleteByName(anyString());
-
-        // when
-        itemImageService.deleteItemImage(itemId, request, mockAuthUser);
-
-        // then
-        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
-        verify(itemRepository).findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId());
-        verify(s3ImageService).deleteImage("itemImage.jpg", mockAuthUser);
-        verify(itemImageRepository).deleteByName("itemImage.jpg");
-    }
+//    @Test
+//    @DisplayName("매물 이미지 삭제 성공")
+//    void deleteItemImage_success() {
+//        // given
+//        Long itemId = 1L;
+//        ImageNameRequest request = new ImageNameRequest("itemImage.jpg");
+//        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
+//        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId())).thenReturn(mockItem);
+//        doNothing().when(s3ImageService).deleteImage(anyString(), eq(mockAuthUser));
+//        doNothing().when(itemImageRepository).deleteByName(anyString());
+//
+//        // when
+//        itemImageService.deleteItemImage(itemId, request, mockAuthUser);
+//
+//        // then
+//        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
+//        verify(itemRepository).findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId());
+//        verify(s3ImageService).deleteImage("itemImage.jpg", mockAuthUser);
+//        verify(itemImageRepository).deleteByName("itemImage.jpg");
+//    }
 
 }

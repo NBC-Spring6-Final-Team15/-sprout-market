@@ -48,8 +48,9 @@ public class ItemImageService {
         verifyItemOwnership(itemId, user.getId());
 
         s3ImageService.deleteImage(request.getImageName(), authUser);
+        ItemImage itemImage = itemImageRepository.findByNameOrElseThrow(request.getImageName());
 
-        itemImageRepository.deleteByName(request.getImageName()); // 이미지 정보 저장
+        itemImageRepository.deleteById(itemImage.getId()); // 이미지 정보 저장
     }
 
     private Item verifyItemOwnership(Long itemId, Long userId){

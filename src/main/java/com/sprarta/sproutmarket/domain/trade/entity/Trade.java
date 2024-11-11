@@ -1,6 +1,7 @@
 package com.sprarta.sproutmarket.domain.trade.entity;
 
 import com.sprarta.sproutmarket.domain.common.Timestamped;
+import com.sprarta.sproutmarket.domain.pay.entity.Payment;
 import com.sprarta.sproutmarket.domain.trade.enums.TradeStatus;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import jakarta.persistence.*;
@@ -22,6 +23,10 @@ public class Trade extends Timestamped {
 
     @Enumerated(EnumType.STRING)
     private TradeStatus tradeStatus = TradeStatus.RESERVED;
+
+
+    @OneToOne
+    private Payment payment;
 
     public Trade(ChatRoom chatRoom) {
         this.chatRoom = chatRoom;

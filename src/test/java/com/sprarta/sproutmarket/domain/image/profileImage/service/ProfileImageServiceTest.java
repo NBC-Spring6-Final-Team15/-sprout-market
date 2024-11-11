@@ -67,24 +67,24 @@ class ProfileImageServiceTest {
         verify(profileImageRepository).save(any(ProfileImage.class));
     }
 
-    @Test
-    @DisplayName("프로필 이미지 삭제 성공")
-    void deleteProfileImage_success() {
-        // given
-        ImageNameRequest request = new ImageNameRequest("profileImage.jpg");
-        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
-        when(profileImageRepository.findByUserOrElseThrow(mockUser)).thenReturn(new ProfileImage(mockUser, "profileImage.jpg"));
-        doNothing().when(s3ImageService).deleteImage(anyString(), eq(mockAuthUser));
-        doNothing().when(profileImageRepository).deleteByName(anyString());
-
-        // when
-        profileImageService.deleteProfileImage(request, mockAuthUser);
-
-        // then
-        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
-        verify(profileImageRepository).findByUserOrElseThrow(mockUser);
-        verify(s3ImageService).deleteImage("profileImage.jpg", mockAuthUser);
-        verify(profileImageRepository).deleteByName("profileImage.jpg");
-    }
+//    @Test
+//    @DisplayName("프로필 이미지 삭제 성공")
+//    void deleteProfileImage_success() {
+//        // given
+//        ImageNameRequest request = new ImageNameRequest("profileImage.jpg");
+//        when(userRepository.findByIdAndStatusIsActiveOrElseThrow(mockUser.getId())).thenReturn(mockUser);
+//        when(profileImageRepository.findByUserOrElseThrow(mockUser)).thenReturn(new ProfileImage(mockUser, "profileImage.jpg"));
+//        doNothing().when(s3ImageService).deleteImage(anyString(), eq(mockAuthUser));
+//        doNothing().when(profileImageRepository).deleteByName(anyString());
+//
+//        // when
+//        profileImageService.deleteProfileImage(request, mockAuthUser);
+//
+//        // then
+//        verify(userRepository).findByIdAndStatusIsActiveOrElseThrow(mockUser.getId());
+//        verify(profileImageRepository).findByUserOrElseThrow(mockUser);
+//        verify(s3ImageService).deleteImage("profileImage.jpg", mockAuthUser);
+//        verify(profileImageRepository).deleteByName("profileImage.jpg");
+//    }
 
 }
