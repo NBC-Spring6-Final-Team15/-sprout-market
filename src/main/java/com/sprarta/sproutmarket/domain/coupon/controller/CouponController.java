@@ -33,10 +33,10 @@ public class CouponController {
     @PostMapping("/coupons/use")
     public ResponseEntity<ApiResponse<Void>> useCoupon(
             @AuthenticationPrincipal CustomUserDetails authUser,
-            @RequestParam String couponCode
+            @RequestParam String couponCode,
+            @RequestParam Long itemId
     ) {
-        couponService.useCoupon(authUser, couponCode);
+        couponService.useCoupon(authUser, couponCode, itemId);
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
-
     }
 }

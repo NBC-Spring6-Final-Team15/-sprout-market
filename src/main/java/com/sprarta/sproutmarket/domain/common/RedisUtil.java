@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class RedisUtil {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RedisTemplate<String, Long> CouponRedisTemplate;
+    private final RedisTemplate<String, Long> couponRedisTemplate;
     private static final String COUPON_COUNT_KEY = "coupon_count";
 
     public Object get(String key) {
@@ -27,16 +27,16 @@ public class RedisUtil {
     }
 
     public Long incrementCouponCount() {
-        return CouponRedisTemplate.opsForValue().increment(COUPON_COUNT_KEY);
+        return couponRedisTemplate.opsForValue().increment(COUPON_COUNT_KEY);
     }
 
     public Long getCouponCount() {
-        Long count = CouponRedisTemplate.opsForValue().get(COUPON_COUNT_KEY);
+        Long count = couponRedisTemplate.opsForValue().get(COUPON_COUNT_KEY);
         return count != null ? count : 0L;
     }
 
     public void resetCouponCount() {
-        CouponRedisTemplate.opsForValue().set(COUPON_COUNT_KEY, 0L);
+        couponRedisTemplate.opsForValue().set(COUPON_COUNT_KEY, 0L);
     }
 
 
