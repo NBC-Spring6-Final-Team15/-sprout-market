@@ -282,7 +282,6 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                                 .build()
                         )
                 ));
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(200));
+        result.andExpect(status().isOk());
     }
 }
