@@ -40,7 +40,8 @@ public class ProfileImageService {
         User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
         profileImageRepository.findByUserOrElseThrow(user);
         s3ImageService.deleteImage(imageName.getImageName(), authUser);
-        profileImageRepository.deleteByName(imageName.getImageName());
+        ProfileImage image = profileImageRepository.findByNameOrElseThrow(imageName.getImageName());
+        profileImageRepository.deleteById(image.getId());
     }
 
 }

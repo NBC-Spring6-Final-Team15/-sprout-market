@@ -1,5 +1,6 @@
 package com.sprarta.sproutmarket.domain.image.itemImage.service;
 
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;
 import com.sprarta.sproutmarket.domain.item.dto.request.ImageNameRequest;
@@ -11,8 +12,6 @@ import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import static com.sprarta.sproutmarket.domain.item.entity.QItem.item;
 
 @Service
 @Transactional
@@ -27,11 +26,12 @@ public class ItemImageService {
     public void deleteItemImage(Long itemId, ImageNameRequest request, CustomUserDetails authUser) {
         User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
 
-        Item item = verifyItemOwnership(itemId, user.getId());
+        verifyItemOwnership(itemId, user.getId());
 
         s3ImageService.deleteImage(request.getImageName(), authUser);
+        ItemImage itemImage = itemImageRepository.findByNameOrElseThrow(request.getImageName());
 
-        itemImageRepository.deleteByNameAndItem(request.getImageName(), item);
+        itemImageRepository.deleteById(itemImage.getId()); // 이미지 정보 저장
     }
 
     private Item verifyItemOwnership(Long itemId, Long userId){
