@@ -1,7 +1,7 @@
 package com.sprarta.sproutmarket.domain.image.profileImage.controller;
 
 import com.sprarta.sproutmarket.domain.common.ApiResponse;
-import com.sprarta.sproutmarket.domain.image.dto.ImageResponse;
+import com.sprarta.sproutmarket.domain.image.dto.response.ImageResponse;
 import com.sprarta.sproutmarket.domain.image.profileImage.service.ProfileImageService;
 import com.sprarta.sproutmarket.domain.item.dto.request.ImageNameRequest;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
