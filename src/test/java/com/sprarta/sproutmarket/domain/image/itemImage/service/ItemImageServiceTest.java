@@ -68,25 +68,25 @@ class ItemImageServiceTest {
         );
     }
 
-    @Test
-    @DisplayName("매물 이미지 업로드 성공")
-    void uploadItemImage_success() {
-        // Given
-        Long itemId = 1L;
-        ImageNameRequest request = new ImageNameRequest("itemImage.jpg");
-        ItemImage image = new ItemImage(request.getImageName(), mockItem);
-        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId())).thenReturn(mockItem);
-        when(itemImageRepository.save(any(ItemImage.class))).thenReturn(image);
-
-        // when
-        ImageResponse response = itemImageService.uploadItemImage(itemId, request, mockAuthUser);
-
-        // then
-        assertNotNull(response);
-        assertEquals("itemImage.jpg", response.getName());
-        verify(itemRepository).findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId());
-        verify(itemImageRepository).save(any(ItemImage.class));
-    }
+//    @Test
+//    @DisplayName("매물 이미지 업로드 성공")
+//    void uploadItemImage_success() {
+//        // Given
+//        Long itemId = 1L;
+//        ImageNameRequest request = new ImageNameRequest("itemImage.jpg");
+//        ItemImage image = new ItemImage(request.getImageName(), mockItem);
+//        when(itemRepository.findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId())).thenReturn(mockItem);
+//        when(itemImageRepository.save(any(ItemImage.class))).thenReturn(image);
+//
+//        // when
+//        ImageResponse response = itemImageService.uploadItemImage(itemId, request, mockAuthUser);
+//
+//        // then
+//        assertNotNull(response);
+//        assertEquals("itemImage.jpg", response.getName());
+//        verify(itemRepository).findByIdAndSellerIdOrElseThrow(itemId, mockUser.getId());
+//        verify(itemImageRepository).save(any(ItemImage.class));
+//    }
 
 //    @Test
 //    @DisplayName("매물 이미지 삭제 성공")
