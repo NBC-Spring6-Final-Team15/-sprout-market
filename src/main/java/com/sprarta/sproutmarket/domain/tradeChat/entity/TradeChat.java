@@ -25,12 +25,8 @@ public class TradeChat extends Timestamped {
     @Column(nullable = false)
     private String content;
 
-//    @Column(nullable = false)
-//    private ChatReadStatus chatReadStatus;
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(nullable = false, name = "chatroom_id")
-//    private ChatRoom chatRoom;
+    @Column(nullable = false)
+    private Long readCount = 1L; // 현재 1 대 1 채팅이기 때문에 1로 설정
 
     public TradeChat(String sender,
                      String content,
@@ -38,7 +34,12 @@ public class TradeChat extends Timestamped {
         this.sender = sender;
         this.content = content;
         this.roomId = roomId;
-//        this.chatReadStatus = chatReadStatus;
+        this.readCount = 1L;
+    }
+
+    // 현재 1 대 1 채팅이기 때문에 한 번 확인하면 0으로
+    public void decreaseReadCount() {
+        this.readCount = 0L;
     }
 
 }

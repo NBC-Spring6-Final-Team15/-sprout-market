@@ -25,8 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TradeServiceTest {
@@ -74,9 +73,9 @@ class TradeServiceTest {
     class TradeCreate {
         @Test
         void 거래_생성_성공() {
-            when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
-            when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
-            doNothing().when(simpMessagingTemplate).convertAndSend(anyString(),anyString());
+            lenient().when(chatRoomRepository.findByIdOrElseThrow(1L)).thenReturn(chatRoom);
+            lenient().when(tradeRepository.save(any(Trade.class))).thenReturn(trade);
+            lenient().doNothing().when(simpMessagingTemplate).convertAndSend(anyString(), anyString());
 
             TradeResponseDto responseDto = tradeService.reserveTrade(1L, sellerUserDetails);
 
@@ -84,6 +83,8 @@ class TradeServiceTest {
             assertThat(responseDto.getItemTitle()).isEqualTo("아이템");
             assertThat(responseDto.getSellerName()).isEqualTo("seller");
             assertThat(responseDto.getBuyerName()).isEqualTo("buyer");
+            assertThat(responseDto.getSellerId()).isEqualTo(seller.getId());
+            assertThat(responseDto.getBuyerId()).isEqualTo(buyer.getId());
         }
 
         @Test
@@ -111,10 +112,10 @@ class TradeServiceTest {
 
     @Test
     void 거래_상태_변경_성공() {
-        when(tradeRepository.findByIdOrElseThrow(1L)).thenReturn(trade);
-        doNothing().when(simpMessagingTemplate).convertAndSend(anyString(),anyString());
+        lenient().when(tradeRepository.findByIdOrElseThrow(1L)).thenReturn(trade);
+        lenient().doNothing().when(simpMessagingTemplate).convertAndSend(anyString(), anyString());
 
-        tradeService.finishTrade(1L, sellerUserDetails,TradeStatus.COMPLETED);
+        tradeService.finishTrade(1L, sellerUserDetails, TradeStatus.COMPLETED);
 
         assertThat(trade.getTradeStatus()).isEqualTo(TradeStatus.COMPLETED);
         assertThat(trade.getChatRoom().getItem().getItemSaleStatus()).isEqualTo(ItemSaleStatus.SOLD);

@@ -18,11 +18,15 @@ import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepositoryCustom;
+import com.sprarta.sproutmarket.domain.notification.entity.PriceChangeEvent;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -48,6 +53,10 @@ public class ItemService {
     private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> viewCountRedisTemplate;
     private final InterestedCategoryService interestedCategoryService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @PersistenceContext
+    private final EntityManager entityManager;
 
     /**
      * 중고 매물에 대해서 검색하는 로직
@@ -91,10 +100,6 @@ public class ItemService {
                 )
         );
 
-//         itemImageService.uploadItemImage(item.getId(), itemCreateRequest.getImageName(), authUser);
-        // 카테고리에 관심 있는 사용자들에게 알림 전송
-        notifyUsersAboutNewItem(item.getCategory().getId(), item.getTitle());
-
         return ItemResponse.builder()
                 .title(item.getTitle())
                 .price(item.getPrice())
@@ -130,13 +135,26 @@ public class ItemService {
     public ItemResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser) {
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, User.fromAuthUser(authUser).getId());
 
-        sendPriceChangeNotification(item, itemContentsUpdateRequest.getPrice());
+        int oldPrice = item.getPrice(); // 이전 가격
 
         item.changeContents(
                 itemContentsUpdateRequest.getTitle(),
                 itemContentsUpdateRequest.getDescription(),
                 itemContentsUpdateRequest.getPrice()
         );
+
+        // flush()를 호출하여 변경 사항을 데이터베이스에 반영
+        entityManager.flush();
+
+        int newPrice = item.getPrice(); // 이제 변경된 가격을 가져옴
+
+        // 로그 추가: 가격 변경 감지
+        log.info("Updated Item ID: {}, Old Price: {}, New Price: {}", itemId, oldPrice, newPrice);
+
+        // 가격이 변경된 경우 이벤트 발행
+        if (oldPrice != newPrice) {
+            eventPublisher.publishEvent(new PriceChangeEvent(itemId, newPrice));
+        }
 
         return ItemResponse.builder()
                 .title(item.getTitle())
