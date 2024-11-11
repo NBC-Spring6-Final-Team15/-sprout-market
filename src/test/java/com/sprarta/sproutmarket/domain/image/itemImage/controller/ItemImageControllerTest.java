@@ -16,22 +16,28 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -60,6 +66,41 @@ class ItemImageControllerTest extends CommonMockMvcControllerTestSetUp {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(MockMvcRestDocumentation.documentationConfiguration(restDocumentation))
                 .build();
+    }
+
+    @Test
+    @DisplayName("여러 이미지 업로드 성공")
+    void itemImageUpload_success() throws Exception {
+        // Mock 이미지 파일 생성
+        MockMultipartFile mockFile1 = new MockMultipartFile("images", "image1.jpg", "image/jpeg", "image1".getBytes());
+        MockMultipartFile mockFile2 = new MockMultipartFile("images", "image2.jpg", "image/jpeg", "image2".getBytes());
+
+        CustomUserDetails mockAuthUser = mock(CustomUserDetails.class);
+        when(mockAuthUser.getUsername()).thenReturn("testUser");
+        when(mockAuthUser.getId()).thenReturn(1L);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities())
+        );
+
+        when(s3ImageService.uploadImageAsync(anyLong(), any(MultipartFile.class), any(CustomUserDetails.class)))
+                .thenReturn(CompletableFuture.completedFuture("http://example.com/image1.jpg"));
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/items/1/images")
+                        .file(mockFile1)
+                        .file(mockFile2)
+                        .header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andDo(document("item-image-upload",
+                        requestParts(
+                                partWithName("images").description("업로드할 이미지 파일들")
+                        ),
+                        responseFields(
+                                fieldWithPath("statusCode").description("응답 상태 코드"),
+                                fieldWithPath("message").description("응답 메시지"),
+                                fieldWithPath("data").description("업로드된 이미지 URL 리스트"),
+                                fieldWithPath("data[]").description("개별 이미지 URL")
+                        )));
     }
 
     @Test
