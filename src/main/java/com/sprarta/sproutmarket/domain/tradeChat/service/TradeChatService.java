@@ -54,13 +54,25 @@ public class TradeChatService {
         return tradeChatDtoList;
     }
 
+    public void deleteChat(Long roomId) {
+        tradeChatRepository.deleteByRoomId(roomId);
+    }
+
     // 채팅방 id 소속 채팅의 카운트 감소 , 사용자의 id를 받아 작성자와 일치하지 않을 경우, 0보다 클 경우 감소
     @Transactional
     public void decreaseReadCount(Long roomId, String sender) {
         for (TradeChat tradeChat : tradeChatRepository.findAllByRoomId(roomId)) {
-            if (!ObjectUtils.nullSafeEquals(tradeChat.getSender(), sender.replaceAll("\"", "")) && tradeChat.getReadCount() > 0) {
+            if (tradeChat.getReadCount() > 0 && !ObjectUtils.nullSafeEquals(tradeChat.getSender(),
+                    sender.replaceAll("\"", ""))) {
                 tradeChat.decreaseReadCount();
             }
+        }
+    }
+
+    public void chatRoomMatch(Long roomId, Long userId) {
+        if (!ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(roomId).getSeller().getId(), userId)
+                && !ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(roomId).getBuyer().getId(), userId)) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
         }
     }
 

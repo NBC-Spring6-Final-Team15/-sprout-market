@@ -24,6 +24,8 @@ public class TradeChatController {
     @MessageMapping("/chat/{roomId}")
     public void message(TradeChatDto tradeChatDto,
                         @DestinationVariable("roomId") Long roomId) {
+        tradeChatService.chatRoomMatch(tradeChatDto.getRoomId(), Long.parseLong(tradeChatDto.getSender()));
+
         messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
 
         tradeChatService.saveChat(tradeChatDto);

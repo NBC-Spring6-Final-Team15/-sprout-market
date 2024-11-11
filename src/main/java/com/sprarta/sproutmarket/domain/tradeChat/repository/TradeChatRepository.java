@@ -11,4 +11,6 @@ public interface TradeChatRepository extends JpaRepository<TradeChat, Long> {
 
     List<TradeChat> findAllByRoomId(Long roomId);
 
+    void deleteByRoomId(Long roomId);
+
 }

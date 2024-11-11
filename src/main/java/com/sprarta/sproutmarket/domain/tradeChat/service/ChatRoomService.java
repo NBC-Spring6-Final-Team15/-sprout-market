@@ -28,6 +28,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
+    private final TradeChatService tradeChatService;
 
     // 채팅방 생성
     @Transactional
@@ -80,6 +81,7 @@ public class ChatRoomService {
         chatRoomMatch(chatRoom, user.getId());
 
         chatRoomRepository.delete(chatRoom);
+        tradeChatService.deleteChat(chatRoomId);
     }
 
     // 사용자 소속 채팅방 전체 조회
