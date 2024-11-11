@@ -54,10 +54,6 @@ public class TradeChatService {
         return tradeChatDtoList;
     }
 
-    public void deleteChat(Long roomId) {
-        tradeChatRepository.deleteByRoomId(roomId);
-    }
-
     // 채팅방 id 소속 채팅의 카운트 감소 , 사용자의 id를 받아 작성자와 일치하지 않을 경우, 0보다 클 경우 감소
     @Transactional
     public void decreaseReadCount(Long roomId, String sender) {

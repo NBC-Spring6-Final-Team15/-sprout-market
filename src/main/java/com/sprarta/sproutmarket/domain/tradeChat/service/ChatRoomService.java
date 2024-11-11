@@ -7,6 +7,7 @@ import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.ChatRoomDto;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import com.sprarta.sproutmarket.domain.tradeChat.repository.ChatRoomRepository;
+import com.sprarta.sproutmarket.domain.tradeChat.repository.TradeChatRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,7 +27,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
-    private final TradeChatService tradeChatService;
+    private final TradeChatRepository tradeChatRepository;
 
     // 채팅방 생성
     @Transactional
@@ -81,7 +80,7 @@ public class ChatRoomService {
         chatRoomMatch(chatRoom, user.getId());
 
         chatRoomRepository.delete(chatRoom);
-        tradeChatService.deleteChat(chatRoomId);
+        tradeChatRepository.deleteByRoomId(chatRoomId);
     }
 
     // 사용자 소속 채팅방 전체 조회

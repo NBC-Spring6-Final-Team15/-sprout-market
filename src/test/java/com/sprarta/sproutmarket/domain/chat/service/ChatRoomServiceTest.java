@@ -1,15 +1,14 @@
 package com.sprarta.sproutmarket.domain.chat.service;
 
 import com.sprarta.sproutmarket.domain.category.entity.Category;
-import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
-import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.ChatRoomDto;
 import com.sprarta.sproutmarket.domain.tradeChat.entity.ChatRoom;
 import com.sprarta.sproutmarket.domain.tradeChat.repository.ChatRoomRepository;
+import com.sprarta.sproutmarket.domain.tradeChat.repository.TradeChatRepository;
 import com.sprarta.sproutmarket.domain.tradeChat.service.ChatRoomService;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
@@ -43,6 +42,8 @@ public class ChatRoomServiceTest {
     private UserRepository userRepository;
     @Mock
     private ChatRoomRepository chatRoomRepository;
+    @Mock
+    private TradeChatRepository tradeChatRepository;
     @InjectMocks
     private ChatRoomService chatRoomService;
 
@@ -246,7 +247,7 @@ public class ChatRoomServiceTest {
 
         // Then
         verify(chatRoomRepository).delete(mockChatRoom2);
-
+        verify(tradeChatRepository).deleteByRoomId(mockChatRoom2.getId());
     }
 
     @Test
