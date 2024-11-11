@@ -2,16 +2,17 @@ package com.sprarta.sproutmarket.domain.notification.aspect;
 
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
-import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
-import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.notification.entity.PriceChangeEvent;
+import com.sprarta.sproutmarket.domain.report.dto.ReportResponseDto;
 import com.sprarta.sproutmarket.domain.trade.dto.TradeResponseDto;
 import com.sprarta.sproutmarket.domain.trade.entity.Trade;
 import com.sprarta.sproutmarket.domain.trade.enums.TradeStatus;
 import com.sprarta.sproutmarket.domain.trade.repository.TradeRepository;
 import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.enums.UserRole;
+import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -24,7 +25,6 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Aspect
@@ -34,7 +34,7 @@ public class NotificationAspect {
 
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final TradeRepository tradeRepository;
-    private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
     private final InterestedItemService interestedItemService;
     private final InterestedCategoryService interestedCategoryService;
 
@@ -46,8 +46,8 @@ public class NotificationAspect {
 
         String message = tradeResponseDto.getItemTitle() + " 예약이 완료되었습니다.";
 
-        sendNotification(buyerId, message);
-        sendNotification(sellerId, message);
+        sendNotificationForUser(buyerId, message);
+        sendNotificationForUser(sellerId, message);
     }
 
     // 거래 상태 변경 알림
@@ -66,8 +66,8 @@ public class NotificationAspect {
         }
 
         // 구매자와 판매자 모두에게 알림 전송
-        sendNotification(trade.getChatRoom().getBuyer().getId(), message);
-        sendNotification(trade.getChatRoom().getSeller().getId(), message);
+        sendNotificationForUser(trade.getChatRoom().getBuyer().getId(), message);
+        sendNotificationForUser(trade.getChatRoom().getSeller().getId(), message);
     }
 
     // 새로운 아이템 등록 시 관심 카테고리 사용자에게 알림 전송
@@ -80,10 +80,11 @@ public class NotificationAspect {
 
         List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
         for (User user : interestedUsers) {
-            sendNotification(user.getId(), "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
+            sendNotificationForUser(user.getId(), "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
         }
     }
 
+    // 관심 물품의 가격이 변경되었을 때 알림 전송
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePriceChangeEvent(PriceChangeEvent event) {
         Long itemId = event.getItemId();
@@ -92,11 +93,27 @@ public class NotificationAspect {
         List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
 
         for (User user : interestedUsers) {
-            sendNotification(user.getId(), "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+            sendNotificationForUser(user.getId(), "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
         }
     }
 
-    private void sendNotification(Long targetId, String message) {
+    // 신고가 접수되었을 때 관리자에게 알림 전송
+    @AfterReturning(value = "execution(* com.sprarta.sproutmarket.domain.report.service.ReportService.createReport(..))", returning = "reportResponseDto", argNames = "reportResponseDto")
+    public void sendReportNotification(ReportResponseDto reportResponseDto) {
+        List<User> adminUsers = userRepository.findAllByUserRole(UserRole.ADMIN); // ADMIN 역할을 가진 모든 사용자 조회
+
+        String message = "새로운 신고가 접수되었습니다. " + "신고 게시몰: " + reportResponseDto.getItemId() + " 신고 사유: " + reportResponseDto.getReportingReason();
+
+        for (User admin : adminUsers) {
+            sendNotificationForAdmin(admin.getId(), message);
+        }
+    }
+
+    private void sendNotificationForUser(Long targetId, String message) {
         simpMessagingTemplate.convertAndSend("/sub/user/" + targetId + "/notifications", message);
+    }
+
+    private void sendNotificationForAdmin(Long targetId, String message) {
+        simpMessagingTemplate.convertAndSend("/sub/admin/" + targetId + "/notifications", message);
     }
 }

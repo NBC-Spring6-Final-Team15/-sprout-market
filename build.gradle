@@ -142,6 +142,11 @@ dependencies {
 
     // 카카오 로그인
     implementation 'com.google.code.gson:gson:2.8.9'
+
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+    // redisson
+    implementation 'org.redisson:redisson:3.19.0'
 }
 
 tasks.named('test') {
