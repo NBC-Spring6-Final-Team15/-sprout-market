@@ -17,41 +17,19 @@ public class AdministrativeArea {
     @Column(name = "adm_nm", nullable = false)
     private String admNm;
 
-    @Column(name = "adm_cd2")
-    private String admCd2;
-
-    @Column(name = "sgg")
-    private String sgg;
-
-    @Column(name = "sido")
-    private String sido;
-
-    @Column(name = "sidonm")
-    private String sidonm;
-
-    @Column(name = "sggnm")
-    private String sggnm;
-
-    @Column(name = "adm_cd")
-    private String admCd;
-
     @Column(name = "geometry", columnDefinition = "MULTIPOLYGON NOT NULL")
     private MultiPolygon geometry;
 
     @Column(name = "adm_center", columnDefinition = "POINT NOT NULL")
     private Point admCenter;
 
-    @Builder
-    public AdministrativeArea(String admNm, String admCd2, String sgg, String sido, String sidonm,
-                              String sggnm, String admCd, MultiPolygon geometry, Point admCenter) {
+    private AdministrativeArea(String admNm, MultiPolygon geometry, Point admCenter) {
         this.admNm = admNm;
-        this.admCd2 = admCd2;
-        this.sgg = sgg;
-        this.sido = sido;
-        this.sidonm = sidonm;
-        this.sggnm = sggnm;
-        this.admCd = admCd;
         this.geometry = geometry;
         this.admCenter = admCenter;
+    }
+
+    public static AdministrativeArea of(String admNm, MultiPolygon geometry, Point admCenter) {
+        return new AdministrativeArea(admNm, geometry, admCenter);
     }
 }
