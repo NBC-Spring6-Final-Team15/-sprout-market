@@ -891,8 +891,39 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 ));
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
-
     }
 
+    @Test
+    @DisplayName("아이템 끌어올리기 성공")
+    void boostItem_success() throws Exception {
+        // given
+        doNothing().when(itemService).boostItem(anyLong(), any(CustomUserDetails.class));
 
+        // when, then
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/boost", 1L)
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(print())
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "boost-item",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("특정 아이템을 끌어올립니다.")
+                                .summary("아이템 끌어올리기")
+                                .tag("Item")
+                                .pathParameters(
+                                parameterWithName("itemId").description("끌어올릴 아이템 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200")
+                                ))
+                                .responseSchema(Schema.schema("아이템-끌어올리기-성공-응답"))
+                                .build()
+                        )
+                ));
+        result.andExpect(status().isOk());
+    }
 }

@@ -99,16 +99,15 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
                         "reserve-trade",
                         resource(ResourceSnippetParameters.builder()
                                 .description("새로운 거래 예약을 생성합니다.")
-                                .pathParameters(
-                                        parameterWithName("chatRoomId").description("거래 예약을 생성할 채팅방 ID")
-                                                .type(SimpleType.NUMBER)
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("거래 예약 생성")
                                 .tag("Trade")
+                                .pathParameters(
+                                parameterWithName("chatRoomId").description("거래 예약을 생성할 채팅방 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .responseFields(
                                         fieldWithPath("message").description("성공 시 응답 메시지 : Created, 예외 시 예외 메시지"),
                                         fieldWithPath("statusCode").description("성공 시 응답 코드 : 201"),
@@ -144,19 +143,18 @@ class TradeControllerTest extends CommonMockMvcControllerTestSetUp {
                         "complete-trade",
                         resource(ResourceSnippetParameters.builder()
                                 .description("거래를 완료/취소 상태로 변경합니다.")
+                                .summary("거래 상태 완료/취소로 변경")
+                                .tag("Trade")
                                 .pathParameters(
-                                        parameterWithName("tradeId").description("거래 ID")
-                                                .type(SimpleType.NUMBER)
+                                parameterWithName("tradeId").description("거래 ID")
                                 )
                                 .requestHeaders(
-                                        headerWithName("Authorization")
+                                headerWithName("Authorization")
                                                 .description("Bearer (JWT 토큰)")
                                 )
                                 .queryParameters(
-                                        parameterWithName("tradeStatus").description("COMPLETE or CANCELLED")
+                                parameterWithName("tradeStatus").description("COMPLETE or CANCELLED")
                                 )
-                                .summary("거래 상태 완료/취소로 변경")
-                                .tag("Trade")
                                 .responseSchema(Schema.schema("거래_상태_변경_성공_응답"))
                                 .build()
                         )
