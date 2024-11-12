@@ -82,15 +82,15 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                         "create-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("새로운 리뷰를 생성합니다.")
-                                .pathParameters(
-                                        parameterWithName("tradeId").description("거래 ID")
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("리뷰 생성")
                                 .tag("Review")
+                                .pathParameters(
+                                parameterWithName("tradeId").description("거래 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .requestFields(List.of(
                                         fieldWithPath("comment").description("리뷰 내용"),
                                         fieldWithPath("reviewRating").description("리뷰 평점")
@@ -128,15 +128,15 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                         "get-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 리뷰의 정보를 조회합니다.")
-                                .pathParameters(
-                                        parameterWithName("reviewId").description("조회할 리뷰 ID")
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("리뷰 단건 조회")
                                 .tag("Review")
+                                .pathParameters(
+                                parameterWithName("reviewId").description("조회할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("성공 메시지 : Ok"),
                                         fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
@@ -174,15 +174,15 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                         "get-reviews",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 사용자의 리뷰 정보를 조회합니다.")
-                                .pathParameters(
-                                        parameterWithName("userId").description("조회할 사용자의 ID")
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("리뷰 전체 조회")
                                 .tag("Review")
+                                .pathParameters(
+                                parameterWithName("userId").description("조회할 사용자의 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("성공 메시지 : Ok"),
                                         fieldWithPath("statusCode").description("성공 상태 코드 : 200"),
@@ -220,15 +220,15 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                         "update-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 리뷰의 정보를 수정합니다.")
-                                .pathParameters(
-                                        parameterWithName("reviewId").description("수정할 리뷰 ID")
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("리뷰 수정")
                                 .tag("Review")
+                                .pathParameters(
+                                parameterWithName("reviewId").description("수정할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .requestFields(List.of(
                                         fieldWithPath("comment").description("리뷰 코멘트"),
                                         fieldWithPath("reviewRating").description("리뷰 평점")
@@ -265,15 +265,15 @@ class ReviewControllerTest extends CommonMockMvcControllerTestSetUp {
                         "delete-review",
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 리뷰를 삭제합니다.")
-                                .pathParameters(
-                                        parameterWithName("reviewId").description("삭제할 리뷰 ID")
-                                )
-                                .requestHeaders(
-                                        headerWithName("Authorization")
-                                                .description("Bearer (JWT 토큰)")
-                                )
                                 .summary("리뷰 삭제")
                                 .tag("Review")
+                                .pathParameters(
+                                parameterWithName("reviewId").description("삭제할 리뷰 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
                                 .responseFields(List.of(
                                         fieldWithPath("message").description("성공 메시지 : Ok"),
                                         fieldWithPath("statusCode").description("성공 상태 코드 : 200")
