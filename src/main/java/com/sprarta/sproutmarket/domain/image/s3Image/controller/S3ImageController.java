@@ -20,12 +20,4 @@ public class S3ImageController {
         String imageName = s3ImageService.uploadImage(image, authUser);
         return ResponseEntity.ok(ApiResponse.onSuccess(imageName));
     }
-
-    // 이미지 삭제
-    @DeleteMapping("/s3/delete")
-    public ResponseEntity<?> s3delete(@RequestBody String imageName,
-                                      @AuthenticationPrincipal CustomUserDetails authUser){
-        s3ImageService.deleteImage(imageName, authUser);
-        return ResponseEntity.ok(null);
-    }
 }
