@@ -908,7 +908,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                         resource(ResourceSnippetParameters.builder()
                                 .description("특정 아이템을 끌어올립니다.")
                                 .summary("아이템 끌어올리기")
-                                .tag("Item")
+                                .tag("Items")
                                 .pathParameters(
                                 parameterWithName("itemId").description("끌어올릴 아이템 ID")
                                 )
