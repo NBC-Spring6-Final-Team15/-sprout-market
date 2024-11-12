@@ -40,7 +40,7 @@ public class S3ImageService {
 
     public String uploadImage(MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
-        String fileName = generateFileName(authUser.getId(), image.getOriginalFilename());
+        String fileName = String.format("user-uploads/%d/%s_%s", authUser.getId(), UUID.randomUUID(),image.getOriginalFilename());
         return uploadToS3(fileName, image);
     }
 
@@ -52,7 +52,8 @@ public class S3ImageService {
     @Async
     public CompletableFuture<String> uploadImageAsync(Long itemId, MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
-        String fileName = "item-images/" + itemId + "/" + UUID.randomUUID() + "_" + image.getOriginalFilename();
+        String fileName = String.format("item-images/%d/%s_%s",itemId,UUID.randomUUID(),image.getOriginalFilename());
+
         String publicUrl = uploadCompressedImageToS3(image, fileName);
 
         // RabbitMQ 메시지 발행
@@ -99,10 +100,6 @@ public class S3ImageService {
         } else {
             throw new ApiException(ErrorStatus.INVALID_FILE_EXTENSION);
         }
-    }
-
-    private String generateFileName(Long userId, String originalFilename) {
-        return "user-uploads/" + userId + "/" + UUID.randomUUID() + "_" + originalFilename;
     }
 
     private String uploadToS3(String fileName, MultipartFile image) {
