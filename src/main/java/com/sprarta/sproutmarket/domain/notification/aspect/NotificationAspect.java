@@ -5,6 +5,7 @@ import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemServ
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.notification.entity.PriceChangeEvent;
+import com.sprarta.sproutmarket.domain.notification.service.NotificationCacheService;
 import com.sprarta.sproutmarket.domain.report.dto.ReportResponseDto;
 import com.sprarta.sproutmarket.domain.trade.dto.TradeResponseDto;
 import com.sprarta.sproutmarket.domain.trade.entity.Trade;
@@ -37,6 +38,7 @@ public class NotificationAspect {
     private final UserRepository userRepository;
     private final InterestedItemService interestedItemService;
     private final InterestedCategoryService interestedCategoryService;
+    private final NotificationCacheService notificationCacheService;
 
     // 거래 예약 알림
     @AfterReturning(value = "execution(* com.sprarta.sproutmarket.domain.trade.service.TradeService.reserveTrade(..))", returning = "tradeResponseDto", argNames = "tradeResponseDto")
@@ -45,6 +47,9 @@ public class NotificationAspect {
         Long sellerId = tradeResponseDto.getSellerId();
 
         String message = tradeResponseDto.getItemTitle() + " 예약이 완료되었습니다.";
+
+        notificationCacheService.saveNotification(buyerId, message);
+        notificationCacheService.saveNotification(sellerId, message);
 
         sendNotificationForUser(buyerId, message);
         sendNotificationForUser(sellerId, message);
@@ -65,7 +70,11 @@ public class NotificationAspect {
             throw new IllegalArgumentException("잘못된 거래 상태입니다.");
         }
 
-        // 구매자와 판매자 모두에게 알림 전송
+        // Redis 에 알림 저장
+        notificationCacheService.saveNotification(trade.getChatRoom().getBuyer().getId(), message);
+        notificationCacheService.saveNotification(trade.getChatRoom().getSeller().getId(), message);
+
+        // WebSocket 으로 구매자와 판매자 모두에게 알림 전송
         sendNotificationForUser(trade.getChatRoom().getBuyer().getId(), message);
         sendNotificationForUser(trade.getChatRoom().getSeller().getId(), message);
     }
@@ -79,12 +88,19 @@ public class NotificationAspect {
         String itemTitle = itemCreateRequest.getTitle();
 
         List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
+
         for (User user : interestedUsers) {
-            sendNotificationForUser(user.getId(), "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
+            String message = "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle;
+
+            // Redis 에 알림 저장
+            notificationCacheService.saveNotification(user.getId(), message);
+
+            // WebSocket 으로 실시간 전송
+            sendNotificationForUser(user.getId(), message);
         }
     }
 
-    // 관심 물품의 가격이 변경되었을 때 알림 전송
+    // 관심 상품의 가격이 바뀌었을 때 알림 전송
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePriceChangeEvent(PriceChangeEvent event) {
         Long itemId = event.getItemId();
@@ -92,8 +108,13 @@ public class NotificationAspect {
 
         List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
 
+        String message = "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice;
+
         for (User user : interestedUsers) {
-            sendNotificationForUser(user.getId(), "관심 상품의 가격이 변경되었습니다. 새로운 가격: " + newPrice);
+            // Redis 에 캐싱
+            notificationCacheService.saveNotification(user.getId(), message);
+            // WebSocket 으로 실시간 전송
+            sendNotificationForUser(user.getId(), message);
         }
     }
 
@@ -105,7 +126,11 @@ public class NotificationAspect {
         String message = "새로운 신고가 접수되었습니다. " + "신고 게시몰: " + reportResponseDto.getItemId() + " 신고 사유: " + reportResponseDto.getReportingReason();
 
         for (User admin : adminUsers) {
+            // Redis 에 저장
+            notificationCacheService.saveNotification(admin.getId(), message);
+            // WebSocket 으로 실시간 전송
             sendNotificationForAdmin(admin.getId(), message);
+
         }
     }
 
