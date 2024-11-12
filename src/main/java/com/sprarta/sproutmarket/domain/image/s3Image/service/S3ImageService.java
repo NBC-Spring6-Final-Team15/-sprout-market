@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -36,8 +37,6 @@ public class S3ImageService {
 
     @Value("${s3.bucketName}")
     private String bucketName;
-
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;  // 최대 5MB
 
     public String uploadImage(MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
@@ -75,12 +74,30 @@ public class S3ImageService {
         return amazonS3.getUrl(bucketName, s3Key).toString();
     }
 
+    /*
+    파일 검사
+    파일 명이 비어있거나, 파일이 비어있으면 예외 처리
+    확장자가 이미지가 아니거나, 확장자가 없으면 예외 처리
+     */
     private void validateFile(MultipartFile image) {
-        if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
+        String filename = image.getOriginalFilename();
+
+        //파일 자체의 유효성 검사
+        if (image.isEmpty() || Objects.isNull(filename)) {
             throw new ApiException(ErrorStatus.EMPTY_FILE_EXCEPTION);
         }
-        if (image.getSize() > MAX_FILE_SIZE) {
-            throw new ApiException(ErrorStatus.FILE_SIZE_EXCEEDED);
+
+        //확장자 검사
+        Set<String> allowedExtensions = Set.of("jpg", "png");
+        int dotIndex = filename.lastIndexOf(".");
+
+        if(dotIndex != -1) {
+            String fileExtension = filename.substring(dotIndex+1).toLowerCase();
+            if (!allowedExtensions.contains(fileExtension)) {
+                throw new ApiException(ErrorStatus.INVALID_FILE_EXTENSION);
+            }
+        } else {
+            throw new ApiException(ErrorStatus.INVALID_FILE_EXTENSION);
         }
     }
 
