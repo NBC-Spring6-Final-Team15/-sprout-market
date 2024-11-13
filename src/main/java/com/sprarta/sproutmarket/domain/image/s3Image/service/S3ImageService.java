@@ -56,14 +56,14 @@ public class S3ImageService {
     }
 
     @Async
-    public CompletableFuture<String> uploadImageAsync(Long itemId, MultipartFile image, CustomUserDetails authUser) {
+    public CompletableFuture<String> uploadImageAsync(MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
-        String fileName = String.format("item-images/%d/%s_%s",itemId,UUID.randomUUID(),image.getOriginalFilename());
+        String fileName = String.format("item-images/%d/%s_%s",authUser.getId(),UUID.randomUUID(),image.getOriginalFilename());
 
         String publicUrl = uploadCompressedImageToS3(image, fileName);
 
         // RabbitMQ 메시지 발행
-        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, new ImageUploadRequest(itemId, fileName, authUser.getId()));
+        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, new ImageUploadRequest(fileName, authUser.getId()));
         log.info("Message sent to RabbitMQ queue for file: {}", fileName);
 
         User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());

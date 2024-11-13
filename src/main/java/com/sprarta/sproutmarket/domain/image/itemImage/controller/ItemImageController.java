@@ -22,14 +22,13 @@ public class ItemImageController {
     private final S3ImageService s3ImageService;
 
     // 여러 이미지 업로드
-    @PostMapping("/{itemId}/images")
+    @PostMapping("/images")
     public ResponseEntity<ApiResponse<List<String>>> itemImageUpload(
-            @PathVariable Long itemId,
             @RequestParam("images") List<MultipartFile> images,
             @AuthenticationPrincipal CustomUserDetails authUser) {
 
         List<CompletableFuture<String>> futures = images.stream()
-                .map(image -> s3ImageService.uploadImageAsync(itemId, image, authUser))
+                .map(image -> s3ImageService.uploadImageAsync(image, authUser))
                 .toList();
 
         List<String> imageUrls = futures.stream().map(CompletableFuture::join).toList();
