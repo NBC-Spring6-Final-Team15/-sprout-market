@@ -28,7 +28,7 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 public class CouponService {
 
-    private static final int MAX_COUPONS = 50; // 쿠폰 발급 최대 수
+    private static final int MAX_COUPONS = 100; // 쿠폰 발급 최대 수
     private static final String COUPON_LOCK_KEY = "coupon_lock"; // Redis 락 키
 
     private final CouponRepository couponRepository;
