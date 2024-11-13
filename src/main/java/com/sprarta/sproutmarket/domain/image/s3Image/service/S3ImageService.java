@@ -7,7 +7,11 @@ import com.sprarta.sproutmarket.config.RabbitMQConfig;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.dto.request.ImageUploadRequest;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
+import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -34,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 public class S3ImageService {
     private final AmazonS3 amazonS3;
     private final RabbitTemplate rabbitTemplate;
+    private final ItemImageRepository itemImageRepository;
+    private final UserRepository userRepository;
 
     @Value("${s3.bucketName}")
     private String bucketName;
@@ -59,6 +65,9 @@ public class S3ImageService {
         // RabbitMQ 메시지 발행
         rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, new ImageUploadRequest(itemId, fileName, authUser.getId()));
         log.info("Message sent to RabbitMQ queue for file: {}", fileName);
+
+        User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
+        itemImageRepository.save(new ItemImage(fileName, user));
 
         return CompletableFuture.completedFuture(publicUrl);
     }

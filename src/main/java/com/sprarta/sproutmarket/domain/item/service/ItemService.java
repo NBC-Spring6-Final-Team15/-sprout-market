@@ -6,6 +6,8 @@ import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
@@ -37,10 +39,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -57,6 +57,7 @@ public class ItemService {
     private final RedisTemplate<String, Long> redisTemplate;
     private final InterestedCategoryService interestedCategoryService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ItemImageRepository itemImageRepository;
 
     @PersistenceContext
     private final EntityManager entityManager;
@@ -102,6 +103,10 @@ public class ItemService {
                         category
                 )
         );
+
+        List<ItemImage> images = itemImageRepository.findByUserIdAndItemIsNull(authUser.getId());
+        item.fetchImage(images);
+        images.forEach(image -> image.fetchItem(item));
 
         return ItemResponse.builder()
                 .title(item.getTitle())
@@ -291,16 +296,7 @@ public class ItemService {
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
         return itemWithViewCounts.stream()
-                .map(itemWithViewCount -> new ItemResponseDto(
-                        itemWithViewCount.getItem().getId(),
-                        itemWithViewCount.getItem().getTitle(),
-                        itemWithViewCount.getItem().getDescription(),
-                        itemWithViewCount.getItem().getPrice(),
-                        itemWithViewCount.getItem().getSeller().getNickname(),
-                        itemWithViewCount.getItem().getItemSaleStatus(),
-                        itemWithViewCount.getItem().getCategory().getName(),
-                        itemWithViewCount.getItem().getStatus()
-                ))
+                .map(itemWithViewCount -> ItemResponseDto.from(itemWithViewCount.getItem()))
                 .toList();
     }
 

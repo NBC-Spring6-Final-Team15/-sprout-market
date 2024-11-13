@@ -86,16 +86,7 @@ public class InterestedItemService {
         // 관심 상품을 ItemResponse 로 변환하여 반환
         return interestedItemsPage.map(interestedItem -> {
             Item item = interestedItem.getItem();
-            return new ItemResponseDto(
-                    item.getId(),
-                    item.getTitle(),
-                    item.getDescription(),
-                    item.getPrice(),
-                    item.getSeller().getNickname(),
-                    item.getItemSaleStatus(),
-                    item.getCategory().getName(),
-                    item.getStatus()
-            );
+            return ItemResponseDto.from(item);
         });
     }
 
@@ -110,7 +101,7 @@ public class InterestedItemService {
 
         List<User> users = interestedItems.stream()
                 .map(InterestedItem::getUser)
-                .collect(Collectors.toList());
+                        .toList();
 
         // 로그 추가: 관심 상품에 등록된 사용자가 있는지 확인
         log.info("Found {} interested users for item {}", users.size(), itemId);
