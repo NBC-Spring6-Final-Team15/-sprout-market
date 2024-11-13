@@ -39,7 +39,7 @@ public class Item extends Timestamped {
     // 파일
     @Column(nullable = false)
     @OneToMany(mappedBy = "item", cascade = CascadeType.REMOVE)
-    private List<ItemImage> itemImages = new ArrayList<>();
+    private List<ItemImage> itemImages;
     // 삭제 상태
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
@@ -71,6 +71,10 @@ public class Item extends Timestamped {
 
     public void boostItem() {
         this.timeForOrder = LocalDateTime.now();
+    }
+
+    public void fetchImage(List<ItemImage> images) {
+        this.itemImages = images;
     }
 
 }

@@ -58,7 +58,7 @@ class ItemImageServiceTest {
         Long itemId = 1L;
         String imageName = "itemImage.jpg";
         ImageNameRequest request = new ImageNameRequest(imageName);
-        ItemImage mockImage = new ItemImage(imageName, mockItem);
+        ItemImage mockImage = new ItemImage(imageName, mockUser);
 
         // Mock 동작 설정
         when(userRepository.findByIdAndStatusIsActiveOrElseThrow(1L)).thenReturn(mockUser);

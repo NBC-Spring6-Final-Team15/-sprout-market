@@ -1,12 +1,15 @@
 package com.sprarta.sproutmarket.domain.item.dto.response;
 
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.item.entity.Item;
 import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class ItemResponseDto {
     private Long id;
     private String title;
@@ -16,9 +19,10 @@ public class ItemResponseDto {
     private ItemSaleStatus itemSaleStatus;
     private String categoryName;
     private Status status;
+    private List<String> imageNames;
 
     @Builder
-    public ItemResponseDto(Long id, String title, String description, int price, String nickname, ItemSaleStatus itemSaleStatus, String categoryName, Status status) {
+    public ItemResponseDto(Long id, String title, String description, int price, String nickname, ItemSaleStatus itemSaleStatus, String categoryName, Status status, List<ItemImage> images) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -27,6 +31,7 @@ public class ItemResponseDto {
         this.itemSaleStatus = itemSaleStatus;
         this.categoryName = categoryName;
         this.status = status;
+        this.imageNames = images.stream().map(ItemImage::getName).toList();
     }
 
     public static ItemResponseDto from(Item item) {
@@ -38,6 +43,8 @@ public class ItemResponseDto {
                 item.getSeller().getNickname(),
                 item.getItemSaleStatus(),
                 item.getCategory().getName(),
-                item.getStatus());
+                item.getStatus(),
+                item.getItemImages()
+        );
     }
 }
