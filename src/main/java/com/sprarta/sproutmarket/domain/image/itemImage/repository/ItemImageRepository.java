@@ -27,10 +27,6 @@ public interface ItemImageRepository extends JpaRepository<ItemImage, Long> {
             .orElseThrow(() -> new ApiException(ErrorStatus.NOT_FOUND_IMAGE));
     }
 
-    @Modifying
-    @Query("DELETE FROM ItemImage ii WHERE ii.name = :name AND ii.item = :item")
-    void deleteByNameAndItem(@Param("name") String name, @Param("item") Item item);
-
     List<ItemImage> findByUserIdAndItemIsNull(Long id);
 
     @Modifying
