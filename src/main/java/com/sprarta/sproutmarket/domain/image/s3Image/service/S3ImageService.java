@@ -72,18 +72,6 @@ public class S3ImageService {
         return CompletableFuture.completedFuture(publicUrl);
     }
 
-    // 압축된 이미지를 S3에 업로드하는 메서드
-    public void uploadCompressedImage(InputStream inputStream, String s3Key) {
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentType("image/jpeg");
-        amazonS3.putObject(bucketName, s3Key, inputStream, metadata);
-    }
-
-    // S3에서 파일 URL 을 가져오는 메서드
-    public String getS3FileUrl(String s3Key) {
-        return amazonS3.getUrl(bucketName, s3Key).toString();
-    }
-
     /*
     파일 검사
     파일 명이 비어있거나, 파일이 비어있으면 예외 처리
