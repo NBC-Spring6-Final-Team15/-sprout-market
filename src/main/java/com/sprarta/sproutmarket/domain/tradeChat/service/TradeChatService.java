@@ -75,7 +75,6 @@ public class TradeChatService {
 
     public void publishChat(Long roomId, TradeChatDto tradeChatDto) {
         redisPublisher.publish(roomId, tradeChatDto);
-        System.out.println("서비스 호출 확인 채팅 내역"+ tradeChatDto);
     }
 
 }
