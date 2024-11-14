@@ -7,7 +7,11 @@ import com.sprarta.sproutmarket.config.RabbitMQConfig;
 import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.dto.request.ImageUploadRequest;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
+import com.sprarta.sproutmarket.domain.user.entity.User;
+import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -24,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,15 +38,15 @@ import java.util.concurrent.CompletableFuture;
 public class S3ImageService {
     private final AmazonS3 amazonS3;
     private final RabbitTemplate rabbitTemplate;
+    private final ItemImageRepository itemImageRepository;
+    private final UserRepository userRepository;
 
     @Value("${s3.bucketName}")
     private String bucketName;
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;  // 최대 5MB
-
     public String uploadImage(MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
-        String fileName = generateFileName(authUser.getId(), image.getOriginalFilename());
+        String fileName = String.format("user-uploads/%d/%s_%s", authUser.getId(), UUID.randomUUID(),image.getOriginalFilename());
         return uploadToS3(fileName, image);
     }
 
@@ -51,14 +56,18 @@ public class S3ImageService {
     }
 
     @Async
-    public CompletableFuture<String> uploadImageAsync(Long itemId, MultipartFile image, CustomUserDetails authUser) {
+    public CompletableFuture<String> uploadImageAsync(MultipartFile image, CustomUserDetails authUser) {
         validateFile(image);
-        String fileName = "item-images/" + itemId + "/" + UUID.randomUUID() + "_" + image.getOriginalFilename();
+        String fileName = String.format("item-images/%d/%s_%s",authUser.getId(),UUID.randomUUID(),image.getOriginalFilename());
+
         String publicUrl = uploadCompressedImageToS3(image, fileName);
 
         // RabbitMQ 메시지 발행
-        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, new ImageUploadRequest(itemId, fileName, authUser.getId()));
+        rabbitTemplate.convertAndSend(RabbitMQConfig.QUEUE_NAME, new ImageUploadRequest(fileName, authUser.getId()));
         log.info("Message sent to RabbitMQ queue for file: {}", fileName);
+
+        User user = userRepository.findByIdAndStatusIsActiveOrElseThrow(authUser.getId());
+        itemImageRepository.save(new ItemImage(fileName, user));
 
         return CompletableFuture.completedFuture(publicUrl);
     }
@@ -75,17 +84,31 @@ public class S3ImageService {
         return amazonS3.getUrl(bucketName, s3Key).toString();
     }
 
+    /*
+    파일 검사
+    파일 명이 비어있거나, 파일이 비어있으면 예외 처리
+    확장자가 이미지가 아니거나, 확장자가 없으면 예외 처리
+     */
     private void validateFile(MultipartFile image) {
-        if (image.isEmpty() || Objects.isNull(image.getOriginalFilename())) {
+        String filename = image.getOriginalFilename();
+
+        //파일 자체의 유효성 검사
+        if (image.isEmpty() || Objects.isNull(filename)) {
             throw new ApiException(ErrorStatus.EMPTY_FILE_EXCEPTION);
         }
-        if (image.getSize() > MAX_FILE_SIZE) {
-            throw new ApiException(ErrorStatus.FILE_SIZE_EXCEEDED);
-        }
-    }
 
-    private String generateFileName(Long userId, String originalFilename) {
-        return "user-uploads/" + userId + "/" + UUID.randomUUID() + "_" + originalFilename;
+        //확장자 검사
+        Set<String> allowedExtensions = Set.of("jpg", "png");
+        int dotIndex = filename.lastIndexOf(".");
+
+        if(dotIndex != -1) {
+            String fileExtension = filename.substring(dotIndex+1).toLowerCase();
+            if (!allowedExtensions.contains(fileExtension)) {
+                throw new ApiException(ErrorStatus.INVALID_FILE_EXTENSION);
+            }
+        } else {
+            throw new ApiException(ErrorStatus.INVALID_FILE_EXTENSION);
+        }
     }
 
     private String uploadToS3(String fileName, MultipartFile image) {

@@ -83,10 +83,10 @@ class ItemImageControllerTest extends CommonMockMvcControllerTestSetUp {
                 new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities())
         );
 
-        when(s3ImageService.uploadImageAsync(anyLong(), any(MultipartFile.class), any(CustomUserDetails.class)))
+        when(s3ImageService.uploadImageAsync(any(MultipartFile.class), any(CustomUserDetails.class)))
                 .thenReturn(CompletableFuture.completedFuture("http://example.com/image1.jpg"));
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/items/1/images")
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/items/images")
                         .file(mockFile1)
                         .file(mockFile2)
                         .header("Authorization", "Bearer token"))

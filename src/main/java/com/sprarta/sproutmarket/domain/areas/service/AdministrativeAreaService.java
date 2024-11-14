@@ -41,33 +41,15 @@ public class AdministrativeAreaService {
         administrativeAreaRepository.saveAll(
                 featureCollection.getFeatures().stream().map(feature -> {
                     String admNm = feature.getProperties().get("adm_nm").toString();
-                    String admCd2 = feature.getProperties().get("adm_cd2").toString();
-                    String sgg = feature.getProperties().get("sgg").toString();
-                    String sido = feature.getProperties().get("sido").toString();
-                    String sidonm = feature.getProperties().get("sidonm").toString();
-                    String sggnm = feature.getProperties().get("sggnm").toString();
-                    String admCd = feature.getProperties().get("adm_cd").toString();
-
                     // Geometry 를 JTS 의 MultiPolygon 으로 변환
                     MultiPolygon jtsMultiPolygon = convertToJtsMultiPolygon((org.geojson.MultiPolygon) feature.getGeometry());
-
                     Point centroid = jtsMultiPolygon.getCentroid();
 
                     // SRID 설정 (경도,위도 정보로 DB 조회할 수 있게 설정하는 ID)
                     initSRID(jtsMultiPolygon, centroid);
 
                     // 엔티티 생성
-                    return AdministrativeArea.builder()
-                            .admNm(admNm)
-                            .admCd2(admCd2)
-                            .sgg(sgg)
-                            .sido(sido)
-                            .sidonm(sidonm)
-                            .sggnm(sggnm)
-                            .admCd(admCd)
-                            .geometry(jtsMultiPolygon)  // WKT 형식의 문자열을 저장합니다.
-                            .admCenter(centroid)
-                            .build();
+                    return AdministrativeArea.of(admNm,jtsMultiPolygon,centroid);
                 }).toList());
     }
 
