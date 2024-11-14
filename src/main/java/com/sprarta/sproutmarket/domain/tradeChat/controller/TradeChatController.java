@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,16 +18,15 @@ import java.util.List;
 @RestController
 public class TradeChatController {
 
-    private final SimpMessageSendingOperations messagingTemplate;
     private final TradeChatService tradeChatService;
 
     @MessageMapping("/chat/{roomId}")
-    public void message(TradeChatDto tradeChatDto,
-                        @DestinationVariable("roomId") Long roomId) {
+    @SendTo("/sub/chat/{roomId}")
+    public void sendMessage(TradeChatDto tradeChatDto,
+                            @DestinationVariable("roomId") Long roomId) {
+        System.out.println("컨트롤러 호출 확인 채팅 내역" + tradeChatDto);
         tradeChatService.chatRoomMatch(tradeChatDto.getRoomId(), Long.parseLong(tradeChatDto.getSender()));
-
-        messagingTemplate.convertAndSend("/sub/chat/" + roomId, tradeChatDto);
-
+        tradeChatService.publishChat(roomId, tradeChatDto);  // 메시지 저장 및 퍼블리시
         tradeChatService.saveChat(tradeChatDto);
     }
 

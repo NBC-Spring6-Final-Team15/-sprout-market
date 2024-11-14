@@ -22,6 +22,7 @@ public class TradeChatService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final TradeChatRepository tradeChatRepository;
+    private final RedisPublisher redisPublisher;
 
     public void saveChat(TradeChatDto tradeChatDto) {
         tradeChatRepository.save(new TradeChat(
@@ -70,6 +71,11 @@ public class TradeChatService {
                 && !ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(roomId).getBuyer().getId(), userId)) {
             throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
         }
+    }
+
+    public void publishChat(Long roomId, TradeChatDto tradeChatDto) {
+        redisPublisher.publish(roomId, tradeChatDto);
+        System.out.println("서비스 호출 확인 채팅 내역"+ tradeChatDto);
     }
 
 }
