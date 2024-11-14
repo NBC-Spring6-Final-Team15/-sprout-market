@@ -4,6 +4,10 @@ import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
 import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
@@ -37,7 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -51,9 +54,10 @@ public class ItemService {
     private final AdministrativeAreaService admAreaService;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final InterestedItemService interestedItemService;
-    private final RedisTemplate<String, Long> viewCountRedisTemplate;
+    private final RedisTemplate<String, Long> redisTemplate;
     private final InterestedCategoryService interestedCategoryService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ItemImageRepository itemImageRepository;
 
     @PersistenceContext
     private final EntityManager entityManager;
@@ -99,6 +103,10 @@ public class ItemService {
                         category
                 )
         );
+
+        List<ItemImage> images = itemImageRepository.findByUserIdAndItemIsNull(authUser.getId());
+        item.fetchImage(images);
+        images.forEach(image -> image.fetchItem(item));
 
         return ItemResponse.builder()
                 .title(item.getTitle())
@@ -274,7 +282,7 @@ public class ItemService {
         List<ItemWithViewCount> itemWithViewCounts = items.stream()
                 .map(item -> {
                     // Redis에서 조회수 가져오기
-                    Long viewCount = viewCountRedisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
+                    Long viewCount = redisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
                     Long finalViewCount = (viewCount != null) ? viewCount : 0L; // 조회수가 null일 경우 0으로 설정
 
                     // 로그로 아이템별 조회수 출력
@@ -288,17 +296,25 @@ public class ItemService {
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
         return itemWithViewCounts.stream()
-                .map(itemWithViewCount -> new ItemResponseDto(
-                        itemWithViewCount.getItem().getId(),
-                        itemWithViewCount.getItem().getTitle(),
-                        itemWithViewCount.getItem().getDescription(),
-                        itemWithViewCount.getItem().getPrice(),
-                        itemWithViewCount.getItem().getSeller().getNickname(),
-                        itemWithViewCount.getItem().getItemSaleStatus(),
-                        itemWithViewCount.getItem().getCategory().getName(),
-                        itemWithViewCount.getItem().getStatus()
-                ))
+                .map(itemWithViewCount -> ItemResponseDto.from(itemWithViewCount.getItem()))
                 .toList();
+    }
+
+    @Transactional
+    public void boostItem(Long itemId, CustomUserDetails authUser) {
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
+
+        String boostKey = String.format("boost:item:%d:user:%d", itemId, authUser.getId());
+
+        // 하루에 한 번 부스트 제한
+        Boolean isAlreadyBoosted = redisTemplate.hasKey(boostKey);
+        if (Boolean.TRUE.equals(isAlreadyBoosted)) {
+            throw new ApiException(ErrorStatus.CONFLICT_ITEM_BOOST);
+        }
+
+        // 부스트 처리 및 Redis에 키 저장 (1일 동안 유효)
+        item.boostItem();
+        redisTemplate.opsForValue().set(boostKey, 1L, 24, TimeUnit.HOURS);
     }
 
     private void incrementViewCount(Long itemId, Long userId) {
@@ -306,14 +322,14 @@ public class ItemService {
         String userKey = "UserView:ItemId:" + itemId + ":UserId:" + userId;
 
         // 사용자가 이미 조회했는지 확인
-        Boolean hasViewed = viewCountRedisTemplate.hasKey(userKey);
+        Boolean hasViewed = redisTemplate.hasKey(userKey);
 
         // 사용자가 조회하지 않은 경우
         if (hasViewed == null || !hasViewed) {
             // 조회수 증가
-            viewCountRedisTemplate.opsForValue().increment(redisKey);
+            redisTemplate.opsForValue().increment(redisKey);
             // 사용자의 조회 기록을 1시간 후 만료되도록 설정
-            viewCountRedisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
+            redisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
         }
     }
 

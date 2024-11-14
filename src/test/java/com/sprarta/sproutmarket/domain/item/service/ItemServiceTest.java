@@ -133,6 +133,7 @@ class ItemServiceTest {
         );
         ReflectionTestUtils.setField(mockItem1, "id", 1L);
 
+
         mockItem2 = new Item(
                 "가짜 매물2",
                 "가짜 설명2",
@@ -148,11 +149,13 @@ class ItemServiceTest {
                 .size(10)
                 .build();
 
-        ItemImage itemImage = ItemImage.builder()
-                .id(1L)
-                .item(mockItem1)
-                .name("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg")
-                .build();
+        ItemImage itemImage = new ItemImage("https://sprout-market.s3.ap-northeast-2.amazonaws.com/4da210e1-7.jpg",mockUser);
+        ReflectionTestUtils.setField(itemImage, "id", 1L);
+
+        List<ItemImage> itemImageList = List.of(itemImage);
+
+        mockItem1.fetchImage(itemImageList);
+        mockItem2.fetchImage(itemImageList);
 
         authUser = new CustomUserDetails(
                 mockUser

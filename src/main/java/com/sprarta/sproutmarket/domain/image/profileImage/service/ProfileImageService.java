@@ -1,7 +1,6 @@
 package com.sprarta.sproutmarket.domain.image.profileImage.service;
 
-import com.sprarta.sproutmarket.domain.image.dto.ImageResponse;
-import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.dto.response.ImageResponse;
 import com.sprarta.sproutmarket.domain.image.profileImage.entity.ProfileImage;
 import com.sprarta.sproutmarket.domain.image.profileImage.repository.ProfileImageRepository;
 import com.sprarta.sproutmarket.domain.image.s3Image.service.S3ImageService;

@@ -1,4 +1,4 @@
-package com.sprarta.sproutmarket.domain.image.dto;
+package com.sprarta.sproutmarket.domain.image.dto.response;
 
 import lombok.AccessLevel;
 import lombok.Getter;

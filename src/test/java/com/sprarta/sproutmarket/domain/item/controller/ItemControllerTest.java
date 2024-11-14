@@ -6,6 +6,7 @@ import com.epages.restdocs.apispec.Schema;
 import com.sprarta.sproutmarket.domain.CommonMockMvcControllerTestSetUp;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -71,6 +72,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
 
     private Item mockItem;
     private Category mockCategory;
+    List<ItemImage> imageList;
+    ItemImage mockItemImage;
 
     @BeforeEach
         // 테스트 전 수행
@@ -97,6 +100,9 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 mockUser,
             mockCategory
         );
+
+        mockItemImage = new ItemImage("이미지이름",mockUser);
+        imageList = List.of(mockItemImage);
 
         ReflectionTestUtils.setField(mockItem, "id", 1L);
         ReflectionTestUtils.setField(mockCategory, "id", 1L);
@@ -262,7 +268,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 "닉네임" + i,
                 ItemSaleStatus.WAITING,
                 mockCategory.getName(),
-                Status.ACTIVE
+                Status.ACTIVE,
+                imageList
             );
             dtoList.add(dto);
         }
@@ -316,6 +323,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                             .description("아이템 카테고리 이름"),
                         fieldWithPath("data.content[].status").type(JsonFieldType.STRING)
                             .description("아이템 상태 (예: ACTIVE, INACTIVE)"),
+                        fieldWithPath("data.content[].imageNames[]")
+                                .description("아이템 이미지 이름"),
                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
                             .description("페이지 관련 정보"),
                         fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
@@ -455,7 +464,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 mockItem.getSeller().getNickname(),
                 mockItem.getItemSaleStatus(),
                 mockItem.getCategory().getName(),
-                mockItem.getStatus()
+                mockItem.getStatus(),
+                imageList
         );
 
         given(itemService.getItem(anyLong(), any(CustomUserDetails.class))).willReturn(itemResponseDto);
@@ -485,7 +495,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("data.nickname").type(JsonFieldType.STRING).description("판매자 닉네임"),
                                         fieldWithPath("data.itemSaleStatus").type(JsonFieldType.STRING).description("판매 상태"),
                                         fieldWithPath("data.categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
-                                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("매물 활성 상태")
+                                        fieldWithPath("data.status").type(JsonFieldType.STRING).description("매물 활성 상태"),
+                                        fieldWithPath("data.imageNames[]").type(JsonFieldType.ARRAY).description("아이템 이미지 주소")
                                 )
                                 .responseSchema(Schema.schema("매물-상세조회-성공-응답"))
                                 .build())
@@ -513,7 +524,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                     "닉네임" + i,
                     ItemSaleStatus.WAITING,
                     "카테고리 이름" + i,
-                    Status.ACTIVE
+                    Status.ACTIVE,
+                    imageList
             );
             dtoList.add(dto);
         }
@@ -553,6 +565,7 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("data.content[].itemSaleStatus").type(JsonFieldType.STRING).description("판매상태"),
                                         fieldWithPath("data.content[].categoryName").type(JsonFieldType.STRING).description("카테고리 이름"),
                                         fieldWithPath("data.content[].status").type(JsonFieldType.STRING).description("활성상태"),
+                                        fieldWithPath("data.content[].imageNames[]").type(JsonFieldType.ARRAY).description("아이템 이미지 이름"),
                                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT).description("페이지 관련 정보"),
                                         fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER).description("현재 페이지 번호 (0부터 시작)"),
                                         fieldWithPath("data.pageable.pageSize").type(JsonFieldType.NUMBER).description("페이지 크기"),
@@ -735,7 +748,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                     "닉네임" + i,
                     ItemSaleStatus.WAITING,
                     "카테고리 이름" + i,
-                    Status.ACTIVE
+                    Status.ACTIVE,
+                    imageList
             );
             dtoList.add(dto);
         }
@@ -789,6 +803,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                                                 .description("아이템 카테고리 이름"),
                                         fieldWithPath("data.content[].status").type(JsonFieldType.STRING)
                                                 .description("아이템 상태 (예: ACTIVE, INACTIVE)"),
+                                        fieldWithPath("data.content[].imageNames[]").type(JsonFieldType.ARRAY)
+                                                .description("아이템 이미지 주소"),
                                         fieldWithPath("data.pageable").type(JsonFieldType.OBJECT)
                                                 .description("페이지 관련 정보"),
                                         fieldWithPath("data.pageable.pageNumber").type(JsonFieldType.NUMBER)
@@ -849,8 +865,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
     @DisplayName("주변 인기 매물 조회 성공")
     void getTopItems_success() throws Exception {
         // given
-        ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
-        ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE);
+        ItemResponseDto itemResponseDto = new ItemResponseDto(1L, "제목", "설명", 10000, "판매자", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE,imageList);
+        ItemResponseDto itemResponseDto2 = new ItemResponseDto(2L, "제목2", "설명2", 10000, "판매자2", ItemSaleStatus.WAITING, "전자기기", Status.ACTIVE,imageList);
         List<ItemResponseDto> dtoList = new ArrayList<>();
         dtoList.add(itemResponseDto);
         dtoList.add(itemResponseDto2);
@@ -882,7 +898,8 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                                         fieldWithPath("data[].nickname").description("판매자 닉네임"),
                                         fieldWithPath("data[].itemSaleStatus").description("아이템 판매 상태"),
                                         fieldWithPath("data[].categoryName").description("아이템 카테고리 이름"),
-                                        fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)")
+                                        fieldWithPath("data[].status").description("아이템 상태 (예: ACTIVE, INACTIVE)"),
+                                        fieldWithPath("data[].imageNames[]").description("아이템 이미지 주소")
                                 ))
                                 .requestSchema(Schema.schema("인기매물-조회-성공-요청"))
                                 .responseSchema(Schema.schema("인기매물-조회-성공-응답"))
@@ -891,8 +908,39 @@ class ItemControllerTest extends CommonMockMvcControllerTestSetUp {
                 ));
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
-
     }
 
+    @Test
+    @DisplayName("아이템 끌어올리기 성공")
+    void boostItem_success() throws Exception {
+        // given
+        doNothing().when(itemService).boostItem(anyLong(), any(CustomUserDetails.class));
 
+        // when, then
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.put("/items/{itemId}/boost", 1L)
+                        .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(print())
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "boost-item",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("특정 아이템을 끌어올립니다.")
+                                .summary("아이템 끌어올리기")
+                                .tag("Item")
+                                .pathParameters(
+                                parameterWithName("itemId").description("끌어올릴 아이템 ID")
+                                )
+                                .requestHeaders(
+                                headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .responseFields(List.of(
+                                        fieldWithPath("message").description("성공 메시지 : Ok"),
+                                        fieldWithPath("statusCode").description("성공 상태 코드 : 200")
+                                ))
+                                .responseSchema(Schema.schema("아이템-끌어올리기-성공-응답"))
+                                .build()
+                        )
+                ));
+        result.andExpect(status().isOk());
+    }
 }
