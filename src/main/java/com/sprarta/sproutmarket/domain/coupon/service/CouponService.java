@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 public class CouponService {
 
     private static final int MAX_COUPONS = 100; // 쿠폰 발급 최대 수
-    private static final String COUPON_LOCK_KEY = "coupon_lock"; // Redis 락 키
 
     private final CouponRepository couponRepository;
     private final RedisUtil redisUtil;
@@ -45,8 +44,8 @@ public class CouponService {
         RLock lock = redissonClient.getLock("couponLock");
 
         try {
-            // 1초 동안 락을 시도
-            if (!lock.tryLock(200, TimeUnit.MILLISECONDS)) {
+            // 0.1초 동안 락을 시도
+            if (!lock.tryLock(100, TimeUnit.MILLISECONDS)) {
                 throw new ApiException(ErrorStatus.FORBIDDEN_LOCK); // 락을 얻을 수 없으면 예외 발생
             }
 
