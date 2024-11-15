@@ -42,10 +42,13 @@ public class CouponService {
 
     // 쿠폰 발급
     public CouponResponseDto issueCoupon(CustomUserDetails authUser) {
-        RLock lock = redissonClient.getLock(COUPON_LOCK_KEY);
+        RLock lock = redissonClient.getLock("couponLock");
 
         try {
-            lock.lock(); // 락을 걸어 동시성 제어
+            // 1초 동안 락을 시도
+            if (!lock.tryLock(200, TimeUnit.MILLISECONDS)) {
+                throw new ApiException(ErrorStatus.INTERNAL_SERVER_ERROR_WE_DO_NOT_KNOW); // 락을 얻을 수 없으면 예외 발생
+            }
 
             // 유저 정보 확인
             User user = userRepository.findById(authUser.getId())
@@ -66,9 +69,15 @@ public class CouponService {
             Coupon coupon = new Coupon(couponCode, user, LocalDateTime.now());
             couponRepository.save(coupon);
 
-            return new CouponResponseDto(coupon.getCouponCode(), coupon.getIssuedAt());
+            return new CouponResponseDto(couponCode, LocalDateTime.now());
+
+        } catch (InterruptedException e) {
+            throw new ApiException(ErrorStatus.INTERNAL_SERVER_ERROR_WE_DO_NOT_KNOW);  // 락 대기 시간이 초과된 경우
         } finally {
-            lock.unlock(); // 락 해제
+            // 락 해제
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
