@@ -8,8 +8,6 @@ import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
 import com.sprarta.sproutmarket.domain.common.exception.ApiException;
 import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
 import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
-import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
-import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -35,7 +33,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,10 +49,7 @@ public class ItemService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final AdministrativeAreaService admAreaService;
-    private final SimpMessagingTemplate simpMessagingTemplate;
-    private final InterestedItemService interestedItemService;
     private final RedisTemplate<String, Long> redisTemplate;
-    private final InterestedCategoryService interestedCategoryService;
     private final ApplicationEventPublisher eventPublisher;
     private final ItemImageRepository itemImageRepository;
 
@@ -333,42 +327,10 @@ public class ItemService {
         }
     }
 
-    /**
-     * 관심 상품으로 등록한 사용자들에게 가격 변경 알림을 보내는 메서드
-     */
-    private void notifyUsersAboutPriceChange(Long itemId, int newPrice) {
-        // 관심 상품 사용자 조회
-        List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
-
-        // 관심 사용자들에게 알림 전송
-        for (User user : interestedUsers) {
-            simpMessagingTemplate.convertAndSend(String.format("/sub/user/%d/notifications", user.getId()),
-                    String.format("관심 상품의 가격이 변경되었습니다. 새로운 가격 : %d", newPrice));
-        }
-    }
-
-    /**
-     * 관심 카테고리에 새로운 물품이 등록되었을 때 사용자에게 알림을 보내는 메서드
-     */
-    private void notifyUsersAboutNewItem(Long categoryId, String itemTitle) {
-        List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
-        for (User user : interestedUsers) {
-            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
-                    "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
-        }
-    }
-
     // ItemSaleStatus 결정 메서드
     //이거 BooleanExpression 같은 개념이라 쿼리 DSL 구현체로 가야할 듯 싶습니당
     private ItemSaleStatus setSaleStatus(ItemSearchRequest itemSearchRequest) {
         return itemSearchRequest.isSaleStatus() ? ItemSaleStatus.WAITING : null;
-    }
-
-    // 알림 전송(가격 변동)
-    private void sendPriceChangeNotification(Item item, int newPrice) {
-        if (item.getPrice() != newPrice) {
-            notifyUsersAboutPriceChange(item.getId(), newPrice);
-        }
     }
 
     private Pageable createPageable(FindItemsInMyAreaRequestDto requestDto) {
