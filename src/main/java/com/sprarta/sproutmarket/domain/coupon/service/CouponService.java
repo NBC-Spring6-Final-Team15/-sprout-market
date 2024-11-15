@@ -28,8 +28,7 @@ import java.util.concurrent.*;
 @RequiredArgsConstructor
 public class CouponService {
 
-    private static final int MAX_COUPONS = 50; // 쿠폰 발급 최대 수
-    private static final String COUPON_LOCK_KEY = "coupon_lock"; // Redis 락 키
+    private static final int MAX_COUPONS = 100; // 쿠폰 발급 최대 수
 
     private final CouponRepository couponRepository;
     private final RedisUtil redisUtil;
@@ -42,10 +41,13 @@ public class CouponService {
 
     // 쿠폰 발급
     public CouponResponseDto issueCoupon(CustomUserDetails authUser) {
-        RLock lock = redissonClient.getLock(COUPON_LOCK_KEY);
+        RLock lock = redissonClient.getLock("couponLock");
 
         try {
-            lock.lock(); // 락을 걸어 동시성 제어
+            // 0.1초 동안 락을 시도
+            if (!lock.tryLock(100, TimeUnit.MILLISECONDS)) {
+                throw new ApiException(ErrorStatus.FORBIDDEN_LOCK); // 락을 얻을 수 없으면 예외 발생
+            }
 
             // 유저 정보 확인
             User user = userRepository.findById(authUser.getId())
@@ -66,9 +68,15 @@ public class CouponService {
             Coupon coupon = new Coupon(couponCode, user, LocalDateTime.now());
             couponRepository.save(coupon);
 
-            return new CouponResponseDto(coupon.getCouponCode(), coupon.getIssuedAt());
+            return new CouponResponseDto(couponCode, LocalDateTime.now());
+
+        } catch (InterruptedException e) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_LOCK);  // 락 대기 시간이 초과된 경우
         } finally {
-            lock.unlock(); // 락 해제
+            // 락 해제
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
