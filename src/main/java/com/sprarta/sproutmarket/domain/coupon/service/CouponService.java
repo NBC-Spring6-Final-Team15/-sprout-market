@@ -47,7 +47,7 @@ public class CouponService {
         try {
             // 1초 동안 락을 시도
             if (!lock.tryLock(200, TimeUnit.MILLISECONDS)) {
-                throw new ApiException(ErrorStatus.INTERNAL_SERVER_ERROR_WE_DO_NOT_KNOW); // 락을 얻을 수 없으면 예외 발생
+                throw new ApiException(ErrorStatus.FORBIDDEN_LOCK); // 락을 얻을 수 없으면 예외 발생
             }
 
             // 유저 정보 확인
@@ -72,7 +72,7 @@ public class CouponService {
             return new CouponResponseDto(couponCode, LocalDateTime.now());
 
         } catch (InterruptedException e) {
-            throw new ApiException(ErrorStatus.INTERNAL_SERVER_ERROR_WE_DO_NOT_KNOW);  // 락 대기 시간이 초과된 경우
+            throw new ApiException(ErrorStatus.FORBIDDEN_LOCK);  // 락 대기 시간이 초과된 경우
         } finally {
             // 락 해제
             if (lock.isHeldByCurrentThread()) {
