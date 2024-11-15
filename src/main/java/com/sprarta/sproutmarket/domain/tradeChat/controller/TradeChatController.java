@@ -25,7 +25,7 @@ public class TradeChatController {
     public void sendMessage(TradeChatDto tradeChatDto,
                             @DestinationVariable("roomId") Long roomId) {
         tradeChatService.chatRoomMatch(tradeChatDto.getRoomId(), Long.parseLong(tradeChatDto.getSender()));
-        tradeChatService.publishChat(roomId, tradeChatDto);  // 메시지 저장 및 퍼블리시
+        tradeChatService.publishChat(roomId, tradeChatDto);  // 메시지 퍼블리시
         tradeChatService.saveChat(tradeChatDto);
     }
 
