@@ -22,6 +22,7 @@ public class TradeChatService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final TradeChatRepository tradeChatRepository;
+    private final RedisPublisher redisPublisher;
 
     public void saveChat(TradeChatDto tradeChatDto) {
         tradeChatRepository.save(new TradeChat(
@@ -58,10 +59,22 @@ public class TradeChatService {
     @Transactional
     public void decreaseReadCount(Long roomId, String sender) {
         for (TradeChat tradeChat : tradeChatRepository.findAllByRoomId(roomId)) {
-            if (!ObjectUtils.nullSafeEquals(tradeChat.getSender(), sender.replaceAll("\"", "")) && tradeChat.getReadCount() > 0) {
+            if (tradeChat.getReadCount() > 0 && !ObjectUtils.nullSafeEquals(tradeChat.getSender(),
+                    sender.replaceAll("\"", ""))) {
                 tradeChat.decreaseReadCount();
             }
         }
+    }
+
+    public void chatRoomMatch(Long roomId, Long userId) {
+        if (!ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(roomId).getSeller().getId(), userId)
+                && !ObjectUtils.nullSafeEquals(chatRoomRepository.findByIdOrElseThrow(roomId).getBuyer().getId(), userId)) {
+            throw new ApiException(ErrorStatus.FORBIDDEN_NOT_OWNED_CHATROOM);
+        }
+    }
+
+    public void publishChat(Long roomId, TradeChatDto tradeChatDto) {
+        redisPublisher.publish(roomId, tradeChatDto);
     }
 
 }
