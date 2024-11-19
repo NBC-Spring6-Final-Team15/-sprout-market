@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Objects;
 
@@ -56,6 +57,13 @@ public class GlobalExceptionHandler {
                 ex.getValue(), Objects.requireNonNull(ex.getRequiredType()).getSimpleName());
         logError(errorMessage);
         return getErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        String message = "주소를 찾을 수 없습니다.";
+        logError(message);
+        return getErrorResponse(HttpStatus.NOT_FOUND, message);
     }
 
     public ResponseEntity<ApiResponse<String>> getErrorResponse(HttpStatus status, String message) {
