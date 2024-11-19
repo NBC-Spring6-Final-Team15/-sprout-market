@@ -32,6 +32,24 @@ jacocoTestReport {
         html.required = true
         csv.required = true
     }
+
+    def Qdomains = []
+    for (qPattern in '**/QA'..'**/QZ') {
+        Qdomains.add(qPattern + '*')
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+                files(classDirectories.files.collect {
+                    fileTree(dir: it, excludes: [
+                            "**/domain/**/dto/**",
+                            "**/config/**",
+                            "**/domain/**/entity/**"
+                    ] + Qdomains)
+
+                })
+        )
+    }
 }
 
 jacocoTestCoverageVerification {
@@ -143,7 +161,16 @@ dependencies {
     // 카카오 로그인
     implementation 'com.google.code.gson:gson:2.8.9'
 
+    // RabbitMQ
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
+    // 이미지 압축 라이브러리
+    implementation 'net.coobird:thumbnailator:0.4.14'
+
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+    // redisson
+    implementation 'org.redisson:redisson:3.22.0'
 }
 
 tasks.named('test') {

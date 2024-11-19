@@ -50,9 +50,6 @@ public class TradeService {
         Trade trade = tradeRepository.save(new Trade(chatRoom));
         chatRoom.getItem().changeSaleStatus(ItemSaleStatus.RESERVED);
 
-        // 예약 성공 알림 전송
-        sendNotification(chatRoom.getBuyer().getId(), chatRoom.getItem().getTitle() + " 예약이 완료되었습니다.");
-
         return TradeResponseDto.from(trade);
     }
 
@@ -76,27 +73,13 @@ public class TradeService {
             throw new ApiException(ErrorStatus.CONFLICT_NOT_RESERVED);
         }
 
-        String message;
-
         if (tradeStatus.equals(TradeStatus.COMPLETED)) {
             trade.updateTradeStatus(TradeStatus.COMPLETED);
             trade.getChatRoom().getItem().changeSaleStatus(ItemSaleStatus.SOLD);
-            message = trade.getChatRoom().getItem().getTitle() + " 거래가 완료되었습니다.";
-
         } else if (tradeStatus.equals(TradeStatus.CANCELLED)) {
             trade.updateTradeStatus(TradeStatus.CANCELLED);
-            message = trade.getChatRoom().getItem().getTitle() + " 거래가 취소되었습니다.";
-
         } else {
             throw new ApiException(ErrorStatus.BAD_REQUEST_INVALID_TRADE_STATUS);
         }
-
-        // 거래 완료 알림 전송 (구매자와 판매자 모두에게)
-        sendNotification(trade.getChatRoom().getBuyer().getId(), message);
-        sendNotification(trade.getChatRoom().getSeller().getId(), message);
-    }
-
-    private void sendNotification(Long targetId, String message) {
-        simpMessagingTemplate.convertAndSend("/sub/user/" + targetId + "/notifications", message);
     }
 }

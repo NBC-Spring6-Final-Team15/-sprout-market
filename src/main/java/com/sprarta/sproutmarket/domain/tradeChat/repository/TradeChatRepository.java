@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface TradeChatRepository extends JpaRepository<TradeChat, Long> {
 
-    List<TradeChat> findAllByroomId(Long chatroomId);
+    List<TradeChat> findAllByRoomId(Long roomId);
+
+    void deleteByRoomId(Long roomId);
 
 }

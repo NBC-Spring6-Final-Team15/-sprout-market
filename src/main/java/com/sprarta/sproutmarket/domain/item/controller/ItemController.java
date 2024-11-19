@@ -157,4 +157,14 @@ public class ItemController {
     public ResponseEntity<ApiResponse<List<ItemResponseDto>>> getTopItems(@AuthenticationPrincipal CustomUserDetails authUser){
         return ResponseEntity.ok(ApiResponse.onSuccess(itemService.getTopItems(authUser)));
     }
+
+    // 끌어올리기
+    @PutMapping("/items/{itemId}/boost")
+    public ResponseEntity<ApiResponse<Void>> boostItem(
+            @PathVariable Long itemId,
+            @AuthenticationPrincipal CustomUserDetails authUser
+    ) {
+        itemService.boostItem(itemId, authUser);
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
+    }
 }

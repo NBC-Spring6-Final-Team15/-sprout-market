@@ -89,14 +89,14 @@ public class TradeChatControllerTest {
     @WithMockUser
     void 채팅_조회() throws Exception {
         Long roomId = 1L;
-        TradeChatDto chatDto1 = new TradeChatDto(roomId, "sender1", "content1");
-        TradeChatDto chatDto2 = new TradeChatDto(roomId, "sender1", "content2");
-        TradeChatDto chatDto3 = new TradeChatDto(roomId, "sender2", "content3");
+        TradeChatDto chatDto1 = new TradeChatDto(roomId, "sender1", "content1", 1L);
+        TradeChatDto chatDto2 = new TradeChatDto(roomId, "sender1", "content2", 1L);
+        TradeChatDto chatDto3 = new TradeChatDto(roomId, "sender2", "content3", 1L);
         List<TradeChatDto> chatList = List.of(chatDto1, chatDto2, chatDto3);
 
         when(tradeChatService.getChats(anyLong(), any(CustomUserDetails.class))).thenReturn(chatList);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chatRoom/{roomId}/chats", roomId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chatRooms/{roomId}/chats", roomId)
                         .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "get-chats",
@@ -123,7 +123,9 @@ public class TradeChatControllerTest {
                                         fieldWithPath("data[].sender")
                                                 .description("채팅 보낸 사용자"),
                                         fieldWithPath("data[].content")
-                                                .description("채팅 내용")
+                                                .description("채팅 내용"),
+                                        fieldWithPath("data[].readCount")
+                                                .description("읽음 확인")
                                 )
                                 .responseSchema(Schema.schema("특정-채팅방-채팅-다건-조회-성공-응답"))
                                 .build()

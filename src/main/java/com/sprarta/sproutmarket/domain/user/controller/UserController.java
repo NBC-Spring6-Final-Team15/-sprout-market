@@ -55,19 +55,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
-//    @PutMapping("/profile-image")
-//    public ResponseEntity<ApiResponse<String>> updateProfileImage(
-//            @AuthenticationPrincipal CustomUserDetails authUser,
-//            @RequestBody String profileImageName) {
-//        String profileImageUrl = userService.updateProfileImage(authUser, profileImageName);
-//        return ResponseEntity.ok(ApiResponse.onSuccess(profileImageUrl));
-//    }
-//
-//    @DeleteMapping("/profile-image")
-//    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal CustomUserDetails authUser) {
-//        userService.deleteProfileImage(authUser);
-//        return ResponseEntity.ok(ApiResponse.onSuccess(null));
-//    }
 
     @PatchMapping("/admin/deleted/{userId}")
     public ResponseEntity<ApiResponse<Void>> activateUser(@PathVariable long userId) {

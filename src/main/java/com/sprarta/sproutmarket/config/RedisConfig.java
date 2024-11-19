@@ -1,32 +1,57 @@
 package com.sprarta.sproutmarket.config;
 
+import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatDto;
+import com.sprarta.sproutmarket.domain.tradeChat.service.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
 public class RedisConfig {
 
+    // Redis 구독 설정
     @Bean
-    public RedisTemplate<String, Object> chatRedisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> chatRedisTemplate = new RedisTemplate<>(); // RedisTemplate 생성 키 String 타입 값 Object 타입
+    public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
+                                                        MessageListenerAdapter listenerAdapter) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.addMessageListener(listenerAdapter, new PatternTopic("chat/*"));
+        return container;
+    }
 
-        chatRedisTemplate.setConnectionFactory(connectionFactory); // Redis 서버와 연결 관리
-
-        chatRedisTemplate.setKeySerializer(new StringRedisSerializer()); // 키를 String 형식으로 직렬화
-        chatRedisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // 값 데이터 JSON 형식으로 직렬화
-
-        return chatRedisTemplate;
+    // RedisSubscriber와 연결
+    @Bean
+    public MessageListenerAdapter listenerAdapter(RedisSubscriber redisSubscriber) {
+        MessageListenerAdapter adapter = new MessageListenerAdapter(redisSubscriber, "handleMessage"); // RedisSubscriber의 handleMessage 메서드 호출
+        adapter.setSerializer(new Jackson2JsonRedisSerializer<>(TradeChatDto.class));
+        return adapter;
     }
 
     @Bean
-    public RedisTemplate<String, Long> viewCountRedisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> chatRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(connectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(TradeChatDto.class));
+        return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<String, Long> RedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Long> redisTemplate = new RedisTemplate<>();
 
         redisTemplate.setConnectionFactory(connectionFactory);
@@ -35,6 +60,13 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Long.class)); // 단순 숫자용 직렬화
 
         return redisTemplate;
+    }
+
+    @Bean
+    public CacheManager cacheManager() {
+        SimpleCacheManager cacheManager = new SimpleCacheManager();
+        cacheManager.setCaches(Arrays.asList(new ConcurrentMapCache("admNameCache")));
+        return cacheManager;
     }
 
 }

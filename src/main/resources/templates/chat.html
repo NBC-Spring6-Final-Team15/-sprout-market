@@ -58,7 +58,7 @@
         .login-section button {
             width: 100%;
             padding: 6px;
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
@@ -79,6 +79,12 @@
             margin: 5px 0;
         }
 
+        .read-count {
+            font-size: 0.8em;
+            color: gray;
+            margin-left: 5px;
+        }
+
         input[type="text"] {
             width: calc(100% - 22px);
             padding: 10px;
@@ -90,11 +96,17 @@
 
         button {
             padding: 10px;
-            background-color: #007bff;
+            background-color: #28a745;
             border: none;
             color: white;
             border-radius: 4px;
             cursor: pointer;
+        }
+
+        /* 채팅방 나가기 버튼 왼쪽 정렬 */
+        #leaveChatRoomButton {
+            margin-top: 10px;
+            align-self: flex-start; /* 왼쪽 정렬 */
         }
     </style>
 </head>
@@ -185,8 +197,15 @@
 
         stompClient.connect({ Authorization: `Bearer ${token}` }, function (frame) {
             console.log('Connected: ' + frame);
+
+            decreaseReadCount(chatRoomId, userId);
+
             stompClient.subscribe(`/sub/chat/${chatRoomId}`, function (message) {
                 displayMessage(JSON.parse(message.body));
+
+                if (JSON.parse(message.body).sender !== userId) {  // 본인이 보낸 메시지가 아닐 때만 호출
+                    decreaseReadCount(JSON.parse(message.body).roomId, userId);
+                }
             });
         });
 
@@ -198,7 +217,8 @@
             const messageDto = {
                 sender: userId,  // 사용자 ID 추가
                 content: messageContent,
-                roomId: chatRoomId
+                roomId: chatRoomId,
+                readCount: 1
             };
 
             console.log('dto 확인 용도', messageDto);
@@ -216,10 +236,67 @@
     function displayMessage(message) {
         const messageList = document.getElementById('messageList');
         const messageElement = document.createElement('div');
+        const readCountElement = document.createElement('span');
+
         messageElement.classList.add('message');
+        readCountElement.classList.add('read-count');
+
         messageElement.textContent = `${message.sender}: ${message.content}`;
+
+        messageElement.appendChild(readCountElement);
         messageList.appendChild(messageElement);
         messageList.scrollTop = messageList.scrollHeight;
+
+        if (message.readCount > 0) {
+            readCountElement.textContent = `(${message.readCount})`;
+        } else {
+            readCountElement.style.display = 'none'; // 리드 카운트가 0이면 숨김
+        }
+    }
+
+    function decreaseReadCount(roomId, sender) {
+        const token = localStorage.getItem('token');
+
+        fetch(`/chat/${roomId}/decreaseReadCount`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(sender)  // sender를 요청 본문으로 전달
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Read count decreased successfully');
+                    updateReadCountInUI(roomId);
+                } else {
+                    console.error('Failed to decrease read count');
+                }
+            })
+            .catch(error => console.error('Error decreasing read count:', error));
+    }
+
+    function updateReadCountInUI(roomId) {
+        const messageList = document.getElementById('messageList');
+        const messages = messageList.getElementsByClassName('message');
+
+        for (let messageElement of messages) {
+            const readCountElement = messageElement.querySelector('.read-count');
+
+            if (readCountElement) {
+                const currentCount = parseInt(readCountElement.textContent.replace(/\D/g, ''), 10);
+
+                // 리드 카운트 감소
+                if (currentCount > 0) {
+                    readCountElement.textContent = `(${currentCount - 1})`;
+                }
+
+                // 리드 카운트가 0이면 숨김
+                if (currentCount - 1 <= 0) {
+                    readCountElement.style.display = 'none'; // 숨기기
+                }
+            }
+        }
     }
 
     if (token) {

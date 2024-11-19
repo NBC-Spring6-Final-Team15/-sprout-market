@@ -26,6 +26,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
@@ -200,18 +204,18 @@ public class ChatRoomControllerTest {
     void 채팅방_목록_조회_성공() throws Exception {
 
         // given
-        ChatRoomDto chatRoomDto2 = new ChatRoomDto(
-                1L,
-                2L,
-                3L
-        );
-
+        ChatRoomDto chatRoomDto2 = new ChatRoomDto(1L, 2L, 3L);
         List<ChatRoomDto> chatRoomDtoList = List.of(chatRoomDto, chatRoomDto2);
 
-        when(chatRoomService.getChatRooms(any(CustomUserDetails.class))).thenReturn(chatRoomDtoList);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ChatRoomDto> chatRoomDtoPage = new PageImpl<>(chatRoomDtoList, pageable, chatRoomDtoList.size());
+
+        when(chatRoomService.getChatRooms(any(CustomUserDetails.class), any(Pageable.class))).thenReturn(chatRoomDtoPage);
 
         ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chatrooms")
-                        .header("Authorization", "Bearer (JWT 토큰)"))
+                        .header("Authorization", "Bearer (JWT 토큰)")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "get-chatrooms",
                         resource(
@@ -228,14 +232,50 @@ public class ChatRoomControllerTest {
                                                         .description("성공 메시지 : Ok"),
                                                 fieldWithPath("statusCode")
                                                         .description("성공 상태 코드 : 200"),
-                                                fieldWithPath("data")
-                                                        .description("본문 응답"),
-                                                fieldWithPath("data[].buyerId")
+                                                fieldWithPath("data.content[].buyerId")
                                                         .description("구매자 Id"),
-                                                fieldWithPath("data[].sellerId")
+                                                fieldWithPath("data.content[].sellerId")
                                                         .description("판매자 Id"),
-                                                fieldWithPath("data[].itemId")
-                                                        .description("채팅방이 만들어진 매물 ID")
+                                                fieldWithPath("data.content[].itemId")
+                                                        .description("채팅방이 만들어진 매물 ID"),
+                                                fieldWithPath("data.pageable.pageNumber")
+                                                        .description("현재 페이지 번호"),
+                                                fieldWithPath("data.pageable.pageSize")
+                                                        .description("페이지 크기"),
+                                                fieldWithPath("data.pageable.sort.empty")
+                                                        .description("정렬 정보가 비어있는지 여부"),
+                                                fieldWithPath("data.pageable.sort.sorted")
+                                                        .description("정렬되었는지 여부"),
+                                                fieldWithPath("data.pageable.sort.unsorted")
+                                                        .description("정렬되지 않았는지 여부"),
+                                                fieldWithPath("data.pageable.offset")
+                                                        .description("현재 페이지의 오프셋"),
+                                                fieldWithPath("data.pageable.paged")
+                                                        .description("페이징 적용 여부"),
+                                                fieldWithPath("data.pageable.unpaged")
+                                                        .description("페이징 미적용 여부"),
+                                                fieldWithPath("data.totalPages")
+                                                        .description("총 페이지 수"),
+                                                fieldWithPath("data.totalElements")
+                                                        .description("총 요소 수"),
+                                                fieldWithPath("data.last")
+                                                        .description("마지막 페이지 여부"),
+                                                fieldWithPath("data.size")
+                                                        .description("페이지 크기"),
+                                                fieldWithPath("data.number")
+                                                        .description("현재 페이지 번호"),
+                                                fieldWithPath("data.sort.empty")
+                                                        .description("정렬 정보가 비어있는지 여부"),
+                                                fieldWithPath("data.sort.sorted")
+                                                        .description("정렬되었는지 여부"),
+                                                fieldWithPath("data.sort.unsorted")
+                                                        .description("정렬되지 않았는지 여부"),
+                                                fieldWithPath("data.first")
+                                                        .description("첫 페이지 여부"),
+                                                fieldWithPath("data.numberOfElements")
+                                                        .description("현재 페이지의 요소 수"),
+                                                fieldWithPath("data.empty")
+                                                        .description("페이지가 비어있는지 여부")
                                         )
                                         .responseSchema(Schema.schema("특정-사용자-채팅방-다건-조회-성공-응답"))
                                         .build()
@@ -243,7 +283,7 @@ public class ChatRoomControllerTest {
 
         // then
         result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
+                .andExpect(jsonPath("$.data.content", Matchers.hasSize(2)));
 
     }
 

@@ -4,8 +4,10 @@ import com.sprarta.sproutmarket.domain.areas.service.AdministrativeAreaService;
 import com.sprarta.sproutmarket.domain.category.entity.Category;
 import com.sprarta.sproutmarket.domain.category.repository.CategoryRepository;
 import com.sprarta.sproutmarket.domain.common.entity.Status;
-import com.sprarta.sproutmarket.domain.interestedCategory.service.InterestedCategoryService;
-import com.sprarta.sproutmarket.domain.interestedItem.service.InterestedItemService;
+import com.sprarta.sproutmarket.domain.common.enums.ErrorStatus;
+import com.sprarta.sproutmarket.domain.common.exception.ApiException;
+import com.sprarta.sproutmarket.domain.image.itemImage.entity.ItemImage;
+import com.sprarta.sproutmarket.domain.image.itemImage.repository.ItemImageRepository;
 import com.sprarta.sproutmarket.domain.item.dto.request.FindItemsInMyAreaRequestDto;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemContentsUpdateRequest;
 import com.sprarta.sproutmarket.domain.item.dto.request.ItemCreateRequest;
@@ -18,16 +20,19 @@ import com.sprarta.sproutmarket.domain.item.entity.ItemSaleStatus;
 import com.sprarta.sproutmarket.domain.item.entity.ItemWithViewCount;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepository;
 import com.sprarta.sproutmarket.domain.item.repository.ItemRepositoryCustom;
+import com.sprarta.sproutmarket.domain.notification.entity.PriceChangeEvent;
 import com.sprarta.sproutmarket.domain.user.entity.CustomUserDetails;
 import com.sprarta.sproutmarket.domain.user.entity.User;
 import com.sprarta.sproutmarket.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +49,12 @@ public class ItemService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final AdministrativeAreaService admAreaService;
-    private final SimpMessagingTemplate simpMessagingTemplate;
-    private final InterestedItemService interestedItemService;
-    private final RedisTemplate<String, Long> viewCountRedisTemplate;
-    private final InterestedCategoryService interestedCategoryService;
+    private final RedisTemplate<String, Long> redisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ItemImageRepository itemImageRepository;
+
+    @PersistenceContext
+    private final EntityManager entityManager;
 
     /**
      * 중고 매물에 대해서 검색하는 로직
@@ -91,9 +98,9 @@ public class ItemService {
                 )
         );
 
-//         itemImageService.uploadItemImage(item.getId(), itemCreateRequest.getImageName(), authUser);
-        // 카테고리에 관심 있는 사용자들에게 알림 전송
-        notifyUsersAboutNewItem(item.getCategory().getId(), item.getTitle());
+        List<ItemImage> images = itemImageRepository.findByUserIdAndItemIsNull(authUser.getId());
+        item.fetchImage(images);
+        images.forEach(image -> image.fetchItem(item));
 
         return ItemResponse.builder()
                 .title(item.getTitle())
@@ -130,13 +137,26 @@ public class ItemService {
     public ItemResponse updateContents(Long itemId, ItemContentsUpdateRequest itemContentsUpdateRequest, CustomUserDetails authUser) {
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, User.fromAuthUser(authUser).getId());
 
-        sendPriceChangeNotification(item, itemContentsUpdateRequest.getPrice());
+        int oldPrice = item.getPrice(); // 이전 가격
 
         item.changeContents(
                 itemContentsUpdateRequest.getTitle(),
                 itemContentsUpdateRequest.getDescription(),
                 itemContentsUpdateRequest.getPrice()
         );
+
+        // flush()를 호출하여 변경 사항을 데이터베이스에 반영
+        entityManager.flush();
+
+        int newPrice = item.getPrice(); // 이제 변경된 가격을 가져옴
+
+        // 로그 추가: 가격 변경 감지
+        log.info("Updated Item ID: {}, Old Price: {}, New Price: {}", itemId, oldPrice, newPrice);
+
+        // 가격이 변경된 경우 이벤트 발행
+        if (oldPrice != newPrice) {
+            eventPublisher.publishEvent(new PriceChangeEvent(itemId, newPrice));
+        }
 
         return ItemResponse.builder()
                 .title(item.getTitle())
@@ -256,7 +276,7 @@ public class ItemService {
         List<ItemWithViewCount> itemWithViewCounts = items.stream()
                 .map(item -> {
                     // Redis에서 조회수 가져오기
-                    Long viewCount = viewCountRedisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
+                    Long viewCount = redisTemplate.opsForValue().get("ViewCount:ItemId:" + item.getId());
                     Long finalViewCount = (viewCount != null) ? viewCount : 0L; // 조회수가 null일 경우 0으로 설정
 
                     // 로그로 아이템별 조회수 출력
@@ -270,17 +290,25 @@ public class ItemService {
 
         // ItemWithViewCount를 ItemResponseDto로 변환하여 반환
         return itemWithViewCounts.stream()
-                .map(itemWithViewCount -> new ItemResponseDto(
-                        itemWithViewCount.getItem().getId(),
-                        itemWithViewCount.getItem().getTitle(),
-                        itemWithViewCount.getItem().getDescription(),
-                        itemWithViewCount.getItem().getPrice(),
-                        itemWithViewCount.getItem().getSeller().getNickname(),
-                        itemWithViewCount.getItem().getItemSaleStatus(),
-                        itemWithViewCount.getItem().getCategory().getName(),
-                        itemWithViewCount.getItem().getStatus()
-                ))
+                .map(itemWithViewCount -> ItemResponseDto.from(itemWithViewCount.getItem()))
                 .toList();
+    }
+
+    @Transactional
+    public void boostItem(Long itemId, CustomUserDetails authUser) {
+        Item item = itemRepository.findByIdOrElseThrow(itemId);
+
+        String boostKey = String.format("boost:item:%d:user:%d", itemId, authUser.getId());
+
+        // 하루에 한 번 부스트 제한
+        Boolean isAlreadyBoosted = redisTemplate.hasKey(boostKey);
+        if (Boolean.TRUE.equals(isAlreadyBoosted)) {
+            throw new ApiException(ErrorStatus.CONFLICT_ITEM_BOOST);
+        }
+
+        // 부스트 처리 및 Redis에 키 저장 (1일 동안 유효)
+        item.boostItem();
+        redisTemplate.opsForValue().set(boostKey, 1L, 24, TimeUnit.HOURS);
     }
 
     private void incrementViewCount(Long itemId, Long userId) {
@@ -288,39 +316,14 @@ public class ItemService {
         String userKey = "UserView:ItemId:" + itemId + ":UserId:" + userId;
 
         // 사용자가 이미 조회했는지 확인
-        Boolean hasViewed = viewCountRedisTemplate.hasKey(userKey);
+        Boolean hasViewed = redisTemplate.hasKey(userKey);
 
         // 사용자가 조회하지 않은 경우
         if (hasViewed == null || !hasViewed) {
             // 조회수 증가
-            viewCountRedisTemplate.opsForValue().increment(redisKey);
+            redisTemplate.opsForValue().increment(redisKey);
             // 사용자의 조회 기록을 1시간 후 만료되도록 설정
-            viewCountRedisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
-        }
-    }
-
-    /**
-     * 관심 상품으로 등록한 사용자들에게 가격 변경 알림을 보내는 메서드
-     */
-    private void notifyUsersAboutPriceChange(Long itemId, int newPrice) {
-        // 관심 상품 사용자 조회
-        List<User> interestedUsers = interestedItemService.findUsersByInterestedItem(itemId);
-
-        // 관심 사용자들에게 알림 전송
-        for (User user : interestedUsers) {
-            simpMessagingTemplate.convertAndSend(String.format("/sub/user/%d/notifications", user.getId()),
-                    String.format("관심 상품의 가격이 변경되었습니다. 새로운 가격 : %d", newPrice));
-        }
-    }
-
-    /**
-     * 관심 카테고리에 새로운 물품이 등록되었을 때 사용자에게 알림을 보내는 메서드
-     */
-    private void notifyUsersAboutNewItem(Long categoryId, String itemTitle) {
-        List<User> interestedUsers = interestedCategoryService.findUsersByInterestedCategory(categoryId);
-        for (User user : interestedUsers) {
-            simpMessagingTemplate.convertAndSend("/sub/user/" + user.getId() + "/notifications",
-                    "새로운 물품이 관심 카테고리에 등록되었습니다: " + itemTitle);
+            redisTemplate.opsForValue().set(userKey, 1L, 60, TimeUnit.MINUTES);
         }
     }
 
@@ -328,13 +331,6 @@ public class ItemService {
     //이거 BooleanExpression 같은 개념이라 쿼리 DSL 구현체로 가야할 듯 싶습니당
     private ItemSaleStatus setSaleStatus(ItemSearchRequest itemSearchRequest) {
         return itemSearchRequest.isSaleStatus() ? ItemSaleStatus.WAITING : null;
-    }
-
-    // 알림 전송(가격 변동)
-    private void sendPriceChangeNotification(Item item, int newPrice) {
-        if (item.getPrice() != newPrice) {
-            notifyUsersAboutPriceChange(item.getId(), newPrice);
-        }
     }
 
     private Pageable createPageable(FindItemsInMyAreaRequestDto requestDto) {

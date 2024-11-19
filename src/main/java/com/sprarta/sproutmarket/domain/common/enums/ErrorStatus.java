@@ -58,6 +58,7 @@ public enum ErrorStatus implements BaseCode {
     FORBIDDEN_NOT_OWNED_ITEM(HttpStatus.FORBIDDEN, 403, "해당 매물은 로그인한 사용자의 매물이 아닙니다."),
     FORBIDDEN_NOT_SELLER(HttpStatus.FORBIDDEN, 403, "해당 물건의 판매자가 아닙니다."),
     NOT_FOUND_ITEM_SALE_STATUS(HttpStatus.NOT_FOUND, 404, "존재하지 않는 판매상태입니다."),
+    CONFLICT_ITEM_BOOST(HttpStatus.CONFLICT, 409, "이미 부스트한 아이템입니다."),
 
     // Category
     NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, 404, "존재하지 않는 카테고리입니다."),
@@ -89,6 +90,9 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_CHAT(HttpStatus.NOT_FOUND, 404, "해당 채팅을 찾을 수 없습니다."),
     FORBIDDEN_NOT_OWNED_CHAT(HttpStatus.FORBIDDEN, 403, "해당 채팅은 로그인한 사용자의 채팅이 아닙니다."),
 
+    // coupon 예외
+    CONFLICT_COUPON(HttpStatus.CONFLICT, 409, "쿠폰 발급이 마감됐습니다."),
+    NOT_FOUND_COUPON(HttpStatus.NOT_FOUND,404,"쿠폰을 찾을 수 없습니다."),
 
     //기타 Java 예외
     BAD_REQUEST_INVALID_FILE(HttpStatus.BAD_REQUEST,400,"업로드된 파일이 유효하지 않습니다."),
@@ -100,7 +104,10 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND_INTERESTED_CATEGORY(HttpStatus.NOT_FOUND, 404, "해당 관심 카테고리를 찾을 수 없습니다."),
     FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, 403, "관리자만 접근이 가능합니다."),
     ALREADY_INTERESTED_ITEM(HttpStatus.BAD_REQUEST, 400, "이미 관심 물품으로 추가되었습니다."),
-    NOT_FOUND_INTERESTED_ITEM(HttpStatus.NOT_FOUND, 404, "해당 관심 물품을 찾을 수 없습니다.");
+    NOT_FOUND_INTERESTED_ITEM(HttpStatus.NOT_FOUND, 404, "해당 관심 물품을 찾을 수 없습니다."),
+
+    // 락 예외
+    FORBIDDEN_LOCK(HttpStatus.FORBIDDEN, 403, "락을 얻을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer statusCode;
