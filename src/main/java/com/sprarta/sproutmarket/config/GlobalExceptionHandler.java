@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
 
     //파일 첨부 용량 초과 예외
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ApiResponse<String>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<ApiResponse<String>> handleMaxUploadSizeExceededException() {
         HttpStatus status = HttpStatus.PAYLOAD_TOO_LARGE;
         return getErrorResponse(status, "파일 크기는 5MB를 초과할 수 없습니다.");
     }
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ApiResponse<String>> handleNoResourceFoundException(NoResourceFoundException ex) {
+    public ResponseEntity<ApiResponse<String>> handleNoResourceFoundException() {
         String message = "주소를 찾을 수 없습니다.";
         logError(message);
         return getErrorResponse(HttpStatus.NOT_FOUND, message);
