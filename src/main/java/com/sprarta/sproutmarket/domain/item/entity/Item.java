@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -65,7 +64,7 @@ public class Item extends Timestamped {
         this.price = price;
     }
 
-    public void solfDelete(Status deleted) {
+    public void softDelete(Status deleted) {
         this.status = deleted;
     }
 
