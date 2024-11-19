@@ -176,7 +176,7 @@ public class ItemService {
     public void softDeleteItem(Long itemId, CustomUserDetails authUser) {
         Item item = itemRepository.findByIdAndSellerIdOrElseThrow(itemId, User.fromAuthUser(authUser).getId());
 
-        item.solfDelete(Status.DELETED);
+        item.softDelete(Status.DELETED);
     }
 
     /**
@@ -188,7 +188,7 @@ public class ItemService {
     public void softDeleteReportedItem(Long itemId) {
         Item item = itemRepository.findByIdOrElseThrow(itemId);
 
-        item.solfDelete(Status.DELETED);
+        item.softDelete(Status.DELETED);
     }
 
     /**
