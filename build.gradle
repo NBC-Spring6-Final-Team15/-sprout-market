@@ -32,6 +32,24 @@ jacocoTestReport {
         html.required = true
         csv.required = true
     }
+
+    def Qdomains = []
+    for (qPattern in '**/QA'..'**/QZ') {
+        Qdomains.add(qPattern + '*')
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(
+                files(classDirectories.files.collect {
+                    fileTree(dir: it, excludes: [
+                            "**/domain/**/dto/**",
+                            "**/config/**",
+                            "**/domain/**/entity/**"
+                    ] + Qdomains)
+
+                })
+        )
+    }
 }
 
 jacocoTestCoverageVerification {
@@ -152,7 +170,7 @@ dependencies {
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
     // redisson
-    implementation 'org.redisson:redisson:3.19.0'
+    implementation 'org.redisson:redisson:3.22.0'
 }
 
 tasks.named('test') {

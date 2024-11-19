@@ -3,6 +3,9 @@ package com.sprarta.sproutmarket.config;
 import com.sprarta.sproutmarket.domain.tradeChat.dto.TradeChatDto;
 import com.sprarta.sproutmarket.domain.tradeChat.service.RedisSubscriber;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -13,6 +16,8 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
@@ -55,6 +60,13 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new GenericToStringSerializer<>(Long.class)); // 단순 숫자용 직렬화
 
         return redisTemplate;
+    }
+
+    @Bean
+    public CacheManager cacheManager() {
+        SimpleCacheManager cacheManager = new SimpleCacheManager();
+        cacheManager.setCaches(Arrays.asList(new ConcurrentMapCache("admNameCache")));
+        return cacheManager;
     }
 
 }

@@ -35,6 +35,41 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
     AdmCachingService admCachingService;
 
     @Test
+    void DB에_행정구역_정보_삽입_성공() throws Exception {
+        String filepath = "filePath";
+        doNothing().when(administrativeAreaService).insertGeoJsonData(filepath);
+
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/areas/geojson")
+                .header("Authorization", "Bearer (JWT 토큰)")
+                .queryParam("filepath",filepath))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "insert-geojson",
+                        resource(ResourceSnippetParameters.builder()
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .queryParameters(
+                                        parameterWithName("filepath")
+                                                .description("파일 경로/파일이름.geojson")
+                                )
+                                .responseFields(List.of(
+                                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                                .description("Created"),
+                                        fieldWithPath("statusCode").type(JsonFieldType.NUMBER)
+                                                .description("201 상태코드"),
+                                        fieldWithPath("data").type(JsonFieldType.STRING)
+                                                .description("DB에 성공적으로 geojson 파일이 삽입됐습니다.")
+                                ))
+                                .build())
+                ))
+                ;
+
+        result.andExpect(status().isCreated());
+        verify(administrativeAreaService, times(1)).insertGeoJsonData(anyString());
+    }
+
+    @Test
     void 좌표로_행정동_조회_성공() throws Exception {
         //when
         AdministrativeAreaRequestDto requestDto = new AdministrativeAreaRequestDto(126.927872, 37.523254);
@@ -129,5 +164,33 @@ class AdministrativeAreaControllerTest extends CommonMockMvcControllerTestSetUp 
         result.andExpect(status().isOk())
                 .andExpect(jsonPath("data[0]").value("경상남도 산청군 오부면"))
                 .andExpect(jsonPath("data[1]").value("경상남도 산청군 생초면"));
+    }
+
+    @Test
+    void 행정구역_캐싱_성공() throws Exception {
+        doNothing().when(admCachingService).cachingAllAdms();
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/admin/areas/cache")
+                .header("Authorization", "Bearer (JWT 토큰)"))
+                .andDo(MockMvcRestDocumentationWrapper.document(
+                        "caching-all-amds",
+                        resource(ResourceSnippetParameters.builder()
+                                .description("특정 행정동 기준 5km 떨어진 행정구역 리스트 조회하는 쿼리를 캐싱")
+                                .requestHeaders(
+                                        headerWithName("Authorization")
+                                                .description("Bearer (JWT 토큰)")
+                                )
+                                .responseFields(
+                                        fieldWithPath("message")
+                                                .description("성공 시 응답 메시지"),
+                                        fieldWithPath("statusCode")
+                                                .description("성공 시 응답 코드 : 200")
+                                )
+                                .responseSchema(Schema.schema("행정동-캐싱-성공-응답"))
+                                .build()
+                        )
+                ));
+
+        result.andExpect(status().isOk());
+        verify(admCachingService, times(1)).cachingAllAdms();
     }
 }

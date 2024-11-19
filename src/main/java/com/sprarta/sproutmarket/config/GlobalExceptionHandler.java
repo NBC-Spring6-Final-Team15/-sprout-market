@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Objects;
 
@@ -45,7 +46,7 @@ public class GlobalExceptionHandler {
 
     //파일 첨부 용량 초과 예외
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ApiResponse<String>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<ApiResponse<String>> handleMaxUploadSizeExceededException() {
         HttpStatus status = HttpStatus.PAYLOAD_TOO_LARGE;
         return getErrorResponse(status, "파일 크기는 5MB를 초과할 수 없습니다.");
     }
@@ -56,6 +57,13 @@ public class GlobalExceptionHandler {
                 ex.getValue(), Objects.requireNonNull(ex.getRequiredType()).getSimpleName());
         logError(errorMessage);
         return getErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleNoResourceFoundException() {
+        String message = "주소를 찾을 수 없습니다.";
+        logError(message);
+        return getErrorResponse(HttpStatus.NOT_FOUND, message);
     }
 
     public ResponseEntity<ApiResponse<String>> getErrorResponse(HttpStatus status, String message) {
