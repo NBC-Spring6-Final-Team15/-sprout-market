@@ -62,11 +62,4 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    @Bean
-    public CacheManager cacheManager() {
-        SimpleCacheManager cacheManager = new SimpleCacheManager();
-        cacheManager.setCaches(Arrays.asList(new ConcurrentMapCache("admNameCache")));
-        return cacheManager;
-    }
-
 }

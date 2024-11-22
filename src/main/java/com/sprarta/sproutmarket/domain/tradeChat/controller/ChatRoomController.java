@@ -21,14 +21,14 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
     // 채팅방 생성
-    @PostMapping("/items/{itemId}/chatrooms")
+    @PostMapping("/items/{itemId}/chat-rooms")
     public ResponseEntity<ApiResponse<ChatRoomDto>> createChatRoom(
             @PathVariable("itemId") Long itemId, @AuthenticationPrincipal CustomUserDetails authUser) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess("Created",201, chatRoomService.createChatRoom(itemId, authUser)));
     }
 
     // 채팅방 조회
-    @GetMapping("/chatrooms/{chatRoomId}")
+    @GetMapping("/chat-rooms/{chatRoomId}")
     public ResponseEntity<ApiResponse<ChatRoomDto>> getChatRoom(
             @PathVariable("chatRoomId") Long chatRoomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         return ResponseEntity.ok
@@ -36,7 +36,7 @@ public class ChatRoomController {
     }
 
     // 사용자의 채팅방 목록 조회
-    @GetMapping("/chatrooms")
+    @GetMapping("/chat-rooms")
     public ResponseEntity<ApiResponse<Page<ChatRoomDto>>> getAllChatRooms(
             @AuthenticationPrincipal CustomUserDetails authUser,
             Pageable pageable) {
@@ -45,7 +45,7 @@ public class ChatRoomController {
     }
 
     // 채팅방 삭제
-    @DeleteMapping("/chatrooms/{chatRoomId}")
+    @DeleteMapping("/chat-rooms/{chatRoomId}")
     public ResponseEntity<ApiResponse<Void>> deleteChatRoom(
             @PathVariable("chatRoomId") Long chatRoomId, @AuthenticationPrincipal CustomUserDetails authUser) {
         chatRoomService.deleteChatRoom(chatRoomId, authUser);

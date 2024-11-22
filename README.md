@@ -1,66 +1,46 @@
 # 🌱  Welcome to SproutMarket!
 
-<div style="background-color: #f9f9f9; padding: 10px; ">
-    <strong>새싹마켓</strong>은 지역 기반에 중고 거래 플랫폼으로써 작은 실천으로 시작하는 지속 가능한 미래를 위해 만들었습니다.
-</div>
 
-
-
+**새싹마켓**은 지역 기반 중고 거래 플랫폼으로써 작은 실천으로 시작하는 지속 가능한 미래를 위해 만들었습니다.
 
 <br>
 
 ## ✨ 프로젝트 핵심 목표
 1. **API 문서 자동화**
+   - Spring Rest Docs + Swagger UI를 사용하여 테스트 코드 기반 API 문서 자동화
+   
 
 2. **성능 최적화**
+   - Reddison의 tryLock을 사용하여 쿠폰 발급 동시성 제어 + 성능 개선
+   - 주변 행정구역 리스트 조회 쿼리에 캐싱 적용하여 성능 개선 + DB 부하 관리
+   
 
 3. **운영 및 배포 효율화**
     - Docker와 Github Actions를 이용한 CI/CD 파이프라인 구축으로 배포 자동화.
 
 ## ✨  KEY SUMMARY
 
-<details><summary>쿠폰 발급시 Redisson 락을 통한 동시성 제어와 tryLock을 통한 응답 속도 향상</summary>
+### 쿠폰 발급 기능 동시성 문제 제어 & tryLock을 활용하여 성능 향상
+1. **한 줄 요약**<br>
+Redission을 활용한 분산 Lock을 통해 동시성 문제 제어, tryLock을 활용하여 성능 1404% 향상<br>
 
-### 배경<br>
-선착순 쿠폰 발급 이벤트를 가정하여 동시성 문제 해결
 
-### 문제<br>
-1.짧은 시간 동안 트래픽이 몰릴 때 발생하는 동시성 문제<br>
-2.모든 요청에 락을 걸어 요청이 몰렸을 때 응답 속도가 지연되는 문제<br>
+2. **도입 배경**<br>
+매물 끌어올리기 기능을 사용하기 위해 발급되는 쿠폰에 대해서, 선착순 발급 이벤트를 여는 시나리오를 가정,
+순간적으로 많은 트래픽이 쿠폰 발급 요청을 할 때, 동시성 문제가 발생하는 것을 확인<br>
 
-### 해결 방안<br>
-**동시성 문제 해결**<br>
-Reddison 락을 사용해 동시성 문제 해결
 
-테스트 설정<br>
-쿠폰 발급 개수 : 100
-JMeter를 사용해 10초 동안 3000개의 요청을 보냄
+3. **기술적 선택지**<br>                      
+3-1 : **JPA의 비관적 락**<br>
+3-1-1: 디스크 기반이기 때문에 속도가 느림<br>
+3-1-2: 애플리케이션 서버에서 락을 관리, 추후 서버 추가 시 락 관리 어려움<br><br>
+3-2 : **Reddison을 활용한 분산 락**<br>
+3-2-1: 메모리 기반이라 속도가 빠름<br>
+3-2-2: Redis를 애플리케이션 외부에 둘 수 있기 때문에 추후 서버 추가 시에도 락 관리가 간편
 
-락 사용 전 : 102개의 쿠폰이 발급됨
 
-<img src = "https://media.discordapp.net/attachments/1262935762484068405/1308304950723346452/E18489E185B3E1848FE185B3E18485E185B5E186ABE18489E185A3E186BA_2024-11-15_E1848BE185A9E18492E185AE_2.24.43.png?ex=673d756f&is=673c23ef&hm=863107e890433615978a331e0103d7db64c2f7d2b7b2f2133f4cb6da85a44f57&=&format=webp&quality=lossless"> <br>
-
-락 사용 후 : 정확히 100개의 쿠폰이 발급됨
-
-<img src = "https://media.discordapp.net/attachments/1262935762484068405/1308304951038185524/E18489E185B3E1848FE185B3E18485E185B5E186ABE18489E185A3E186BA_2024-11-15_E1848BE185A9E18492E185AE_2.27.24.png?ex=673d756f&is=673c23ef&hm=dd7f96b7a35058127e22ec141d41813b3a92d97cd1e502eb8026ca91d137e254&=&format=webp&quality=lossless">
-
-**응답 속도 지연 문제 해결**
-
-lock.tryLock으로 락 대기 시간을 줄여 응답 속도 향상
-
-테스트 설정<br>
-쿠폰 발급 개수 : 100
-JMeter를 사용해 10초 동안 3000개의 요청을 보냄
-
-tryLock 사용 전 : 평균 응답 속도 1025ms<br>
-
-<img src = "https://media.discordapp.net/attachments/1262935762484068405/1308304949947404318/0f10256b-cfce-4acd-aa75-ee736ebc90bd.png?ex=673d756f&is=673c23ef&hm=47898f651580325d7ddff8aec95b286150d44227fdcf7b9217c3ec3475968396&=&format=webp&quality=lossless"><br>
-
-tryLock 사용 후 : 평균 응답 속도 73ms (약 92% 응답 속도 개선)<br>
-
-<img src = "https://media.discordapp.net/attachments/1262935762484068405/1308304950232743936/673a06b6-bc98-46d8-a792-2c43d0a4b594.png?ex=673d756f&is=673c23ef&hm=8f62b7d8458d62dcb885348799a7ca5b709e0d233d8b8ff322cd519cd68e07e3&=&format=webp&quality=lossless"> 
-</details>
-
+4. **결론**<br>
+Reddison 도입을 결정하여 동시성 제어, Reddison의 tryLock 기능을 활용하여 성능 크게 개선
 
 
 ## 트러블 슈팅
@@ -119,10 +99,13 @@ tryLock 사용 후 : 평균 응답 속도 73ms (약 92% 응답 속도 개선)<br
 
 ✅ 관리자로 임명된 분들은 카테고리를 관리하고, 부적절한 매물을 삭제할 수 있습니다.
 
+## ✨ ERD
+<img src = "https://cdn.discordapp.com/attachments/1262935762484068405/1309341327334445127/31.png?ex=67413aa2&is=673fe922&hm=b767c6dbd5dc8429c569077827b80775d2632aaebe7e0cc861b0b6e0b276fa41&">
+
 
 ## ✨ 인프라 아키텍처 & 적용 기술
 
-<img src="https://camo.githubusercontent.com/a939a97343b526155a402189c6327f5a82a4d74d61daa9794127e4d7fdd9a757/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f6174746163686d656e74732f313236323933353736323438343036383430352f313330333535363433393834323838313635372f556e7469746c65642e706e673f65783d36373263326630612669733d363732616464386126686d3d3065383662616366613633333163633838386134366636346538653733303765313434393533656665303934363031316261383466616539333237326364626626">
+<img src="https://media.discordapp.net/attachments/1262935762484068405/1309327247533932605/Untitled.png?ex=67412d85&is=673fdc05&hm=9c24dc5111e7ded4be1a96da070c7e4f71c71f373348532ddf1d6938f480e5dd&=&format=webp&quality=lossless&width=409&height=350">
 
 
 ### ✨ Backend
@@ -285,44 +268,30 @@ Redis는 메모리 기반으로 작동해 데이터 읽기, 쓰기 속도가 매
 ## ✨ Hello Introduce US
 
 
-|신승재|김기혜|장기현|이지택|양혜민|
-|:----:|:----:|:----:|:----:|:----:|
-|![enter image description here](https://avatars.githubusercontent.com/u/147094944?v=4)%7C![enter image description here](https://avatars.githubusercontent.com/u/150889625?v=4)%7C![enter image description here](https://avatars.githubusercontent.com/u/109169177?v=4)%7C![enter image description here](https://teamsparta.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F0ebe0603-a6a3-4be2-8deb-061448070a66%2FUntitled.jpeg?table=block&id=d7bf83a8-c4ea-46b8-b8f8-51984c3c63c9&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=670&userId=&cache=v2)%7C![enter image description here](https://ca.slack-edge.com/T06B9PCLY1E-U074B44JZN0-0d66bbf845ed-192)%7C
-|[@durururuk](https://github.com/durururuk)%7C[@kikye04040](https://github.com/kikye04040)%7C[@EtherXion](https://github.com/EtherXion)%7C[@jitaeklee](https://github.com/jitaeklee)%7C[@asitwas729](https://github.com/asitwas729)%7C
-| CI/CD<br>Area<br>ELK Stack<br>Category  | Kakao Login<br>User<br>Alert<br>RabbitMQ | Chatting<br> | Trade<br>Review<br>Report<br>Popular Item<br>Coupon | Item<br>Image |
+|                                         신승재                                          |                                         김기혜                                          |                                         장기현                                          |                                                                                                                                                                           이지택                                                                                                                                                                            |양혜민|
+|:------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----:|
+|![enter image description here](https://avatars.githubusercontent.com/u/147094944?v=4)|![enter image description here](https://avatars.githubusercontent.com/u/150889625?v=4)|![enter image description here](https://avatars.githubusercontent.com/u/109169177?v=4)|![enter image description here](https://teamsparta.notion.site/image/https%3A%2F%2Fprod-files-secure.s3.us-west-2.amazonaws.com%2F83c75a39-3aba-4ba4-a792-7aefe4b07895%2F0ebe0603-a6a3-4be2-8deb-061448070a66%2FUntitled.jpeg?table=block&id=d7bf83a8-c4ea-46b8-b8f8-51984c3c63c9&spaceId=83c75a39-3aba-4ba4-a792-7aefe4b07895&width=670&userId=&cache=v2)|![enter image description here](https://ca.slack-edge.com/T06B9PCLY1E-U074B44JZN0-0d66bbf845ed-192)
+|                      [@durururuk](https://github.com/durururuk)                      |                     [@kikye04040](https://github.com/kikye04040)                     |                      [@EtherXion](https://github.com/EtherXion)                      |                                                                                                                                                        [@jitaeklee](https://github.com/jitaeklee)                                                                                                                                                        |[@asitwas729](https://github.com/asitwas729)
+|                        CI/CD<br>Area<br>ELK Stack<br>Category                        |                       Kakao Login<br>User<br>Alert<br>RabbitMQ                       |                                     Chatting<br>                                     |                                                                                                                                                   Trade<br>Review<br>Report<br>Popular Item<br>Coupon                                                                                                                                                    | Item<br>Image |
 
 
 
-##### [💚 Let's Go Our GitHub](https://github.com/NBC-Spring6-Final-Team15/sprout-market)
+##### [Github](https://github.com/NBC-Spring6-Final-Team15/sprout-market)
 
-##### [💚 Let's Go Our Notion](https://teamsparta.notion.site/15-15-aac3459b7971408392231a60149bcb9f)
+### [팀 노션](https://teamsparta.notion.site/15-15-aac3459b7971408392231a60149bcb9f)
 
-##### [💚 Let's Go Our Github Rules](https://teamsparta.notion.site/Github-Rules-010c40cb458947e8ba9ac1483f7c0871)
+### [커밋 컨벤션](https://teamsparta.notion.site/Github-Rules-010c40cb458947e8ba9ac1483f7c0871)
 
-##### [💚 Let's Go Our Code Convention](https://teamsparta.notion.site/Code-Convention-435a94ebb5a94dcc9cfda16a434d6846)
+### [코드 컨벤션](https://teamsparta.notion.site/Code-Convention-435a94ebb5a94dcc9cfda16a434d6846)
+
+### API 문서 http://43.203.87.214:8081/
 
 <details><summary>
 기타 자료
 </summary>
 
-### ERD
-<img src="https://github.com/user-attachments/assets/ceb2e667-73d4-4b23-a53f-c17663cba43e">
-
-### API 문서
-http://43.203.87.214:8081/
-
 ### 자료 출처
 행정구역 geoJson :  https://github.com/vuski/admdongkor
-
-### 프로젝트 구조
-
-<details><summary> 프로젝트 구조
-</summary>
-
-*Write here!*
 </details>
-
-</details>
-<br>
 
 ## ✨ 추후 목표

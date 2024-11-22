@@ -58,7 +58,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(RestDocumentationExtension.class)
 @AutoConfigureRestDocs(outputDir = "build/generated-snippets")
 @AutoConfigureMockMvc(addFilters = false)
-public class ChatRoomControllerTest {
+class ChatRoomControllerTest {
 
     @MockBean
     private ChatRoomService chatRoomService;
@@ -81,13 +81,12 @@ public class ChatRoomControllerTest {
 
     private Long itemId;
     private ChatRoomDto chatRoomDto;
-    private User mockUser;
 
     @BeforeEach
     void setup(RestDocumentationContextProvider restDocumentation) {
         MockitoAnnotations.openMocks(this);
 
-        mockUser = new User("username", "email@email.com", "ABcd2Fg*", "nickname", "01012345678", "address", UserRole.USER);
+        User mockUser = new User("username", "email@email.com", "ABcd2Fg*", "nickname", "01012345678", "address", UserRole.USER);
         mockAuthUser = new CustomUserDetails(mockUser);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(mockAuthUser, null, mockAuthUser.getAuthorities());
@@ -107,7 +106,7 @@ public class ChatRoomControllerTest {
         //when
         when(chatRoomService.createChatRoom(anyLong(), any(CustomUserDetails.class))).thenReturn(chatRoomDto);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/{itemId}/chatrooms", itemId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.post("/items/{itemId}/chat-rooms", itemId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(chatRoomDto))
                         .header("Authorization", "Bearer (JWT 토큰)"))
@@ -159,7 +158,7 @@ public class ChatRoomControllerTest {
 
         when(chatRoomService.getChatRoom(anyLong(), any(CustomUserDetails.class))).thenReturn(chatRoomDto);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chatrooms/{chatRoomId}", chatRoomId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chat-rooms/{chatRoomId}", chatRoomId)
                         .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
                         "get-a-chatroom",
@@ -212,7 +211,7 @@ public class ChatRoomControllerTest {
 
         when(chatRoomService.getChatRooms(any(CustomUserDetails.class), any(Pageable.class))).thenReturn(chatRoomDtoPage);
 
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chatrooms")
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.get("/chat-rooms")
                         .header("Authorization", "Bearer (JWT 토큰)")
                         .param("page", "0")
                         .param("size", "20"))
@@ -297,7 +296,7 @@ public class ChatRoomControllerTest {
         doNothing().when(chatRoomService).deleteChatRoom(anyLong(),any(CustomUserDetails.class));
 
         // when
-        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/chatrooms/{chatRoomId}", chatRoomId)
+        ResultActions result = mockMvc.perform(RestDocumentationRequestBuilders.delete("/chat-rooms/{chatRoomId}", chatRoomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer (JWT 토큰)"))
                 .andDo(MockMvcRestDocumentationWrapper.document(
